@@ -19,7 +19,15 @@ const Register = () => {
             }
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const userRef = doc(db, "users", userCredential.user.uid);
-            await setDoc(userRef, { email, username, created_at: serverTimestamp() });
+            await setDoc(userRef, {
+                email,
+                username,
+                photoURL: "",
+                total_owed: 0,
+                total_debt: 0,
+                friendsList: [],
+                created_at: serverTimestamp(),
+            });
         } catch (error) {
             console.log("Error: ", error);
         }
