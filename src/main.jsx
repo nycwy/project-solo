@@ -8,6 +8,7 @@ import ProtectedRoute from './routes/ProtectedRoute'
 import Dashboard from './features/dashboard/Dashboard'
 import PublicRoute from './routes/PublicRoute'
 import AuthProvider from './context/AuthProvider'
+import Logout from './features/auth/Logout'
 
 const router = createBrowserRouter([
     {
@@ -24,6 +25,14 @@ const router = createBrowserRouter([
             <PublicRoute>
                 <Login />
             </PublicRoute>
+        )
+    },
+    {
+        path: '/logout',
+        element: (
+            <ProtectedRoute>
+                <Logout />
+            </ProtectedRoute>
         )
     },
     {
