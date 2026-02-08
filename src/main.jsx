@@ -9,41 +9,59 @@ import Dashboard from './features/dashboard/Dashboard'
 import PublicRoute from './routes/PublicRoute'
 import AuthProvider from './context/AuthProvider'
 import Logout from './features/auth/Logout'
+import AddExpense from './transactions/AddExpense'
+import AddFriend from './features/friends/AddFriend'
 
 const router = createBrowserRouter([
     {
-        path: '/register',
+        path: "/register",
         element: (
             <PublicRoute>
                 <Register />
             </PublicRoute>
-        )
+        ),
     },
     {
-        path: '/login',
+        path: "/login",
         element: (
             <PublicRoute>
                 <Login />
             </PublicRoute>
-        )
+        ),
     },
     {
-        path: '/logout',
+        path: "/logout",
         element: (
             <ProtectedRoute>
                 <Logout />
             </ProtectedRoute>
-        )
+        ),
     },
     {
-        path: '/',
+        path: "/",
         element: (
             <ProtectedRoute>
                 <Dashboard />
             </ProtectedRoute>
-        )
-    }
-])
+        ),
+    },
+    {
+        path: "/add-expense",
+        element: (
+            <ProtectedRoute>
+                <AddExpense />
+            </ProtectedRoute>
+        ),
+    },
+    {
+        path: "/add-friend",
+        element: (
+            <ProtectedRoute>
+                <AddFriend />
+            </ProtectedRoute>
+        ),
+    },
+]);
 
 createRoot(document.getElementById('root')).render(
     <StrictMode>
