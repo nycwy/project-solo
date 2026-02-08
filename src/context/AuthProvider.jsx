@@ -12,7 +12,7 @@ const AuthProvider = ({ children }) => {
             if (currentUser) {
                 const userRef = doc(db, "users", currentUser.uid);
                 const fetchedUser = await getDoc(userRef);
-                setUser({ ...fetchedUser.data(), id: fetchedUser.id });
+                setUser({ ...fetchedUser.data(), uid: currentUser.uid });
             } else {
                 setUser(null);
             }

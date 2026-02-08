@@ -26,7 +26,7 @@ const AddExpense = () => {
     useEffect(() => {
         const fetchFriends = async () => {
             if (!auth.currentUser) return;
-
+            
             const userRef = doc(db, "users", auth.currentUser.uid);
             const userSnap = await getDoc(userRef);
 

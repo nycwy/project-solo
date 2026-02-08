@@ -40,7 +40,6 @@ const Dashboard = () => {
                 ...doc.data(),
                 role: "payer",
             }));
-            console.log("Found Payer Docs:", docs.length);
             setPayerTransactions(docs);
         });
 
@@ -61,7 +60,6 @@ const Dashboard = () => {
                 ...doc.data(),
                 role: "debtor",
             }));
-            console.log("Found Debtor Docs:", docs.length);
             setDebtorTransactions(docs);
         });
 
@@ -89,12 +87,6 @@ const Dashboard = () => {
     });
 
     const netBalance = totalOwedToMe - totalDebtIOwe;
-
-    console.log("---------------- DIAGNOSTIC ----------------");
-    console.log("MY USER ID IS:", user?.uid);
-    console.log("Payer List Size:", payerTransactions.length);
-    console.log("Debtor List Size:", debtorTransactions.length);
-    console.log("--------------------------------------------");
 
     return (
         <div className="min-h-screen bg-gray-50 p-6">
