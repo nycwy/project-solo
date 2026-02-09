@@ -14,6 +14,7 @@ import {
 } from "firebase/firestore";
 import Button from "../components/Button";
 import Input from "../components/Input";
+import { FiArrowLeft } from "react-icons/fi";
 
 const AddExpense = () => {
     const { user } = useContext(AuthContext);
@@ -29,6 +30,7 @@ const AddExpense = () => {
     const [showFriendSelector, setShowFriendSelector] = useState(false);
     const [existingBatchId, setExistingBatchId] = useState(null);
 
+    // 1. Fetch Friends & Set Initial Participant (Me)
     useEffect(() => {
         const fetchFriends = async () => {
             if (user?.uid) {
@@ -37,12 +39,14 @@ const AddExpense = () => {
                 if (docSnap.exists()) {
                     setFriends(docSnap.data().friendsList || []);
                 }
-                setParticipants([user.uid]);
+                // Default: I am always a participant
+                if (!id) setParticipants([user.uid]);
             }
         };
         fetchFriends();
-    }, [user]);
+    }, [user, id]);
 
+    // 2. Fetch Existing Transaction (If Editing)
     useEffect(() => {
         const fetchTransaction = async () => {
             if (!id) return;
@@ -53,7 +57,7 @@ const AddExpense = () => {
                 const mainDoc = await getDoc(doc(db, "transactions", id));
                 if (!mainDoc.exists()) {
                     alert("Expense not found");
-                    navigate("/dashboard");
+                    navigate("/");
                     return;
                 }
 
@@ -61,31 +65,27 @@ const AddExpense = () => {
 
                 if (data.payerId !== user.uid) {
                     alert("You can only edit expenses you created.");
-                    navigate("/dashboard");
+                    navigate("/");
                     return;
                 }
 
                 setDescription(data.description);
-
                 const totalAmount = data.originalAmount || data.amount;
                 setAmount(totalAmount.toString());
 
                 if (data.batchId) {
                     setExistingBatchId(data.batchId);
-
                     const q = query(
                         collection(db, "transactions"),
                         where("batchId", "==", data.batchId),
                     );
                     const batchSnap = await getDocs(q);
-
                     const foundParticipants = new Set([user.uid]);
 
                     batchSnap.forEach((doc) => {
                         const t = doc.data();
                         if (t.debtorId !== "SELF") foundParticipants.add(t.debtorId);
                     });
-
                     setParticipants(Array.from(foundParticipants));
                 } else {
                     if (data.debtorId !== "SELF") {
@@ -129,6 +129,7 @@ const AddExpense = () => {
 
             const batch = writeBatch(db);
 
+            // DELETE OLD TRANSACTIONS IF EDITING
             if (isEditing) {
                 if (existingBatchId) {
                     const q = query(
@@ -142,8 +143,11 @@ const AddExpense = () => {
                 }
             }
 
+            // CREATE NEW TRANSACTIONS
+
+            // Case 1: Personal Expense (Just Me)
             if (participants.length === 1 && participants.includes(user.uid)) {
-                const newRef = doc(collection(db, "transactions")); // Auto ID
+                const newRef = doc(collection(db, "transactions"));
                 batch.set(newRef, {
                     description,
                     originalAmount: numericAmount,
@@ -151,26 +155,29 @@ const AddExpense = () => {
                     payerId: user.uid,
                     debtorId: "SELF",
                     date: serverTimestamp(),
-                    status: "completed",
+                    status: "confirmed", // Personal is auto-confirmed
                     splitType: "SELF",
                     batchId: newBatchId,
+                    settleStatus: null,
                 });
             }
+            // Case 2: Split Expense (Me + Others)
             else {
                 participants.forEach((pId) => {
-                    if (pId === user.uid) return;
+                    if (pId === user.uid) return; // Don't create a debt for myself
 
                     const newRef = doc(collection(db, "transactions"));
                     batch.set(newRef, {
                         description,
-                        originalAmount: numericAmount,
-                        amount: parseFloat(splitAmount.toFixed(2)),
+                        originalAmount: numericAmount, // Store total bill for reference
+                        amount: parseFloat(splitAmount.toFixed(2)), // Individual share
                         payerId: user.uid,
                         debtorId: pId,
                         date: serverTimestamp(),
-                        status: "pending",
+                        status: "pending", // <--- OTHERS MUST CONFIRM THIS
                         splitType: "EQUAL",
                         batchId: newBatchId,
+                        settleStatus: null,
                     });
                 });
             }
@@ -185,19 +192,18 @@ const AddExpense = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 p-6 flex flex-col items-center">
-            <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-6">
-                <div className="flex justify-between items-center mb-6">
+        <div className="min-h-screen bg-gray-50 p-6 flex flex-col items-center justify-center">
+            <div className="w-full max-w-md bg-white rounded-3xl shadow-xl p-8 border border-gray-100">
+                <div className="flex items-center gap-2 mb-6">
                     <button
                         onClick={() => navigate("/")}
-                        className="text-gray-400 hover:text-gray-600"
+                        className="text-gray-400 hover:text-blue-600 transition"
                     >
-                        ← Back
+                        <FiArrowLeft size={24} />
                     </button>
-                    <h2 className="text-xl font-bold text-gray-800">
+                    <h2 className="text-2xl font-bold text-gray-800">
                         {isEditing ? "Edit Expense" : "Add Expense"}
                     </h2>
-                    <div className="w-6"></div>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-5">
@@ -246,6 +252,7 @@ const AddExpense = () => {
                         {showFriendSelector && (
                             <div className="mt-2 bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden animate-fade-in-down">
                                 <div className="p-2 max-h-48 overflow-y-auto space-y-1">
+                                    {/* Myself (Always Checked) */}
                                     <div className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg opacity-70 cursor-not-allowed">
                                         <input
                                             type="checkbox"
@@ -258,6 +265,7 @@ const AddExpense = () => {
                                         </span>
                                     </div>
 
+                                    {/* Friend List */}
                                     {friends.length > 0 ? (
                                         friends.map((friend) => (
                                             <label
@@ -282,7 +290,7 @@ const AddExpense = () => {
                                         ))
                                     ) : (
                                         <p className="p-2 text-xs text-gray-400 text-center">
-                                            No friends found.
+                                            No friends found. Add some first!
                                         </p>
                                     )}
                                 </div>
@@ -290,10 +298,11 @@ const AddExpense = () => {
                         )}
                     </div>
 
-                    {amount && (
-                        <div className="bg-gray-100 p-4 rounded-xl text-center">
+                    {/* Dynamic Calculation Preview */}
+                    {amount && participants.length > 0 && (
+                        <div className="bg-gray-100 p-4 rounded-xl text-center border border-gray-200">
                             <p className="text-gray-500 text-xs uppercase font-bold mb-1">
-                                The Split
+                                The Split Breakdown
                             </p>
                             <div className="flex justify-center items-center gap-4 text-sm">
                                 <div>
@@ -305,7 +314,8 @@ const AddExpense = () => {
                                 <div className="text-gray-300">|</div>
                                 <div>
                                     <span className="block font-bold text-green-600">
-                                        {`You get back रु ${(amount - amount / participants.length).toFixed(2)}`}
+                                        You get back रु{" "}
+                                        {(amount - amount / participants.length).toFixed(2)}
                                     </span>
                                 </div>
                             </div>
@@ -321,6 +331,7 @@ const AddExpense = () => {
                                     : "Save Expense"
                         }
                         disabled={loading}
+                        className="bg-blue-600 hover:bg-blue-700 text-white mt-4 shadow-md shadow-blue-200"
                     />
                 </form>
             </div>

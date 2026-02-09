@@ -9,7 +9,6 @@ import {
     query,
     where,
     updateDoc,
-    arrayUnion,
     deleteDoc,
 } from "firebase/firestore";
 
@@ -20,8 +19,8 @@ const Dashboard = () => {
     const [userProfile, setUserProfile] = useState(null);
     const [payerTransactions, setPayerTransactions] = useState([]);
     const [debtorTransactions, setDebtorTransactions] = useState([]);
-    const [incomingRequests, setIncomingRequests] = useState([]);
 
+    // 1. Fetch User Profile
     useEffect(() => {
         if (!user?.uid) return;
         const unsubUser = onSnapshot(doc(db, "users", user.uid), (doc) => {
@@ -30,23 +29,10 @@ const Dashboard = () => {
         return () => unsubUser();
     }, [user]);
 
+    // 2. Fetch Transactions (Payer & Debtor)
     useEffect(() => {
         if (!user?.uid) return;
-        const q = query(
-            collection(db, "friend_requests"),
-            where("toId", "==", user.uid),
-            where("status", "==", "pending"),
-        );
-        const unsub = onSnapshot(q, (snapshot) => {
-            setIncomingRequests(
-                snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
-            );
-        });
-        return () => unsub();
-    }, [user]);
 
-    useEffect(() => {
-        if (!user?.uid) return;
         const unsubP = onSnapshot(
             query(collection(db, "transactions"), where("payerId", "==", user.uid)),
             (s) =>
@@ -54,6 +40,7 @@ const Dashboard = () => {
                     s.docs.map((d) => ({ id: d.id, ...d.data(), role: "payer" })),
                 ),
         );
+
         const unsubD = onSnapshot(
             query(collection(db, "transactions"), where("debtorId", "==", user.uid)),
             (s) =>
@@ -61,45 +48,34 @@ const Dashboard = () => {
                     s.docs.map((d) => ({ id: d.id, ...d.data(), role: "debtor" })),
                 ),
         );
+
         return () => {
             unsubP();
             unsubD();
         };
     }, [user]);
 
-    const handleAcceptFriend = async (request) => {
+    // 3. New Expense Approval Handlers (For Debtor)
+    const handleAcceptExpense = async (transactionId) => {
         try {
-            const myRef = doc(db, "users", user.uid);
-            const senderRef = doc(db, "users", request.fromId);
-            const requestRef = doc(db, "friend_requests", request.id);
-
-            const myData = {
-                uid: request.fromId,
-                email: request.fromEmail,
-                username: request.fromName,
-            };
-            const senderData = {
-                uid: user.uid,
-                email: user.email,
-                username: userProfile?.username || "A Friend",
-            };
-
-            await updateDoc(myRef, { friendsList: arrayUnion(myData) });
-            await updateDoc(senderRef, { friendsList: arrayUnion(senderData) });
-            await updateDoc(requestRef, { status: "accepted" });
+            await updateDoc(doc(db, "transactions", transactionId), {
+                status: "confirmed",
+            });
         } catch (e) {
             console.error(e);
         }
     };
 
-    const handleDeclineFriend = async (requestId) => {
+    const handleRejectExpense = async (transactionId) => {
+        if (!window.confirm("Reject and delete this expense request?")) return;
         try {
-            await deleteDoc(doc(db, "friend_requests", requestId));
+            await deleteDoc(doc(db, "transactions", transactionId));
         } catch (e) {
             console.error(e);
         }
     };
 
+    // 4. Settlement Handlers
     const handleRequestSettle = async (transactionId) => {
         try {
             await updateDoc(doc(db, "transactions", transactionId), {
@@ -130,6 +106,7 @@ const Dashboard = () => {
         }
     };
 
+    // 5. Helpers
     const getFriendName = (targetId) => {
         if (targetId === "SELF") return "Yourself";
         if (targetId === user?.uid) return "You";
@@ -137,14 +114,30 @@ const Dashboard = () => {
         return friend ? friend.username : "Unknown";
     };
 
+    // 6. Calculations & Filtering
     const allTransactions = [...payerTransactions, ...debtorTransactions].sort(
         (a, b) => (b.date?.seconds || 0) - (a.date?.seconds || 0),
     );
 
+    // LIST 1: Active History
+    // Show if: 1. Confirmed OR 2. Pending AND I am the Payer (I sent it)
+    const activeTransactions = allTransactions.filter(
+        (t) =>
+            t.status === "confirmed" ||
+            (t.status === "pending" && t.role === "payer"),
+    );
+
+    // LIST 2: Incoming Requests (I need to approve these)
+    const pendingExpenseRequests = allTransactions.filter(
+        (t) => t.role === "debtor" && t.status === "pending",
+    );
+
     let owed = 0,
         debt = 0;
-    allTransactions.forEach((t) => {
-        if (t.settleStatus !== "settled") {
+
+    // BALANCE LOGIC: Only sum up CONFIRMED transactions
+    activeTransactions.forEach((t) => {
+        if (t.status === "confirmed" && t.settleStatus !== "settled") {
             if (t.role === "payer" && t.debtorId !== "SELF") owed += t.amount;
             else if (t.role === "debtor") debt += t.amount;
         }
@@ -173,35 +166,38 @@ const Dashboard = () => {
                     </div>
                 </div>
 
-                {/* FRIEND REQUESTS NOTIFICATION */}
-                {incomingRequests.length > 0 && (
+                {/* INCOMING EXPENSE REQUESTS (For Debtor) */}
+                {pendingExpenseRequests.length > 0 && (
                     <div className="mb-6 space-y-2">
-                        <h3 className="text-orange-600 font-bold text-xs uppercase mb-1 tracking-wider">
-                            New Friend Requests
+                        <h3 className="text-purple-600 font-bold text-xs uppercase mb-1 tracking-wider">
+                            Expense Requests
                         </h3>
-                        {incomingRequests.map((req) => (
+                        {pendingExpenseRequests.map((req) => (
                             <div
                                 key={req.id}
-                                className="bg-white border-l-4 border-orange-500 p-4 rounded-xl shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3"
+                                className="bg-white border-l-4 border-purple-500 p-4 rounded-xl shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 transition hover:shadow-md"
                             >
                                 <div>
                                     <p className="text-sm font-bold text-gray-800">
-                                        {req.fromName}
+                                        {getFriendName(req.payerId)} claims you owe{" "}
+                                        <span className="text-red-500">रु {req.amount}</span>
                                     </p>
-                                    <p className="text-[10px] text-gray-400">wants to connect</p>
+                                    <p className="text-[10px] text-gray-400">
+                                        For: {req.description}
+                                    </p>
                                 </div>
                                 <div className="flex gap-2 w-full sm:w-auto">
                                     <button
-                                        onClick={() => handleAcceptFriend(req)}
+                                        onClick={() => handleAcceptExpense(req.id)}
                                         className="flex-1 sm:flex-none bg-green-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-green-700 transition"
                                     >
-                                        Accept
+                                        Confirm
                                     </button>
                                     <button
-                                        onClick={() => handleDeclineFriend(req.id)}
+                                        onClick={() => handleRejectExpense(req.id)}
                                         className="flex-1 sm:flex-none bg-gray-100 text-gray-600 px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-gray-200 transition"
                                     >
-                                        Decline
+                                        Reject
                                     </button>
                                 </div>
                             </div>
@@ -246,7 +242,7 @@ const Dashboard = () => {
 
                 {/* ACTIVITY LIST */}
                 <div className="space-y-3">
-                    {allTransactions.length === 0 ? (
+                    {activeTransactions.length === 0 ? (
                         <div className="text-center py-12 bg-white rounded-2xl border border-dashed border-gray-300">
                             <p className="text-gray-400 font-medium">No expenses yet.</p>
                             <p className="text-xs text-gray-300 mt-1">
@@ -254,7 +250,7 @@ const Dashboard = () => {
                             </p>
                         </div>
                     ) : (
-                        allTransactions.map((t) => (
+                        activeTransactions.map((t) => (
                             <div
                                 key={t.id}
                                 className={`bg-white p-3 md:p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center gap-3 group hover:border-blue-200 transition ${t.settleStatus === "settled" ? "opacity-50" : ""}`}
@@ -287,7 +283,14 @@ const Dashboard = () => {
                                         {t.role === "payer" ? "+" : "-"}रु {t.amount}
                                     </span>
 
-                                    {/* Action Buttons */}
+                                    {/* --- Status Badge: Payer waiting for confirmation --- */}
+                                    {t.status === "pending" && t.role === "payer" && (
+                                        <span className="text-[10px] bg-purple-100 text-purple-700 px-2 py-1 rounded font-bold uppercase">
+                                            Pending Approval
+                                        </span>
+                                    )}
+
+                                    {/* --- Payer Actions (Edit) - Always show unless settled --- */}
                                     {t.role === "payer" && !t.settleStatus && (
                                         <button
                                             onClick={(e) => {
@@ -299,41 +302,47 @@ const Dashboard = () => {
                                             Edit
                                         </button>
                                     )}
-                                    {t.role === "debtor" && !t.settleStatus && (
-                                        <button
-                                            onClick={() => handleRequestSettle(t.id)}
-                                            className="text-[10px] bg-blue-50 text-blue-600 px-2 py-1 rounded font-bold uppercase hover:bg-blue-600 hover:text-white transition"
-                                        >
-                                            Settle
-                                        </button>
-                                    )}
-                                    {t.role === "debtor" &&
-                                        t.settleStatus === "pending_confirmation" && (
-                                            <span className="text-[10px] bg-yellow-100 text-yellow-700 px-2 py-1 rounded font-bold uppercase">
-                                                Waiting...
-                                            </span>
-                                        )}
-                                    {t.role === "payer" &&
-                                        t.settleStatus === "pending_confirmation" && (
-                                            <div className="flex gap-1">
+
+                                    {/* --- Confirmed Settlement Buttons --- */}
+                                    {t.status === "confirmed" && (
+                                        <>
+                                            {t.role === "debtor" && !t.settleStatus && (
                                                 <button
-                                                    onClick={() => handleConfirmSettle(t.id)}
-                                                    className="text-[10px] bg-green-600 text-white px-2 py-1 rounded font-bold uppercase hover:bg-green-700"
+                                                    onClick={() => handleRequestSettle(t.id)}
+                                                    className="text-[10px] bg-blue-50 text-blue-600 px-2 py-1 rounded font-bold uppercase hover:bg-blue-600 hover:text-white transition"
                                                 >
-                                                    Accept
+                                                    Settle
                                                 </button>
-                                                <button
-                                                    onClick={() => handleDeclineSettle(t.id)}
-                                                    className="text-[10px] bg-red-100 text-red-600 px-2 py-1 rounded font-bold uppercase hover:bg-red-200"
-                                                >
-                                                    Decline
-                                                </button>
-                                            </div>
-                                        )}
-                                    {t.settleStatus === "settled" && (
-                                        <span className="text-[10px] bg-gray-100 text-gray-400 px-2 py-1 rounded font-bold uppercase">
-                                            Settled
-                                        </span>
+                                            )}
+                                            {t.role === "debtor" &&
+                                                t.settleStatus === "pending_confirmation" && (
+                                                    <span className="text-[10px] bg-yellow-100 text-yellow-700 px-2 py-1 rounded font-bold uppercase">
+                                                        Waiting...
+                                                    </span>
+                                                )}
+                                            {t.role === "payer" &&
+                                                t.settleStatus === "pending_confirmation" && (
+                                                    <div className="flex gap-1">
+                                                        <button
+                                                            onClick={() => handleConfirmSettle(t.id)}
+                                                            className="text-[10px] bg-green-600 text-white px-2 py-1 rounded font-bold uppercase hover:bg-green-700"
+                                                        >
+                                                            Accept
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeclineSettle(t.id)}
+                                                            className="text-[10px] bg-red-100 text-red-600 px-2 py-1 rounded font-bold uppercase hover:bg-red-200"
+                                                        >
+                                                            Decline
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            {t.settleStatus === "settled" && (
+                                                <span className="text-[10px] bg-gray-100 text-gray-400 px-2 py-1 rounded font-bold uppercase">
+                                                    Settled
+                                                </span>
+                                            )}
+                                        </>
                                     )}
                                 </div>
                             </div>
@@ -341,7 +350,6 @@ const Dashboard = () => {
                     )}
                 </div>
 
-                {/* FAB */}
                 <button
                     onClick={() => navigate("/add-expense")}
                     className="fixed bottom-6 right-6 w-14 h-14 bg-blue-600 text-white rounded-full shadow-xl flex items-center justify-center text-3xl pb-1 hover:bg-blue-700 transition transform hover:scale-110 active:scale-95 z-50"
