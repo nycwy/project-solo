@@ -12,6 +12,7 @@ import { AuthContext } from "../../context/AuthContext";
 import Button from "../../components/Button";
 import Input from "../../components/Input";
 import { useNavigate } from "react-router-dom";
+import { FiArrowLeft } from "react-icons/fi";
 
 const AddFriend = () => {
     const { user } = useContext(AuthContext);
@@ -66,41 +67,48 @@ const AddFriend = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 p-6 flex flex-col items-center">
-            <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-6">
-                <div className="flex justify-between items-center mb-6">
+        <div className="min-h-screen bg-gray-50 p-4 md:p-8 flex flex-col items-center justify-center">
+            <div className="w-full max-w-md bg-white rounded-3xl shadow-xl p-8 transition-all hover:shadow-2xl">
+                <div className="flex items-center gap-2 mb-6">
                     <button
-                        onClick={() => navigate("/")}
-                        className="text-gray-400 hover:text-gray-600"
+                        onClick={() => navigate(-1)}
+                        className="p-2 -ml-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-full transition"
                     >
-                        ← Back
+                        <FiArrowLeft size={20} />
                     </button>
-                    <h2 className="text-xl font-bold text-gray-800">Add Friend</h2>
-                    <div className="w-6"></div>
+                    <h2 className="text-xl font-bold text-gray-800">Add New Friend</h2>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-6">
                     {error && (
-                        <div className="p-3 bg-red-100 text-red-700 rounded text-sm border border-red-200">
+                        <div className="p-3 bg-red-50 text-red-600 rounded-xl text-sm border border-red-100 font-medium text-center">
                             {error}
                         </div>
                     )}
                     {message && (
-                        <div className="p-3 bg-green-100 text-green-700 rounded text-sm border border-green-200">
+                        <div className="p-3 bg-green-50 text-green-600 rounded-xl text-sm border border-green-100 font-medium text-center">
                             {message}
                         </div>
                     )}
 
-                    <Input
-                        type="email"
-                        placeholder="friend@example.com"
-                        value={email}
-                        setValue={setEmail}
-                    />
+                    <div>
+                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                            Friend's Email
+                        </label>
+                        <Input
+                            type="email"
+                            placeholder="friend@example.com"
+                            value={email}
+                            setValue={setEmail}
+                            className="bg-gray-50 focus:bg-white"
+                        />
+                    </div>
+
                     <Button
-                        text={loading ? "Sending..." : "Send Request"}
+                        text={loading ? "Sending Request..." : "Send Request"}
                         onClick={handleAddFriend}
                         disabled={loading}
+                        className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md shadow-blue-200"
                     />
                 </div>
             </div>

@@ -14,6 +14,7 @@ import AddFriend from './features/friends/AddFriend'
 import Profile from './components/Profile'
 import FriendDetails from './features/friends/FriendDetails'
 import Friends from './features/friends/Friends'
+import Journal from './features/journal/Journal'
 
 const router = createBrowserRouter([
     {
@@ -96,12 +97,20 @@ const router = createBrowserRouter([
             </ProtectedRoute>
         ),
     },
+    {
+        path: "/journal",
+        element: (
+            <ProtectedRoute>
+                <Journal />
+            </ProtectedRoute>
+        ),
+    },
 ]);
 
 createRoot(document.getElementById('root')).render(
     <StrictMode>
         <AuthProvider>
-            <RouterProvider router={router} />
+                <RouterProvider router={router} />
         </AuthProvider>
     </StrictMode>,
 )

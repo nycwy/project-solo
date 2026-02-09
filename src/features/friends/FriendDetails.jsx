@@ -12,6 +12,7 @@ import {
     updateDoc,
 } from "firebase/firestore";
 import Button from "../../components/Button";
+import { FiArrowLeft } from "react-icons/fi";
 
 const FriendDetails = () => {
     const { id: friendId } = useParams();
@@ -111,104 +112,124 @@ const FriendDetails = () => {
     };
 
     if (!friend)
-        return <div className="p-6 text-center text-gray-400">Loading...</div>;
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                <p className="text-gray-400 animate-pulse">Loading...</p>
+            </div>
+        );
 
     return (
-        <div className="min-h-screen bg-gray-50 p-6">
-            <div className="flex items-center gap-4 mb-6">
-                <button
-                    onClick={() => navigate("/")}
-                    className="text-gray-400 hover:text-gray-600 text-sm font-bold"
-                >
-                    ← Back
-                </button>
-                <div className="flex-1">
-                    <h1 className="text-2xl font-bold text-gray-800">
-                        {friend.username}
-                    </h1>
-                    <p className="text-xs text-gray-400">{friend.email}</p>
-                </div>
-                <div className="text-right">
-                    <p className="text-xs text-gray-400 uppercase font-bold">
-                        Net Balance
-                    </p>
-                    <p
-                        className={`text-xl font-bold ${balance >= 0 ? "text-green-600" : "text-red-500"}`}
-                    >
-                        {balance >= 0 ? "You are owed " : "You owe "}
-                        {`रु ${Math.abs(balance).toFixed(2)}`}
-                    </p>
-                </div>
-            </div>
-
-            <div className="space-y-3 pb-20">
-                {transactions.length === 0 ? (
-                    <div className="bg-white p-8 rounded-xl text-center text-gray-400 shadow-sm">
-                        <p>No expenses with {friend.username} yet.</p>
-                        <Button
-                            text="Add Expense"
-                            className="mt-4 bg-blue-50 text-blue-600 px-4 py-2"
-                            onClick={() => navigate("/add-expense")}
-                        />
-                    </div>
-                ) : (
-                    transactions.map((t) => (
-                        <div
-                            key={t.id}
-                            className={`bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center ${t.settleStatus === "settled" ? "opacity-50" : ""}`}
-                        >
-                            <div className="flex-1">
-                                <p
-                                    className={`font-bold text-gray-800 ${t.settleStatus === "settled" ? "line-through" : ""}`}
-                                >
-                                    {t.description}
-                                </p>
-                                <p className="text-[10px] text-gray-400 mt-0.5">
-                                    {t.date
-                                        ? new Date(t.date.seconds * 1000).toLocaleDateString()
-                                        : "Just now"}
-                                </p>
-                            </div>
-
-                            <div className="flex flex-col items-end gap-1.5">
-                                <span
-                                    className={`font-bold ${t.role === "payer" ? "text-green-600" : "text-red-500"} ${t.settleStatus === "settled" ? "line-through text-gray-400" : ""}`}
-                                >
-                                    {t.role === "payer" ? "+" : "-"}रु {t.amount}
-                                </span>
-
-                                {t.role === "debtor" && !t.settleStatus && (
-                                    <button
-                                        onClick={() => handleSettle(t)}
-                                        className="text-[10px] bg-blue-50 text-blue-600 px-2 py-1 rounded font-bold uppercase hover:bg-blue-600 hover:text-white transition"
-                                    >
-                                        Settle
-                                    </button>
-                                )}
-                                {t.role === "payer" &&
-                                    t.settleStatus === "pending_confirmation" && (
-                                        <button
-                                            onClick={() => handleConfirm(t)}
-                                            className="text-[10px] bg-green-600 text-white px-2 py-1 rounded font-bold uppercase animate-pulse"
-                                        >
-                                            Confirm
-                                        </button>
-                                    )}
-                                {t.settleStatus === "pending_confirmation" &&
-                                    t.role === "debtor" && (
-                                        <span className="text-[10px] bg-yellow-100 text-yellow-700 px-2 py-1 rounded font-bold uppercase">
-                                            Waiting
-                                        </span>
-                                    )}
-                                {t.settleStatus === "settled" && (
-                                    <span className="text-[10px] bg-gray-100 text-gray-400 px-2 py-1 rounded font-bold uppercase">
-                                        Settled
-                                    </span>
-                                )}
+        <div className="min-h-screen bg-gray-50 p-4 md:p-8">
+            <div className="max-w-2xl mx-auto">
+                {/* Header Card */}
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6 sticky top-20 z-10">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                            <button
+                                onClick={() => navigate(-1)}
+                                className="p-2 -ml-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-full transition"
+                            >
+                                <FiArrowLeft size={20} />
+                            </button>
+                            <div>
+                                <h1 className="text-xl md:text-2xl font-bold text-gray-800">
+                                    {friend.username}
+                                </h1>
+                                <p className="text-xs text-gray-400">{friend.email}</p>
                             </div>
                         </div>
-                    ))
-                )}
+                        <div className="text-right">
+                            <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">
+                                Net Balance
+                            </p>
+                            <p
+                                className={`text-lg md:text-2xl font-bold ${balance >= 0 ? "text-green-600" : "text-red-500"}`}
+                            >
+                                {balance >= 0 ? "You are owed" : "You owe"}
+                                <span className="block text-xl md:text-3xl mt-1">
+                                    रु {Math.abs(balance).toFixed(2)}
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Transactions List */}
+                <div className="space-y-3 pb-24">
+                    {transactions.length === 0 ? (
+                        <div className="text-center py-12 bg-white rounded-2xl border border-dashed border-gray-300">
+                            <p className="text-gray-400 font-medium">No expenses yet.</p>
+                            <Button
+                                text="Add Expense"
+                                className="mt-4 bg-blue-50 text-blue-600 px-6 py-2 w-auto"
+                                onClick={() => navigate("/add-expense")}
+                            />
+                        </div>
+                    ) : (
+                        transactions.map((t) => (
+                            <div
+                                key={t.id}
+                                className={`bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center transition hover:shadow-md ${t.settleStatus === "settled" ? "opacity-60 bg-gray-50" : ""}`}
+                            >
+                                <div className="flex-1 min-w-0 pr-4">
+                                    <p
+                                        className={`font-bold text-gray-800 text-sm md:text-base truncate ${t.settleStatus === "settled" ? "line-through text-gray-500" : ""}`}
+                                    >
+                                        {t.description}
+                                    </p>
+                                    <p className="text-[10px] md:text-xs text-gray-400 mt-1">
+                                        {t.date
+                                            ? new Date(t.date.seconds * 1000).toLocaleDateString(
+                                                undefined,
+                                                {
+                                                    month: "short",
+                                                    day: "numeric",
+                                                },
+                                            )
+                                            : "Just now"}
+                                    </p>
+                                </div>
+
+                                <div className="flex flex-col items-end gap-2 shrink-0">
+                                    <span
+                                        className={`font-bold text-sm md:text-base ${t.role === "payer" ? "text-green-600" : "text-red-500"} ${t.settleStatus === "settled" ? "line-through text-gray-400" : ""}`}
+                                    >
+                                        {t.role === "payer" ? "+" : "-"}रु {t.amount}
+                                    </span>
+
+                                    {t.role === "debtor" && !t.settleStatus && (
+                                        <button
+                                            onClick={() => handleSettle(t)}
+                                            className="text-[10px] bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg font-bold uppercase hover:bg-blue-600 hover:text-white transition"
+                                        >
+                                            Settle
+                                        </button>
+                                    )}
+                                    {t.role === "payer" &&
+                                        t.settleStatus === "pending_confirmation" && (
+                                            <button
+                                                onClick={() => handleConfirm(t)}
+                                                className="text-[10px] bg-green-600 text-white px-3 py-1.5 rounded-lg font-bold uppercase animate-pulse hover:bg-green-700"
+                                            >
+                                                Confirm
+                                            </button>
+                                        )}
+                                    {t.settleStatus === "pending_confirmation" &&
+                                        t.role === "debtor" && (
+                                            <span className="text-[10px] bg-yellow-100 text-yellow-700 px-2 py-1 rounded font-bold uppercase">
+                                                Waiting
+                                            </span>
+                                        )}
+                                    {t.settleStatus === "settled" && (
+                                        <span className="text-[10px] bg-gray-100 text-gray-400 px-2 py-1 rounded font-bold uppercase">
+                                            Settled
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
             </div>
         </div>
     );
