@@ -1,19 +1,20 @@
-import React, { useState } from "react";
-import { db, auth } from "../../services/firebase";
+import React, { useState, useContext } from "react";
+import { db } from "../../services/firebase";
 import {
     collection,
     query,
     where,
     getDocs,
-    updateDoc,
-    doc,
-    arrayUnion,
+    addDoc,
+    serverTimestamp,
 } from "firebase/firestore";
+import { AuthContext } from "../../context/AuthContext";
 import Button from "../../components/Button";
 import Input from "../../components/Input";
 import { useNavigate } from "react-router-dom";
 
 const AddFriend = () => {
+    const { user } = useContext(AuthContext);
     const [email, setEmail] = useState("");
     const [error, setError] = useState("");
     const [message, setMessage] = useState("");
@@ -27,51 +28,43 @@ const AddFriend = () => {
 
         try {
             if (!email) throw new Error("Please enter an email address.");
-            if (auth.currentUser && email === auth.currentUser.email) {
-                throw new Error("You cannot add yourself as a friend.");
+
+            const targetEmail = email.trim().toLowerCase();
+            if (user && targetEmail === user.email.toLowerCase()) {
+                throw new Error("You cannot add yourself.");
             }
 
             const usersRef = collection(db, "users");
-            const q = query(usersRef, where("email", "==", email));
+            const q = query(usersRef, where("email", "==", targetEmail));
             const querySnapshot = await getDocs(q);
 
             if (querySnapshot.empty) {
-                throw new Error("User not found. Ask your friend to register first!");
+                throw new Error("User not found. Ask them to register first!");
             }
 
             const friendDoc = querySnapshot.docs[0];
             const friendData = friendDoc.data();
 
-            console.log("Found Friend Data:", friendData);
-
-            const friendUid = friendData.uid || friendDoc.id;
-            const friendEmail = friendData.email || email;
-            const friendName =
-                friendData.username || friendData.displayName || "Unknown Friend";
-
-            if (!friendUid) {
-                throw new Error("This user's data is corrupted (missing UID).");
-            }
-
-            const myUserRef = doc(db, "users", auth.currentUser.uid);
-
-            await updateDoc(myUserRef, {
-                friendsList: arrayUnion({
-                    uid: friendUid,
-                    email: friendEmail,
-                    username: friendName,
-                }),
+            await addDoc(collection(db, "friend_requests"), {
+                fromId: user.uid,
+                fromEmail: user.email,
+                fromName: user.username || "A Friend",
+                toId: friendDoc.id,
+                status: "pending",
+                timestamp: serverTimestamp(),
             });
 
-            setMessage(`Success! Added ${friendName} to your friends.`);
+            setMessage(`Request sent to ${friendData.username || targetEmail}!`);
             setEmail("");
+
+            setTimeout(() => navigate("/"), 2000);
         } catch (err) {
-            console.error(err);
             setError(err.message);
         } finally {
             setLoading(false);
         }
     };
+
     return (
         <div className="min-h-screen bg-gray-50 p-6 flex flex-col items-center">
             <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-6">
@@ -87,10 +80,6 @@ const AddFriend = () => {
                 </div>
 
                 <div className="space-y-4">
-                    <p className="text-sm text-gray-500">
-                        Enter the email address of the person you want to split bills with.
-                    </p>
-
                     {error && (
                         <div className="p-3 bg-red-100 text-red-700 rounded text-sm border border-red-200">
                             {error}
@@ -108,9 +97,8 @@ const AddFriend = () => {
                         value={email}
                         setValue={setEmail}
                     />
-
                     <Button
-                        text={loading ? "Searching..." : "Add Friend"}
+                        text={loading ? "Sending..." : "Send Request"}
                         onClick={handleAddFriend}
                         disabled={loading}
                     />

@@ -61,6 +61,14 @@ const router = createBrowserRouter([
             </ProtectedRoute>
         ),
     },
+    {
+        path: "/edit-expense/:id",
+        element: (
+            <ProtectedRoute>
+                <AddExpense />
+            </ProtectedRoute>
+        ),
+    },
 ]);
 
 createRoot(document.getElementById('root')).render(

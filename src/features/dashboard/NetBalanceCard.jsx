@@ -1,7 +1,6 @@
 import React from "react";
 
 const NetBalanceCard = ({ totalOwed, totalDebt }) => {
-    // Calculate the "Net Worth"
     const netBalance = totalOwed - totalDebt;
     const isPositive = netBalance >= 0;
 
@@ -11,12 +10,10 @@ const NetBalanceCard = ({ totalOwed, totalDebt }) => {
                 Net Balance
             </h3>
 
-            {/* The Big Number */}
             <div className="text-4xl font-bold my-2">
                 {isPositive ? "+" : "-"}${Math.abs(netBalance).toFixed(2)}
             </div>
 
-            {/* The Breakdown */}
             <div className="flex justify-between mt-6 pt-4 border-t border-blue-500/30">
                 <div>
                     <p className="text-blue-200 text-xs mb-1">You are owed</p>
