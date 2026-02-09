@@ -215,7 +215,7 @@ const AddExpense = () => {
 
                     <div>
                         <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
-                            Total Bill Amount ($)
+                            Total Bill Amount (रु)
                         </label>
                         <Input
                             type="number"
@@ -298,15 +298,14 @@ const AddExpense = () => {
                             <div className="flex justify-center items-center gap-4 text-sm">
                                 <div>
                                     <span className="block font-bold text-gray-800">
-                                        ${(amount / participants.length).toFixed(2)}
+                                        रु {(amount / participants.length).toFixed(2)}
                                     </span>
                                     <span className="text-xs text-gray-500">per person</span>
                                 </div>
                                 <div className="text-gray-300">|</div>
                                 <div>
                                     <span className="block font-bold text-green-600">
-                                        You get back $
-                                        {(amount - amount / participants.length).toFixed(2)}
+                                        {`You get back रु ${(amount - amount / participants.length).toFixed(2)}`}
                                     </span>
                                 </div>
                             </div>

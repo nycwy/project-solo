@@ -11,6 +11,9 @@ import AuthProvider from './context/AuthProvider'
 import Logout from './features/auth/Logout'
 import AddExpense from './transactions/AddExpense'
 import AddFriend from './features/friends/AddFriend'
+import Profile from './components/Profile'
+import FriendDetails from './features/friends/FriendDetails'
+import Friends from './features/friends/Friends'
 
 const router = createBrowserRouter([
     {
@@ -46,6 +49,14 @@ const router = createBrowserRouter([
         ),
     },
     {
+        path: "/profile",
+        element: (
+            <ProtectedRoute>
+                <Profile />
+            </ProtectedRoute>
+        ),
+    },
+    {
         path: "/add-expense",
         element: (
             <ProtectedRoute>
@@ -54,10 +65,26 @@ const router = createBrowserRouter([
         ),
     },
     {
+        path: "/friends",
+        element: (
+            <ProtectedRoute>
+                <Friends />
+            </ProtectedRoute>
+        )
+    },
+    {
         path: "/add-friend",
         element: (
             <ProtectedRoute>
                 <AddFriend />
+            </ProtectedRoute>
+        ),
+    },
+    {
+        path: "/friend/:id",
+        element: (
+            <ProtectedRoute>
+                <FriendDetails />
             </ProtectedRoute>
         ),
     },

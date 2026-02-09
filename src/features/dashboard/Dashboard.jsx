@@ -1,6 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../../context/AuthContext";
-import Button from "../../components/Button";
 import { useNavigate } from "react-router-dom";
 import { db } from "../../services/firebase";
 import {
@@ -22,8 +21,6 @@ const Dashboard = () => {
     const [payerTransactions, setPayerTransactions] = useState([]);
     const [debtorTransactions, setDebtorTransactions] = useState([]);
     const [incomingRequests, setIncomingRequests] = useState([]);
-
-    const handleLogout = () => navigate("/logout");
 
     useEffect(() => {
         if (!user?.uid) return;
@@ -69,14 +66,6 @@ const Dashboard = () => {
             unsubD();
         };
     }, [user]);
-
-    const getFriendName = (targetId) => {
-        if (targetId === "SELF") return "Yourself";
-        if (targetId === user?.uid) return "You";
-
-        const friend = userProfile?.friendsList?.find((f) => f.uid === targetId);
-        return friend ? friend.username : "Unknown";
-    };
 
     const handleAcceptFriend = async (request) => {
         try {
@@ -141,6 +130,13 @@ const Dashboard = () => {
         }
     };
 
+    const getFriendName = (targetId) => {
+        if (targetId === "SELF") return "Yourself";
+        if (targetId === user?.uid) return "You";
+        const friend = userProfile?.friendsList?.find((f) => f.uid === targetId);
+        return friend ? friend.username : "Unknown";
+    };
+
     const allTransactions = [...payerTransactions, ...debtorTransactions].sort(
         (a, b) => (b.date?.seconds || 0) - (a.date?.seconds || 0),
     );
@@ -157,22 +153,22 @@ const Dashboard = () => {
     return (
         <div className="min-h-screen bg-gray-50 p-6 pb-24">
             <div className="flex justify-between items-center mb-8">
-                <div>
-                    <h2 className="text-2xl font-bold text-gray-800">
-                        Hello, {userProfile?.username || "Friend"}
-                    </h2>
-                    <button
-                        onClick={() => navigate("/add-friend")}
-                        className="text-blue-600 text-xs font-bold uppercase mt-1 hover:underline"
-                    >
-                        + Add Friend
-                    </button>
+                <div
+                    onClick={() => navigate("/profile")}
+                    className="flex items-center gap-3 cursor-pointer group"
+                >
+                    <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-lg group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                        {userProfile?.username
+                            ? userProfile.username[0].toUpperCase()
+                            : "?"}
+                    </div>
+                    <div>
+                        <h2 className="text-xl font-bold text-gray-800 group-hover:text-blue-600 transition-colors">
+                            {userProfile?.username || "Friend"}
+                        </h2>
+                        <p className="text-xs text-gray-400">View Profile</p>
+                    </div>
                 </div>
-                <Button
-                    text="Logout"
-                    onClick={handleLogout}
-                    className="bg-red-100 text-red-600 px-4 py-2 rounded-lg"
-                />
             </div>
 
             {incomingRequests.length > 0 && (
@@ -215,51 +211,21 @@ const Dashboard = () => {
                     Net Balance
                 </p>
                 <h3 className="text-4xl font-bold my-2">
-                    {owed - debt >= 0 ? "+" : "-"}${Math.abs(owed - debt).toFixed(2)}
+                    {owed - debt >= 0 ? "+" : "-"}रु {Math.abs(owed - debt).toFixed(2)}
                 </h3>
                 <div className="flex mt-6 pt-4 border-t border-blue-500/50">
                     <div className="w-1/2">
                         <p className="text-blue-200 text-xs">Owed to you</p>
                         <p className="text-green-300 font-bold text-lg">
-                            +${owed.toFixed(2)}
+                            +रु {owed.toFixed(2)}
                         </p>
                     </div>
                     <div className="w-1/2 text-right">
                         <p className="text-blue-200 text-xs">You owe</p>
                         <p className="text-red-300 font-bold text-lg">
-                            -${debt.toFixed(2)}
+                            -रु {debt.toFixed(2)}
                         </p>
                     </div>
-                </div>
-            </div>
-
-            <div className="mb-8">
-                <h3 className="text-gray-500 font-bold text-xs uppercase mb-3 tracking-wider">
-                    Your Friends
-                </h3>
-                <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-                    {userProfile?.friendsList?.length > 0 ? (
-                        userProfile.friendsList.map((f) => (
-                            <div
-                                key={f.uid}
-                                className="shrink-0 flex flex-col items-center"
-                            >
-                                <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-sm border border-gray-200 text-blue-600 font-bold mb-1 text-xl">
-                                    {f.username[0].toUpperCase()}
-                                </div>
-                                <span className="text-[10px] text-gray-600 font-medium truncate w-16 text-center">
-                                    {f.username.split(" ")[0]}
-                                </span>
-                            </div>
-                        ))
-                    ) : (
-                        <div
-                            onClick={() => navigate("/add-friend")}
-                            className="flex items-center gap-2 p-3 bg-white rounded-xl border border-dashed border-gray-300 text-gray-400 text-sm cursor-pointer w-full justify-center"
-                        >
-                            <span>+ Add your first friend</span>
-                        </div>
-                    )}
                 </div>
             </div>
 
@@ -303,7 +269,7 @@ const Dashboard = () => {
                                 <span
                                     className={`font-bold ${t.role === "payer" ? "text-green-600" : "text-red-500"} ${t.settleStatus === "settled" ? "line-through text-gray-400" : ""}`}
                                 >
-                                    {t.role === "payer" ? "+" : "-"}${t.amount}
+                                    {t.role === "payer" ? "+" : "-"}रु {t.amount}
                                 </span>
 
                                 {t.role === "payer" && !t.settleStatus && (
@@ -317,7 +283,6 @@ const Dashboard = () => {
                                         Edit
                                     </button>
                                 )}
-
                                 {t.role === "debtor" && !t.settleStatus && (
                                     <button
                                         onClick={() => handleRequestSettle(t.id)}
@@ -326,14 +291,12 @@ const Dashboard = () => {
                                         Settle
                                     </button>
                                 )}
-
                                 {t.role === "debtor" &&
                                     t.settleStatus === "pending_confirmation" && (
                                         <span className="text-[10px] bg-yellow-100 text-yellow-700 px-2 py-1 rounded font-bold uppercase">
                                             Waiting...
                                         </span>
                                     )}
-
                                 {t.role === "payer" &&
                                     t.settleStatus === "pending_confirmation" && (
                                         <div className="flex gap-1">
@@ -351,7 +314,6 @@ const Dashboard = () => {
                                             </button>
                                         </div>
                                     )}
-
                                 {t.settleStatus === "settled" && (
                                     <span className="text-[10px] bg-gray-100 text-gray-400 px-2 py-1 rounded font-bold uppercase">
                                         Settled
