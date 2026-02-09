@@ -2,7 +2,7 @@ import React, { useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { db, auth } from "../services/firebase";
-import { doc, updateDoc, onSnapshot } from "firebase/firestore";
+import { doc, updateDoc, onSnapshot, getDoc } from "firebase/firestore";
 import { updateProfile } from "firebase/auth";
 import Button from "../components/Button";
 import Input from "../components/Input";
@@ -33,23 +33,53 @@ const Profile = () => {
         return () => unsub();
     }, [user, isEditing]);
 
-    // 2. Profile Update Handler
+    // 2. Profile Update Handler (With Fan-Out Update)
     const handleUpdateProfile = async (e) => {
         e.preventDefault();
         setLoading(true);
         setMessage("");
 
         try {
-            if (!username.trim()) throw new Error("Username cannot be empty");
+            const newName = username.trim();
+            if (!newName) throw new Error("Username cannot be empty");
 
+            // A. Update Auth Profile (Firebase Auth)
             if (auth.currentUser) {
-                await updateProfile(auth.currentUser, { displayName: username });
+                await updateProfile(auth.currentUser, { displayName: newName });
             }
 
+            // B. Update My Document (Firestore)
             const userRef = doc(db, "users", user.uid);
-            await updateDoc(userRef, { username: username });
+            await updateDoc(userRef, { username: newName });
 
-            setMessage("Profile updated successfully! ✅");
+            // C. FAN-OUT UPDATE: Update my name in all my friends' lists
+            if (profileData.friendsList && profileData.friendsList.length > 0) {
+                // create an array of promises to update all friends in parallel
+                const updatePromises = profileData.friendsList.map(async (friend) => {
+                    const friendRef = doc(db, "users", friend.uid);
+                    const friendSnap = await getDoc(friendRef);
+
+                    if (friendSnap.exists()) {
+                        const friendData = friendSnap.data();
+                        const theirFriendsList = friendData.friendsList || [];
+
+                        // Find ME in THEIR list and update MY name
+                        const updatedList = theirFriendsList.map((f) => {
+                            if (f.uid === user.uid) {
+                                return { ...f, username: newName }; // Update the name
+                            }
+                            return f;
+                        });
+
+                        // Write back the updated list to their document
+                        await updateDoc(friendRef, { friendsList: updatedList });
+                    }
+                });
+
+                await Promise.all(updatePromises);
+            }
+
+            setMessage("Name updated successfully! ✅");
             setIsEditing(false);
             setTimeout(() => setMessage(""), 3000);
         } catch (error) {
@@ -90,9 +120,8 @@ const Profile = () => {
                 </div>
 
                 <div className="bg-white rounded-3xl shadow-xl overflow-hidden transition-all hover:shadow-2xl">
-                    {/* 1. Profile Header (Blue Gradient) */}
+                    {/* 1. Profile Header */}
                     <div className="bg-linear-to-br from-blue-600 to-blue-700 p-8 flex flex-col items-center text-white relative">
-                        {/* Decorative Circle */}
                         <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-full -translate-y-10 translate-x-10 blur-xl"></div>
 
                         <div className="relative z-10 mb-4 group">
