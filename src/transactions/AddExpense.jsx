@@ -14,7 +14,13 @@ import {
 } from "firebase/firestore";
 import Button from "../components/Button";
 import Input from "../components/Input";
-import { FiArrowLeft } from "react-icons/fi";
+import {
+    FiArrowLeft,
+    FiUsers,
+    FiCheck,
+    FiChevronDown,
+    FiChevronUp,
+} from "react-icons/fi";
 
 const AddExpense = () => {
     const { user } = useContext(AuthContext);
@@ -39,7 +45,6 @@ const AddExpense = () => {
                 if (docSnap.exists()) {
                     setFriends(docSnap.data().friendsList || []);
                 }
-                // Default: I am always a participant
                 if (!id) setParticipants([user.uid]);
             }
         };
@@ -91,7 +96,7 @@ const AddExpense = () => {
                     if (data.debtorId !== "SELF") {
                         setParticipants([user.uid, data.debtorId]);
                     } else {
-                        setParticipants([user.uid]); // Personal
+                        setParticipants([user.uid]);
                     }
                 }
             } catch (error) {
@@ -144,8 +149,6 @@ const AddExpense = () => {
             }
 
             // CREATE NEW TRANSACTIONS
-
-            // Case 1: Personal Expense (Just Me)
             if (participants.length === 1 && participants.includes(user.uid)) {
                 const newRef = doc(collection(db, "transactions"));
                 batch.set(newRef, {
@@ -155,26 +158,24 @@ const AddExpense = () => {
                     payerId: user.uid,
                     debtorId: "SELF",
                     date: serverTimestamp(),
-                    status: "confirmed", // Personal is auto-confirmed
+                    status: "confirmed",
                     splitType: "SELF",
                     batchId: newBatchId,
                     settleStatus: null,
                 });
-            }
-            // Case 2: Split Expense (Me + Others)
-            else {
+            } else {
                 participants.forEach((pId) => {
-                    if (pId === user.uid) return; // Don't create a debt for myself
+                    if (pId === user.uid) return;
 
                     const newRef = doc(collection(db, "transactions"));
                     batch.set(newRef, {
                         description,
-                        originalAmount: numericAmount, // Store total bill for reference
-                        amount: parseFloat(splitAmount.toFixed(2)), // Individual share
+                        originalAmount: numericAmount,
+                        amount: parseFloat(splitAmount.toFixed(2)),
                         payerId: user.uid,
                         debtorId: pId,
                         date: serverTimestamp(),
-                        status: "pending", // <--- OTHERS MUST CONFIRM THIS
+                        status: "pending",
                         splitType: "EQUAL",
                         batchId: newBatchId,
                         settleStatus: null,
@@ -192,148 +193,199 @@ const AddExpense = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 p-6 flex flex-col items-center justify-center">
-            <div className="w-full max-w-md bg-white rounded-3xl shadow-xl p-8 border border-gray-100">
-                <div className="flex items-center gap-2 mb-6">
+        <div className="min-h-screen bg-gray-50 p-4 md:p-8 flex flex-col items-center justify-center">
+            <div className="w-full max-w-lg bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
+                {/* Header */}
+                <div className="bg-white p-6 md:p-8 border-b border-gray-50 flex items-center gap-4">
                     <button
                         onClick={() => navigate("/")}
-                        className="text-gray-400 hover:text-blue-600 transition"
+                        className="p-2 -ml-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition"
                     >
-                        <FiArrowLeft size={24} />
+                        <FiArrowLeft size={22} />
                     </button>
-                    <h2 className="text-2xl font-bold text-gray-800">
-                        {isEditing ? "Edit Expense" : "Add Expense"}
-                    </h2>
+                    <div>
+                        <h2 className="text-xl md:text-2xl font-bold text-gray-800">
+                            {isEditing ? "Edit Expense" : "New Expense"}
+                        </h2>
+                        <p className="text-xs text-gray-400">Enter details below</p>
+                    </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-5">
-                    <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
-                            Description
-                        </label>
-                        <Input
-                            type="text"
-                            placeholder="e.g. Pizza Party"
-                            value={description}
-                            setValue={setDescription}
-                        />
-                    </div>
+                <div className="p-6 md:p-8">
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        {/* Description Field */}
+                        <div>
+                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                                For what?
+                            </label>
+                            <Input
+                                type="text"
+                                placeholder="e.g. Saturday Dinner, Uber..."
+                                value={description}
+                                setValue={setDescription}
+                                className="text-sm md:text-base bg-gray-50 border-gray-200 focus:bg-white"
+                            />
+                        </div>
 
-                    <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
-                            Total Bill Amount (रु)
-                        </label>
-                        <Input
-                            type="number"
-                            placeholder="0.00"
-                            value={amount}
-                            setValue={setAmount}
-                        />
-                    </div>
+                        {/* Amount Field */}
+                        <div>
+                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                                Total Bill
+                            </label>
+                            <div className="relative">
+                                <span className="absolute left-4 top-3.5 text-gray-400 font-bold">
+                                    Rs.
+                                </span>
+                                <Input
+                                    type="number"
+                                    placeholder="0.00"
+                                    value={amount}
+                                    setValue={setAmount}
+                                    className="pl-12 text-lg font-bold text-gray-800 bg-gray-50 border-gray-200 focus:bg-white"
+                                />
+                            </div>
+                        </div>
 
-                    <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase mb-2">
-                            Split with...
-                        </label>
+                        {/* Friend Selector Dropdown */}
+                        <div className="relative">
+                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                                Split with
+                            </label>
 
-                        <button
-                            type="button"
-                            onClick={() => setShowFriendSelector(!showFriendSelector)}
-                            className="w-full flex justify-between items-center bg-blue-50 text-blue-700 px-4 py-3 rounded-xl border border-blue-100 font-semibold hover:bg-blue-100 transition"
-                        >
-                            <span>
-                                {participants.length === 1
-                                    ? "Just Me (Personal)"
-                                    : `Me + ${participants.length - 1} others`}
-                            </span>
-                            <span>{showFriendSelector ? "▲" : "▼"}</span>
-                        </button>
-
-                        {showFriendSelector && (
-                            <div className="mt-2 bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden animate-fade-in-down">
-                                <div className="p-2 max-h-48 overflow-y-auto space-y-1">
-                                    {/* Myself (Always Checked) */}
-                                    <div className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg opacity-70 cursor-not-allowed">
-                                        <input
-                                            type="checkbox"
-                                            checked
-                                            disabled
-                                            className="w-5 h-5 text-blue-600 rounded"
+                            <button
+                                type="button"
+                                onClick={() => setShowFriendSelector(!showFriendSelector)}
+                                className={`w-full flex justify-between items-center p-4 rounded-xl border transition-all duration-200 ${showFriendSelector
+                                        ? "bg-blue-50 border-blue-200 text-blue-700 shadow-sm"
+                                        : "bg-gray-50 border-gray-200 text-gray-700 hover:bg-white hover:shadow-sm"
+                                    }`}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-white rounded-lg shadow-sm">
+                                        <FiUsers
+                                            className={
+                                                showFriendSelector ? "text-blue-500" : "text-gray-400"
+                                            }
                                         />
-                                        <span className="font-medium text-gray-700">
-                                            You (Payer)
-                                        </span>
                                     </div>
-
-                                    {/* Friend List */}
-                                    {friends.length > 0 ? (
-                                        friends.map((friend) => (
-                                            <label
-                                                key={friend.uid}
-                                                className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg cursor-pointer transition"
-                                            >
-                                                <input
-                                                    type="checkbox"
-                                                    checked={participants.includes(friend.uid)}
-                                                    onChange={() => toggleParticipant(friend.uid)}
-                                                    className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
-                                                />
-                                                <div className="flex flex-col">
-                                                    <span className="font-medium text-gray-800">
-                                                        {friend.username}
-                                                    </span>
-                                                    <span className="text-[10px] text-gray-400">
-                                                        {friend.email}
-                                                    </span>
-                                                </div>
-                                            </label>
-                                        ))
-                                    ) : (
-                                        <p className="p-2 text-xs text-gray-400 text-center">
-                                            No friends found. Add some first!
+                                    <div className="text-left">
+                                        <p className="text-sm font-bold">
+                                            {participants.length === 1
+                                                ? "Just Me"
+                                                : `${participants.length} People`}
                                         </p>
-                                    )}
+                                        <p className="text-[10px] opacity-70">
+                                            {participants.length === 1
+                                                ? "Personal Expense"
+                                                : "Split Equally"}
+                                        </p>
+                                    </div>
+                                </div>
+                                {showFriendSelector ? <FiChevronUp /> : <FiChevronDown />}
+                            </button>
+
+                            {/* Dropdown List */}
+                            {showFriendSelector && (
+                                <div className="mt-3 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden animate-fade-in-up z-10 relative">
+                                    <div className="p-2 max-h-56 overflow-y-auto space-y-1 custom-scrollbar">
+                                        {/* Myself (Always Checked) */}
+                                        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl opacity-60">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-xs">
+                                                    YOU
+                                                </div>
+                                                <span className="font-bold text-sm text-gray-700">
+                                                    You (Payer)
+                                                </span>
+                                            </div>
+                                            <FiCheck className="text-blue-600" />
+                                        </div>
+
+                                        {/* Friend List */}
+                                        {friends.length > 0 ? (
+                                            friends.map((friend) => {
+                                                const isSelected = participants.includes(friend.uid);
+                                                return (
+                                                    <div
+                                                        key={friend.uid}
+                                                        onClick={() => toggleParticipant(friend.uid)}
+                                                        className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all ${isSelected
+                                                                ? "bg-blue-50 border border-blue-100"
+                                                                : "hover:bg-gray-50 border border-transparent"
+                                                            }`}
+                                                    >
+                                                        <div className="flex items-center gap-3">
+                                                            <div
+                                                                className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${isSelected
+                                                                        ? "bg-blue-600 text-white"
+                                                                        : "bg-gray-200 text-gray-500"
+                                                                    }`}
+                                                            >
+                                                                {friend.username[0].toUpperCase()}
+                                                            </div>
+                                                            <div className="flex flex-col">
+                                                                <span
+                                                                    className={`text-sm font-bold ${isSelected ? "text-blue-800" : "text-gray-700"}`}
+                                                                >
+                                                                    {friend.username}
+                                                                </span>
+                                                                <span className="text-[10px] text-gray-400">
+                                                                    {friend.email}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        {isSelected && (
+                                                            <FiCheck className="text-blue-600" />
+                                                        )}
+                                                    </div>
+                                                );
+                                            })
+                                        ) : (
+                                            <p className="p-4 text-xs text-gray-400 text-center">
+                                                No friends added yet.
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Breakdown Calculation */}
+                        {amount && participants.length > 0 && (
+                            <div className="bg-linear-to-r from-gray-50 to-gray-100 p-5 rounded-2xl border border-gray-200/60">
+                                <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest mb-3 text-center">
+                                    Summary
+                                </p>
+                                <div className="flex justify-between items-center text-sm md:text-base">
+                                    <div className="text-center w-1/2 border-r border-gray-300 pr-4">
+                                        <p className="text-xs text-gray-500 mb-1">Per Person</p>
+                                        <p className="font-bold text-gray-800 text-lg">
+                                            रु {(amount / participants.length).toFixed(2)}
+                                        </p>
+                                    </div>
+                                    <div className="text-center w-1/2 pl-4">
+                                        <p className="text-xs text-gray-500 mb-1">You receive</p>
+                                        <p className="font-bold text-green-600 text-lg">
+                                            + रु {(amount - amount / participants.length).toFixed(2)}
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         )}
-                    </div>
 
-                    {/* Dynamic Calculation Preview */}
-                    {amount && participants.length > 0 && (
-                        <div className="bg-gray-100 p-4 rounded-xl text-center border border-gray-200">
-                            <p className="text-gray-500 text-xs uppercase font-bold mb-1">
-                                The Split Breakdown
-                            </p>
-                            <div className="flex justify-center items-center gap-4 text-sm">
-                                <div>
-                                    <span className="block font-bold text-gray-800">
-                                        रु {(amount / participants.length).toFixed(2)}
-                                    </span>
-                                    <span className="text-xs text-gray-500">per person</span>
-                                </div>
-                                <div className="text-gray-300">|</div>
-                                <div>
-                                    <span className="block font-bold text-green-600">
-                                        You get back रु{" "}
-                                        {(amount - amount / participants.length).toFixed(2)}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    <Button
-                        text={
-                            loading
-                                ? "Saving..."
-                                : isEditing
-                                    ? "Update Expense"
-                                    : "Save Expense"
-                        }
-                        disabled={loading}
-                        className="bg-blue-600 hover:bg-blue-700 text-white mt-4 shadow-md shadow-blue-200"
-                    />
-                </form>
+                        <Button
+                            text={
+                                loading
+                                    ? "Processing..."
+                                    : isEditing
+                                        ? "Update Expense"
+                                        : "Save Expense"
+                            }
+                            disabled={loading}
+                            className="bg-blue-600 hover:bg-blue-700 text-white w-full py-4 rounded-xl font-bold shadow-lg shadow-blue-200 transform active:scale-95 transition-all"
+                        />
+                    </form>
+                </div>
             </div>
         </div>
     );
