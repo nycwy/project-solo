@@ -161,7 +161,7 @@ const FriendDetails = () => {
                             <p className="text-gray-400 font-medium">No expenses yet.</p>
                             <Button
                                 text="Add Expense"
-                                className="mt-4 bg-blue-50 text-blue-600 px-6 py-2 w-auto"
+                                className="mt-4 bg-blue-100 text-blue-600 px-6 py-2 w-auto hover:text-white hover:bg-blue-600"
                                 onClick={() => navigate("/add-expense")}
                             />
                         </div>
