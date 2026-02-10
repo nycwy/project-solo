@@ -81,18 +81,18 @@ const Navbar = () => {
                     <div className="md:hidden absolute top-16 left-0 w-full bg-white border-b border-gray-200 shadow-xl z-40">
                         <div className="p-4 space-y-2">
                             <NavLink
-                                to="/"
-                                onClick={closeMenu}
-                                className={mobileMenuClasses}
-                            >
-                                <FiPieChart size={20} /> Splitter
-                            </NavLink>
-                            <NavLink
                                 to="/journal"
                                 onClick={closeMenu}
                                 className={mobileMenuClasses}
                             >
                                 <FiLayout size={20} /> Journal
+                            </NavLink>
+                            <NavLink
+                                to="/"
+                                onClick={closeMenu}
+                                className={mobileMenuClasses}
+                            >
+                                <FiPieChart size={20} /> Splitter
                             </NavLink>
                             <NavLink
                                 to="/friends"
