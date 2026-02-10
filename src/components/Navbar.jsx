@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
-import { FiUser, FiMenu, FiX, FiPieChart, FiLayout } from "react-icons/fi";
+import { FiUser, FiMenu, FiX, FiPieChart, FiLayout, FiFileText } from "react-icons/fi";
 import { FaUserFriends } from "react-icons/fa";
 
 const Navbar = () => {
@@ -51,6 +51,9 @@ const Navbar = () => {
                             <NavLink to="/friends" className={desktopLinkClasses}>
                                 <FaUserFriends size={18} /> <span>Friends</span>
                             </NavLink>
+                            <NavLink to="/statement" className={desktopLinkClasses}>
+                                <FiFileText size={18} /> <span>Statement</span>
+                            </NavLink>
 
                             {/* Divider */}
                             <div className="w-px h-6 bg-gray-200 mx-2"></div>
@@ -77,7 +80,11 @@ const Navbar = () => {
                 {isOpen && (
                     <div className="md:hidden absolute top-16 left-0 w-full bg-white border-b border-gray-200 shadow-xl z-40">
                         <div className="p-4 space-y-2">
-                            <NavLink to="/" onClick={closeMenu} className={mobileMenuClasses}>
+                            <NavLink
+                                to="/"
+                                onClick={closeMenu}
+                                className={mobileMenuClasses}
+                            >
                                 <FiPieChart size={20} /> Splitter
                             </NavLink>
                             <NavLink
@@ -93,6 +100,13 @@ const Navbar = () => {
                                 className={mobileMenuClasses}
                             >
                                 <FaUserFriends size={20} /> Friends
+                            </NavLink>
+                            <NavLink
+                                to="/statement"
+                                onClick={closeMenu}
+                                className={mobileMenuClasses}
+                            >
+                                <FiFileText size={20} /> Statement
                             </NavLink>
 
                             <div className="border-t border-gray-100 my-2"></div>

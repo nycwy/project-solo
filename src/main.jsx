@@ -15,6 +15,7 @@ import Profile from './components/Profile'
 import FriendDetails from './features/friends/FriendDetails'
 import Friends from './features/friends/Friends'
 import Journal from './features/journal/Journal'
+import Statement from './features/statement/Statement'
 
 const router = createBrowserRouter([
     {
@@ -102,6 +103,14 @@ const router = createBrowserRouter([
         element: (
             <ProtectedRoute>
                 <Journal />
+            </ProtectedRoute>
+        ),
+    },
+    {
+        path: "/statement",
+        element: (
+            <ProtectedRoute>
+                <Statement />
             </ProtectedRoute>
         ),
     },
