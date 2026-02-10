@@ -211,7 +211,7 @@ const Dashboard = () => {
                         Net Balance
                     </p>
                     <h3 className="text-3xl md:text-5xl font-bold my-3">
-                        {owed - debt >= 0 ? "+" : "-"}रु {Math.abs(owed - debt).toFixed(2)}
+                        {owed - debt >= 0 ? "+" : "-"}Rs. {Math.abs(owed - debt).toFixed(2)}
                     </h3>
                     <div className="flex mt-6 pt-4 border-t border-blue-500/50">
                         <div className="w-1/2">
@@ -219,7 +219,7 @@ const Dashboard = () => {
                                 Owed to you
                             </p>
                             <p className="text-green-300 font-bold text-lg md:text-xl">
-                                +रु {owed.toFixed(2)}
+                                +Rs. {owed.toFixed(2)}
                             </p>
                         </div>
                         <div className="w-1/2 text-right">
@@ -227,7 +227,7 @@ const Dashboard = () => {
                                 You owe
                             </p>
                             <p className="text-red-300 font-bold text-lg md:text-xl">
-                                -रु {debt.toFixed(2)}
+                                -Rs. {debt.toFixed(2)}
                             </p>
                         </div>
                     </div>
