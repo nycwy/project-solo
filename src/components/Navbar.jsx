@@ -42,11 +42,11 @@ const Navbar = () => {
 
                         {/* DESKTOP MENU */}
                         <div className="hidden md:flex items-center space-x-1">
-                            <NavLink to="/" className={desktopLinkClasses}>
-                                <FiPieChart size={18} /> <span>Splitter</span>
-                            </NavLink>
                             <NavLink to="/journal" className={desktopLinkClasses}>
                                 <FiLayout size={18} /> <span>Journal</span>
+                            </NavLink>
+                            <NavLink to="/" className={desktopLinkClasses}>
+                                <FiPieChart size={18} /> <span>Splitter</span>
                             </NavLink>
                             <NavLink to="/friends" className={desktopLinkClasses}>
                                 <FaUserFriends size={18} /> <span>Friends</span>

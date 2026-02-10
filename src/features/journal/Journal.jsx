@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from "react";
+import React, { useState, useContext, useEffect, useRef } from "react";
 import { AuthContext } from "../../context/AuthContext";
 import { db } from "../../services/firebase";
 import {
@@ -9,6 +9,7 @@ import {
     onSnapshot,
     deleteDoc,
     doc,
+    updateDoc,
     serverTimestamp,
     Timestamp,
 } from "firebase/firestore";
@@ -20,13 +21,19 @@ import {
     FiTrash2,
     FiCalendar,
     FiActivity,
+    FiEdit2,
 } from "react-icons/fi";
 
 const Journal = () => {
     const { user } = useContext(AuthContext);
 
+    // Refs for Auto-Scrolling
+    const incomeRef = useRef(null);
+    const expenseRef = useRef(null);
+
     const [entries, setEntries] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [editingId, setEditingId] = useState(null);
 
     // Income State
     const [incAmount, setIncAmount] = useState("");
@@ -56,7 +63,6 @@ const Journal = () => {
                     ...doc.data(),
                 }));
 
-                // Client-side Sort (Newest First)
                 data.sort((a, b) => {
                     const dateA = a.date?.seconds || 0;
                     const dateB = b.date?.seconds || 0;
@@ -85,7 +91,7 @@ const Journal = () => {
     const balance = totalIncome - totalExpense;
 
     // 3. Handlers
-    const handleAddEntry = async (type) => {
+    const handleSaveEntry = async (type) => {
         const isIncome = type === "income";
         const amountVal = parseFloat(isIncome ? incAmount : expAmount);
         const descVal = isIncome ? incDesc : expDesc;
@@ -98,15 +104,26 @@ const Journal = () => {
         try {
             const entryDate = new Date(dateVal);
             entryDate.setHours(12, 0, 0, 0);
+            const timestampDate = Timestamp.fromDate(entryDate);
 
-            await addDoc(collection(db, "journal"), {
-                uid: user.uid,
-                type: type,
-                amount: amountVal,
-                description: descVal,
-                date: Timestamp.fromDate(entryDate),
-                createdAt: serverTimestamp(),
-            });
+            if (editingId) {
+                const entryRef = doc(db, "journal", editingId);
+                await updateDoc(entryRef, {
+                    amount: amountVal,
+                    description: descVal,
+                    date: timestampDate,
+                });
+                setEditingId(null);
+            } else {
+                await addDoc(collection(db, "journal"), {
+                    uid: user.uid,
+                    type: type,
+                    amount: amountVal,
+                    description: descVal,
+                    date: timestampDate,
+                    createdAt: serverTimestamp(),
+                });
+            }
 
             if (isIncome) {
                 setIncAmount("");
@@ -117,15 +134,55 @@ const Journal = () => {
                 setExpDesc("");
                 setExpDate(new Date().toISOString().split("T")[0]);
             }
+            setEditingId(null);
         } catch (error) {
-            console.error("Error adding entry:", error);
-            alert("Failed to save entry.");
+            console.error("Error saving entry:", error);
+            alert("Failed to save.");
         }
     };
 
-    const handleDelete = async (id) => {
-        if (window.confirm("Are you sure you want to delete this entry?")) {
+    const handleEditClick = (entry) => {
+        setEditingId(entry.id);
+        const dateStr = new Date(entry.date.seconds * 1000)
+            .toISOString()
+            .split("T")[0];
+
+        if (entry.type === "income") {
+            setIncAmount(entry.amount);
+            setIncDesc(entry.description);
+            setIncDate(dateStr);
+            setExpAmount("");
+            setExpDesc("");
+
+            // Scroll to Income Box
+            setTimeout(() => {
+                incomeRef.current?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "center",
+                });
+            }, 100);
+        } else {
+            setExpAmount(entry.amount);
+            setExpDesc(entry.description);
+            setExpDate(dateStr);
+            setIncAmount("");
+            setIncDesc("");
+
+            // Scroll to Expense Box
+            setTimeout(() => {
+                expenseRef.current?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "center",
+                });
+            }, 100);
+        }
+    };
+
+    const handleDelete = async (id, description) => {
+        // Confirmation Message
+        if (window.confirm(`Are you sure you want to delete "${description}"?`)) {
             await deleteDoc(doc(db, "journal", id));
+            if (editingId === id) setEditingId(null);
         }
     };
 
@@ -137,7 +194,6 @@ const Journal = () => {
         });
     };
 
-    // Shared Date Input Style to match your custom Input component
     const dateInputClass =
         "w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-700 text-sm outline-none transition appearance-none";
 
@@ -186,17 +242,32 @@ const Journal = () => {
 
             {/* INPUT SECTION */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-8">
-                {/* 1. INCOME CARD */}
-                <div className="bg-white p-4 md:p-5 rounded-2xl shadow-sm border-t-4 border-green-500 transition hover:shadow-md">
-                    <div className="flex items-center gap-2 mb-4 text-green-600">
-                        <FiArrowUpCircle size={20} />
-                        <h2 className="font-bold text-gray-800 text-sm md:text-base">
-                            Add Income
-                        </h2>
+                {/* 1. INCOME CARD (Added Ref) */}
+                <div
+                    ref={incomeRef}
+                    className={`bg-white p-4 md:p-5 rounded-2xl shadow-sm border-t-4 border-green-500 transition-all duration-300 ${editingId && incAmount ? "ring-2 ring-green-500 ring-offset-2 scale-[1.02]" : "hover:shadow-md"}`}
+                >
+                    <div className="flex items-center justify-between mb-4 text-green-600">
+                        <div className="flex items-center gap-2">
+                            <FiArrowUpCircle size={20} />
+                            <h2 className="font-bold text-gray-800 text-sm md:text-base">
+                                {editingId && incAmount ? "Edit Income" : "Add Income"}
+                            </h2>
+                        </div>
+                        {editingId && incAmount && (
+                            <button
+                                onClick={() => {
+                                    setEditingId(null);
+                                    setIncAmount("");
+                                    setIncDesc("");
+                                }}
+                                className="text-xs text-gray-400 hover:text-gray-600"
+                            >
+                                Cancel
+                            </button>
+                        )}
                     </div>
-
                     <div className="space-y-3">
-                        {/* Row 1: Amount & Date */}
                         <div className="grid grid-cols-2 gap-3 items-start">
                             <div className="flex flex-col">
                                 <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">
@@ -222,8 +293,6 @@ const Journal = () => {
                                 />
                             </div>
                         </div>
-
-                        {/* Row 2: Description */}
                         <div>
                             <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">
                                 Description
@@ -236,26 +305,40 @@ const Journal = () => {
                                 className="text-sm"
                             />
                         </div>
-
                         <Button
-                            text="Save Income"
-                            onClick={() => handleAddEntry("income")}
+                            text={editingId && incAmount ? "Update Income" : "Save Income"}
+                            onClick={() => handleSaveEntry("income")}
                             className="bg-green-600 hover:bg-green-700 w-full mt-2 text-sm"
                         />
                     </div>
                 </div>
 
-                {/* 2. EXPENSE CARD */}
-                <div className="bg-white p-4 md:p-5 rounded-2xl shadow-sm border-t-4 border-red-500 transition hover:shadow-md">
-                    <div className="flex items-center gap-2 mb-4 text-red-500">
-                        <FiArrowDownCircle size={20} />
-                        <h2 className="font-bold text-gray-800 text-sm md:text-base">
-                            Add Expense
-                        </h2>
+                {/* 2. EXPENSE CARD (Added Ref) */}
+                <div
+                    ref={expenseRef}
+                    className={`bg-white p-4 md:p-5 rounded-2xl shadow-sm border-t-4 border-red-500 transition-all duration-300 ${editingId && expAmount ? "ring-2 ring-red-500 ring-offset-2 scale-[1.02]" : "hover:shadow-md"}`}
+                >
+                    <div className="flex items-center justify-between mb-4 text-red-500">
+                        <div className="flex items-center gap-2">
+                            <FiArrowDownCircle size={20} />
+                            <h2 className="font-bold text-gray-800 text-sm md:text-base">
+                                {editingId && expAmount ? "Edit Expense" : "Add Expense"}
+                            </h2>
+                        </div>
+                        {editingId && expAmount && (
+                            <button
+                                onClick={() => {
+                                    setEditingId(null);
+                                    setExpAmount("");
+                                    setExpDesc("");
+                                }}
+                                className="text-xs text-gray-400 hover:text-gray-600"
+                            >
+                                Cancel
+                            </button>
+                        )}
                     </div>
-
                     <div className="space-y-3">
-                        {/* Row 1: Amount & Date */}
                         <div className="grid grid-cols-2 gap-3 items-start">
                             <div className="flex flex-col">
                                 <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">
@@ -281,8 +364,6 @@ const Journal = () => {
                                 />
                             </div>
                         </div>
-
-                        {/* Row 2: Description */}
                         <div>
                             <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">
                                 Description
@@ -295,10 +376,9 @@ const Journal = () => {
                                 className="text-sm"
                             />
                         </div>
-
                         <Button
-                            text="Save Expense"
-                            onClick={() => handleAddEntry("expense")}
+                            text={editingId && expAmount ? "Update Expense" : "Save Expense"}
+                            onClick={() => handleSaveEntry("expense")}
                             className="bg-red-500 hover:bg-red-600 w-full mt-2 text-sm"
                         />
                     </div>
@@ -328,7 +408,7 @@ const Journal = () => {
                             entries.map((e) => (
                                 <div
                                     key={e.id}
-                                    className="bg-white p-3 md:p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center group hover:border-blue-200 transition"
+                                    className={`bg-white p-3 md:p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center group hover:border-blue-200 transition ${editingId === e.id ? "bg-blue-50 border-blue-200" : ""}`}
                                 >
                                     <div className="flex items-center gap-3 md:gap-4 overflow-hidden min-w-0">
                                         <div
@@ -350,19 +430,37 @@ const Journal = () => {
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-3 md:gap-4 ml-2 shrink-0">
+                                    <div className="flex items-center gap-3 ml-2 shrink-0">
                                         <span
                                             className={`font-bold text-sm md:text-base whitespace-nowrap ${e.type === "income" ? "text-green-600" : "text-red-500"}`}
                                         >
                                             {e.type === "income" ? "+" : "-"}Rs.
                                             {e.amount.toLocaleString()}
                                         </span>
-                                        <button
-                                            onClick={() => handleDelete(e.id)}
-                                            className="w-8 h-8 flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full transition"
-                                        >
-                                            <FiTrash2 size={16} />
-                                        </button>
+
+                                        {/* Actions Container */}
+                                        <div className="flex items-center bg-gray-50 rounded-lg p-1 border border-gray-200">
+                                            {/* Edit Button */}
+                                            <button
+                                                onClick={() => handleEditClick(e)}
+                                                className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-blue-600 hover:bg-white rounded-md transition"
+                                                title="Edit"
+                                            >
+                                                <FiEdit2 size={16} />
+                                            </button>
+
+                                            {/* Breaker Line */}
+                                            <div className="w-px h-4 bg-gray-300 mx-1"></div>
+
+                                            {/* Delete Button */}
+                                            <button
+                                                onClick={() => handleDelete(e.id, e.description)}
+                                                className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-red-600 hover:bg-white rounded-md transition"
+                                                title="Delete"
+                                            >
+                                                <FiTrash2 size={16} />
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             ))

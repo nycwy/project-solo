@@ -67,7 +67,7 @@ const Register = () => {
                             Stop worrying about who paid what.
                         </h2>
                         <p className="text-blue-100 text-lg mb-8">
-                            Join thousands of users who trust Splitter to track shared
+                            Join thousands of users who trust King! to track shared
                             expenses for trips, roommates, and dinners.
                         </p>
 

@@ -7,7 +7,7 @@ const PublicRoute = ({ children }) => {
 
     return (
         <div>
-            {user ? <Navigate to='/' /> : children}
+            {user ? <Navigate to='/journal' /> : children}
         </div>
     )
 }
