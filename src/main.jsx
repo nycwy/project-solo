@@ -1,21 +1,24 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import { createBrowserRouter, RouterProvider } from 'react-router-dom'
-import Register from './features/auth/Register'
-import Login from './features/auth/Login'
-import ProtectedRoute from './routes/ProtectedRoute'
-import Dashboard from './features/dashboard/Dashboard'
-import PublicRoute from './routes/PublicRoute'
-import AuthProvider from './context/AuthProvider'
-import Logout from './features/auth/Logout'
-import AddExpense from './transactions/AddExpense'
-import AddFriend from './features/friends/AddFriend'
-import Profile from './components/Profile'
-import FriendDetails from './features/friends/FriendDetails'
-import Friends from './features/friends/Friends'
-import Journal from './features/journal/Journal'
-import Statement from './features/statement/Statement'
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import "./index.css";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
+
+import AuthProvider from "./context/AuthProvider";
+import Layout from "./components/Layout";
+import ProtectedRoute from "./routes/ProtectedRoute";
+import PublicRoute from "./routes/PublicRoute";
+
+import Register from "./features/auth/Register";
+import Login from "./features/auth/Login";
+import Logout from "./features/auth/Logout";
+import Dashboard from "./features/dashboard/Dashboard";
+import AddExpense from "./transactions/AddExpense";
+import AddFriend from "./features/friends/AddFriend";
+import Profile from "./components/Profile";
+import FriendDetails from "./features/friends/FriendDetails";
+import Friends from "./features/friends/Friends";
+import Journal from "./features/journal/Journal";
+import Statement from "./features/statement/Statement";
 
 const router = createBrowserRouter([
     {
@@ -34,92 +37,62 @@ const router = createBrowserRouter([
             </PublicRoute>
         ),
     },
+
     {
-        path: "/logout",
         element: (
             <ProtectedRoute>
-                <Logout />
+                <Layout />
             </ProtectedRoute>
         ),
-    },
-    {
-        path: "/",
-        element: (
-            <ProtectedRoute>
-                <Dashboard />
-            </ProtectedRoute>
-        ),
-    },
-    {
-        path: "/profile",
-        element: (
-            <ProtectedRoute>
-                <Profile />
-            </ProtectedRoute>
-        ),
-    },
-    {
-        path: "/add-expense",
-        element: (
-            <ProtectedRoute>
-                <AddExpense />
-            </ProtectedRoute>
-        ),
-    },
-    {
-        path: "/friends",
-        element: (
-            <ProtectedRoute>
-                <Friends />
-            </ProtectedRoute>
-        )
-    },
-    {
-        path: "/add-friend",
-        element: (
-            <ProtectedRoute>
-                <AddFriend />
-            </ProtectedRoute>
-        ),
-    },
-    {
-        path: "/friend/:id",
-        element: (
-            <ProtectedRoute>
-                <FriendDetails />
-            </ProtectedRoute>
-        ),
-    },
-    {
-        path: "/edit-expense/:id",
-        element: (
-            <ProtectedRoute>
-                <AddExpense />
-            </ProtectedRoute>
-        ),
-    },
-    {
-        path: "/journal",
-        element: (
-            <ProtectedRoute>
-                <Journal />
-            </ProtectedRoute>
-        ),
-    },
-    {
-        path: "/statement",
-        element: (
-            <ProtectedRoute>
-                <Statement />
-            </ProtectedRoute>
-        ),
+        children: [
+            {
+                path: "/",
+                element: <Dashboard />,
+            },
+            {
+                path: "/profile",
+                element: <Profile />,
+            },
+            {
+                path: "/friends",
+                element: <Friends />,
+            },
+            {
+                path: "/journal",
+                element: <Journal />,
+            },
+            {
+                path: "/add-expense",
+                element: <AddExpense />,
+            },
+            {
+                path: "/add-friend",
+                element: <AddFriend />,
+            },
+            {
+                path: "/friend/:id",
+                element: <FriendDetails key={window.location.pathname} />,
+            },
+            {
+                path: "/edit-expense/:id",
+                element: <AddExpense />,
+            },
+            {
+                path: "/statement",
+                element: <Statement />,
+            },
+            {
+                path: "/logout",
+                element: <Logout />,
+            },
+        ],
     },
 ]);
 
-createRoot(document.getElementById('root')).render(
+createRoot(document.getElementById("root")).render(
     <StrictMode>
         <AuthProvider>
-                <RouterProvider router={router} />
+            <RouterProvider router={router} />
         </AuthProvider>
     </StrictMode>,
-)
+);
