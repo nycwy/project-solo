@@ -1,7 +1,7 @@
 import { onAuthStateChanged } from "firebase/auth";
 import React, { useEffect, useState } from "react";
 import { auth, db } from "../services/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, onSnapshot } from "firebase/firestore";
 import { AuthContext } from "./AuthContext";
 
 const AuthProvider = ({ children }) => {
@@ -9,28 +9,44 @@ const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-            try {
-                if (currentUser) {
-                    const userRef = doc(db, "users", currentUser.uid);
-                    const fetchedUser = await getDoc(userRef);
+        let unsubscribeSnapshot = null;
 
-                    if (fetchedUser.exists()) {
-                        setUser({ ...fetchedUser.data(), uid: currentUser.uid });
-                    } else {
-                        setUser(currentUser);
-                    }
-                } else {
-                    setUser(null);
-                }
-            } catch (error) {
-                console.error("Error fetching user data:", error);
+        const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
+            if (currentUser) {
+                const userRef = doc(db, "users", currentUser.uid);
+
+                unsubscribeSnapshot = onSnapshot(
+                    userRef,
+                    (docSnap) => {
+                        if (docSnap.exists()) {
+                            setUser({
+                                uid: currentUser.uid,
+                                email: currentUser.email,
+                                displayName: currentUser.displayName,
+                                photoURL: currentUser.photoURL,
+                                ...docSnap.data(),
+                            });
+                        } else {
+                            setUser(currentUser);
+                        }
+                        setLoading(false);
+                    },
+                    (error) => {
+                        console.error("Error listening to user data:", error);
+                        setLoading(false);
+                    },
+                );
+            } else {
                 setUser(null);
-            } finally {
                 setLoading(false);
+                if (unsubscribeSnapshot) unsubscribeSnapshot();
             }
         });
-        return unsubscribe;
+
+        return () => {
+            unsubscribeAuth();
+            if (unsubscribeSnapshot) unsubscribeSnapshot();
+        };
     }, []);
 
     if (loading) {

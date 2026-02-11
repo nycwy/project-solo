@@ -54,11 +54,11 @@ const Navbar = () => {
 
                     {/* MOBILE VIEW */}
                     <div className="md:hidden flex items-center">
-                        <div className="bg-gray-50 border border-gray-100 px-3 py-1.5 rounded-lg">
+                        {/* <div className="bg-gray-50 border border-gray-100 px-3 py-1.5 rounded-lg"> */}
                             <span className="text-sm font-bold text-gray-700 capitalize">
                                 {userName}
                             </span>
-                        </div>
+                        {/* </div> */}
                     </div>
                 </div>
             </div>
