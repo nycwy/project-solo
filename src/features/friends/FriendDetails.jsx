@@ -10,9 +10,10 @@ import {
     where,
     onSnapshot,
     updateDoc,
+    deleteDoc,
 } from "firebase/firestore";
 import Button from "../../components/Button";
-import { FiArrowLeft, FiCheck, FiClock, FiAlertCircle } from "react-icons/fi";
+import { FiArrowLeft, FiCheck, FiClock, FiTrash2 } from "react-icons/fi";
 
 const FriendDetails = () => {
     const { id: friendId } = useParams();
@@ -60,7 +61,7 @@ const FriendDetails = () => {
             const list1 = snap1.docs.map((d) => ({
                 id: d.id,
                 ...d.data(),
-                role: "payer", // I paid
+                role: "payer",
             }));
 
             if (unsub2) unsub2();
@@ -69,7 +70,7 @@ const FriendDetails = () => {
                 const list2 = snap2.docs.map((d) => ({
                     id: d.id,
                     ...d.data(),
-                    role: "debtor", // I owe
+                    role: "debtor",
                 }));
 
                 const merged = [...list1, ...list2].sort((a, b) => {
@@ -117,6 +118,21 @@ const FriendDetails = () => {
         }
     };
 
+    const handleDelete = async (t) => {
+        if (
+            window.confirm(
+                "Are you sure you want to delete this settled transaction?",
+            )
+        ) {
+            try {
+                await deleteDoc(doc(db, "transactions", t.id));
+            } catch (error) {
+                console.error("Error deleting transaction:", error);
+                alert("Failed to delete.");
+            }
+        }
+    };
+
     if (!friend && loading)
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -127,7 +143,7 @@ const FriendDetails = () => {
     return (
         <div className="min-h-screen bg-gray-50 p-4 md:p-8">
             <div className="max-w-2xl mx-auto">
-                {/* Header Card (Sticky) */}
+                {/* Header Card */}
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 md:p-6 mb-6 sticky top-20 z-10 transition-shadow hover:shadow-md">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3 md:gap-4">
@@ -185,7 +201,7 @@ const FriendDetails = () => {
                             <div
                                 key={t.id}
                                 className={`group bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center transition-all hover:shadow-md hover:border-blue-100 ${t.settleStatus === "settled"
-                                        ? "opacity-60 bg-gray-50 grayscale-[0.5]"
+                                        ? "opacity-60 bg-gray-50 grayscale-[0.5] hover:opacity-100 hover:grayscale-0"
                                         : ""
                                     }`}
                             >
@@ -228,7 +244,7 @@ const FriendDetails = () => {
                                     </span>
 
                                     {/* Action Buttons Logic */}
-                                    <div className="flex items-center">
+                                    <div className="flex items-center gap-2">
                                         {/* Case 1: I owe money -> Settle Button */}
                                         {t.role === "debtor" && !t.settleStatus && (
                                             <button
@@ -257,6 +273,17 @@ const FriendDetails = () => {
                                                     <FiClock size={10} /> Waiting
                                                 </span>
                                             )}
+
+                                        {/* Case 4: SETTLED -> Show Delete Button */}
+                                        {t.settleStatus === "settled" && (
+                                            <button
+                                                onClick={() => handleDelete(t)}
+                                                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                title="Delete Transaction"
+                                            >
+                                                <FiTrash2 size={16} />
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             </div>
