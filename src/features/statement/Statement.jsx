@@ -28,7 +28,6 @@ const Statement = () => {
     const [loading, setLoading] = useState(false);
     const [friendsMap, setFriendsMap] = useState({});
 
-    // 1. Fetch Friends
     useEffect(() => {
         const fetchFriends = async () => {
             if (user?.uid) {
@@ -50,7 +49,6 @@ const Statement = () => {
         return friendsMap[uid] || "Unknown User";
     };
 
-    // --- 2. GENERATE JOURNAL PDF ---
     const generateJournalPDF = async () => {
         if (!startDate || !endDate)
             return alert("Please select both start and end dates.");
@@ -131,7 +129,6 @@ const Statement = () => {
         setLoading(false);
     };
 
-    // --- 3. GENERATE SPLITTER PDF ---
     const generateSplitterPDF = async () => {
         if (!startDate || !endDate)
             return alert("Please select both start and end dates.");
@@ -248,7 +245,6 @@ const Statement = () => {
     return (
         <div className="min-h-screen bg-gray-50 p-4 md:p-8 pb-24">
             <div className="max-w-2xl mx-auto">
-                {/* Page Header */}
                 <div className="flex items-center gap-3 mb-6 md:mb-8">
                     <div className="p-3 bg-purple-100 text-purple-600 rounded-2xl">
                         <FiFileText size={24} className="md:w-7 md:h-7" />
@@ -264,7 +260,6 @@ const Statement = () => {
                 </div>
 
                 <div className="bg-white rounded-2xl md:rounded-3xl shadow-lg p-5 md:p-8 transition-all hover:shadow-xl">
-                    {/* TABS */}
                     <div className="flex p-1 bg-gray-100 rounded-xl mb-6 md:mb-8">
                         <button
                             onClick={() => setActiveTab("journal")}
@@ -286,26 +281,21 @@ const Statement = () => {
                         </button>
                     </div>
 
-                    {/* FORM */}
                     <div className="space-y-6 animate-fade-in-up">
-                        {/* Date Inputs - Fixed for Mobile */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-[10px] md:text-xs font-bold text-gray-400 uppercase mb-2">
                                     From Date
                                 </label>
                                 <div className="relative">
-                                    <FiCalendar className="absolute left-3 top-3.5 text-gray-400" />
+                                    <FiCalendar
+                                        className={`absolute left-3 top-3.5 ${startDate ? "text-blue-500" : "text-gray-400"}`}
+                                    />
                                     <input
-                                        type="text" // Defaults to text for placeholder
-                                        placeholder="mm/dd/yyyy"
-                                        onFocus={(e) => (e.target.type = "date")} // Switches to date on click
-                                        onBlur={(e) => {
-                                            if (!e.target.value) e.target.type = "text";
-                                        }} // Switches back if empty
+                                        type="date"
                                         value={startDate}
                                         onChange={(e) => setStartDate(e.target.value)}
-                                        className="w-full pl-10 p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-blue-500 transition text-sm text-gray-700"
+                                        className={`w-full pl-10 p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-blue-500 transition text-sm appearance-none ${!startDate ? "text-gray-400" : "text-gray-800 font-medium"}`}
                                     />
                                 </div>
                             </div>
@@ -314,23 +304,19 @@ const Statement = () => {
                                     To Date
                                 </label>
                                 <div className="relative">
-                                    <FiCalendar className="absolute left-3 top-3.5 text-gray-400" />
+                                    <FiCalendar
+                                        className={`absolute left-3 top-3.5 ${endDate ? "text-blue-500" : "text-gray-400"}`}
+                                    />
                                     <input
-                                        type="text"
-                                        placeholder="mm/dd/yyyy"
-                                        onFocus={(e) => (e.target.type = "date")}
-                                        onBlur={(e) => {
-                                            if (!e.target.value) e.target.type = "text";
-                                        }}
+                                        type="date"
                                         value={endDate}
                                         onChange={(e) => setEndDate(e.target.value)}
-                                        className="w-full pl-10 p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-blue-500 transition text-sm text-gray-700"
+                                        className={`w-full pl-10 p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-blue-500 transition text-sm appearance-none ${!endDate ? "text-gray-400" : "text-gray-800 font-medium"}`}
                                     />
                                 </div>
                             </div>
                         </div>
 
-                        {/* Info Box */}
                         <div
                             className={`p-4 rounded-xl border flex items-start gap-3 ${activeTab === "journal" ? "bg-blue-50 border-blue-100 text-blue-800" : "bg-orange-50 border-orange-100 text-orange-800"}`}
                         >
