@@ -27,6 +27,7 @@ const FriendDetails = () => {
     useEffect(() => {
         const fetchFriend = async () => {
             try {
+                setLoading(true);
                 const docSnap = await getDoc(doc(db, "users", friendId));
                 if (docSnap.exists()) {
                     setFriend(docSnap.data());
@@ -53,10 +54,23 @@ const FriendDetails = () => {
             where("debtorId", "==", user.uid),
         );
 
-        let unsub2 = null;
+        let list1 = [];
+        let list2 = [];
+        let loaded1 = false;
+        let loaded2 = false;
 
-        const unsub1 = onSnapshot(q1, (snap1) => {
-            const list1 = snap1.docs
+        const updateState = () => {
+            if (loaded1 && loaded2) {
+                const merged = [...list1, ...list2].sort((a, b) => {
+                    return (b.date?.seconds || 0) - (a.date?.seconds || 0);
+                });
+                setTransactions(merged);
+                setLoading(false);
+            }
+        };
+
+        const unsub1 = onSnapshot(q1, (snap) => {
+            list1 = snap.docs
                 .map((d) => ({
                     id: d.id,
                     ...d.data(),
@@ -64,29 +78,26 @@ const FriendDetails = () => {
                 }))
                 .filter((t) => !t.hiddenBy?.includes(user.uid));
 
-            if (unsub2) unsub2();
+            loaded1 = true;
+            updateState();
+        });
 
-            unsub2 = onSnapshot(q2, (snap2) => {
-                const list2 = snap2.docs
-                    .map((d) => ({
-                        id: d.id,
-                        ...d.data(),
-                        role: "debtor",
-                    }))
-                    .filter((t) => !t.hiddenBy?.includes(user.uid));
+        const unsub2 = onSnapshot(q2, (snap) => {
+            list2 = snap.docs
+                .map((d) => ({
+                    id: d.id,
+                    ...d.data(),
+                    role: "debtor",
+                }))
+                .filter((t) => !t.hiddenBy?.includes(user.uid));
 
-                const merged = [...list1, ...list2].sort((a, b) => {
-                    return (b.date?.seconds || 0) - (a.date?.seconds || 0);
-                });
-
-                setTransactions(merged);
-                setLoading(false);
-            });
+            loaded2 = true;
+            updateState();
         });
 
         return () => {
             unsub1();
-            if (unsub2) unsub2();
+            unsub2();
         };
     }, [user, friendId]);
 
@@ -119,23 +130,18 @@ const FriendDetails = () => {
     };
 
     const handleDelete = async (t) => {
-        if (
-            window.confirm(
-                "Remove this transaction from your history? It will still be visible to your friend.",
-            )
-        ) {
+        if (window.confirm("Remove from your history?")) {
             try {
                 await updateDoc(doc(db, "transactions", t.id), {
                     hiddenBy: arrayUnion(user.uid),
                 });
             } catch (error) {
                 console.error(error);
-                alert("Failed to delete.");
             }
         }
     };
 
-    if (!friend && loading)
+    if (loading || !friend)
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -145,7 +151,7 @@ const FriendDetails = () => {
     return (
         <div className="min-h-screen bg-gray-50 p-4 md:p-8">
             <div className="max-w-2xl mx-auto">
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 md:p-6 mb-6 sticky top-20 z-10 transition-shadow hover:shadow-md">
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 md:p-6 mb-6 sticky top-20 z-10">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3 md:gap-4">
                             <button
@@ -161,7 +167,6 @@ const FriendDetails = () => {
                                 <p className="text-xs text-gray-400 mt-1">{friend?.email}</p>
                             </div>
                         </div>
-
                         <div className="text-right">
                             <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-0.5">
                                 Net Balance
@@ -187,12 +192,9 @@ const FriendDetails = () => {
                                 <FiClock size={24} />
                             </div>
                             <p className="text-gray-500 font-medium">No transactions yet.</p>
-                            <p className="text-xs text-gray-400 mt-1 mb-6">
-                                Start tracking expenses together!
-                            </p>
                             <Button
                                 text="Add Expense"
-                                className="bg-blue-100 text-blue-600 px-6 py-2.5 w-auto hover:bg-blue-600 hover:text-white rounded-xl text-sm font-bold shadow-none"
+                                className="mt-6 bg-blue-100 text-blue-600 px-6 py-2.5 w-auto hover:bg-blue-600 hover:text-white rounded-xl text-sm font-bold shadow-none"
                                 onClick={() => navigate("/add-expense")}
                             />
                         </div>
@@ -200,10 +202,7 @@ const FriendDetails = () => {
                         transactions.map((t) => (
                             <div
                                 key={t.id}
-                                className={`group bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center transition-all hover:shadow-md hover:border-blue-100 ${t.settleStatus === "settled"
-                                        ? "opacity-60 bg-gray-50 grayscale-[0.5] hover:opacity-100 hover:grayscale-0"
-                                        : ""
-                                    }`}
+                                className={`group bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center transition-all hover:shadow-md ${t.settleStatus === "settled" ? "opacity-60 bg-gray-50 grayscale-[0.5]" : ""}`}
                             >
                                 <div className="flex-1 min-w-0 pr-3">
                                     <p
@@ -213,13 +212,7 @@ const FriendDetails = () => {
                                     </p>
                                     <p className="text-[10px] md:text-xs text-gray-400 mt-1 flex items-center gap-1">
                                         {t.date
-                                            ? new Date(t.date.seconds * 1000).toLocaleDateString(
-                                                undefined,
-                                                {
-                                                    month: "short",
-                                                    day: "numeric",
-                                                },
-                                            )
+                                            ? new Date(t.date.seconds * 1000).toLocaleDateString()
                                             : "Just now"}
                                         {t.settleStatus === "settled" && (
                                             <span className="flex items-center text-green-600 ml-1 font-medium bg-green-50 px-1 rounded">
@@ -228,29 +221,21 @@ const FriendDetails = () => {
                                         )}
                                     </p>
                                 </div>
-
                                 <div className="flex flex-col items-end gap-2 shrink-0">
                                     <span
-                                        className={`font-bold font-mono text-sm md:text-base ${t.settleStatus === "settled"
-                                                ? "text-gray-400"
-                                                : t.role === "payer"
-                                                    ? "text-green-600"
-                                                    : "text-red-500"
-                                            }`}
+                                        className={`font-bold font-mono text-sm md:text-base ${t.settleStatus === "settled" ? "text-gray-400" : t.role === "payer" ? "text-green-600" : "text-red-500"}`}
                                     >
                                         {t.role === "payer" ? "+" : "-"} रु {t.amount}
                                     </span>
-
                                     <div className="flex items-center gap-2">
                                         {t.role === "debtor" && !t.settleStatus && (
                                             <button
                                                 onClick={() => handleSettle(t)}
-                                                className="text-[10px] md:text-xs bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg font-bold uppercase tracking-wide hover:bg-blue-600 hover:text-white transition-colors"
+                                                className="text-[10px] md:text-xs bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg font-bold uppercase hover:bg-blue-600 hover:text-white transition"
                                             >
                                                 Settle
                                             </button>
                                         )}
-
                                         {t.role === "payer" &&
                                             t.settleStatus === "pending_confirmation" && (
                                                 <button
@@ -260,19 +245,16 @@ const FriendDetails = () => {
                                                     <FiCheck size={12} /> Confirm
                                                 </button>
                                             )}
-
                                         {t.settleStatus === "pending_confirmation" &&
                                             t.role === "debtor" && (
                                                 <span className="flex items-center gap-1 text-[10px] bg-yellow-100 text-yellow-700 px-2 py-1 rounded-md font-bold uppercase border border-yellow-200">
                                                     <FiClock size={10} /> Waiting
                                                 </span>
                                             )}
-
                                         {t.settleStatus === "settled" && (
                                             <button
                                                 onClick={() => handleDelete(t)}
-                                                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                title="Delete Transaction"
+                                                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
                                             >
                                                 <FiTrash2 size={16} />
                                             </button>
