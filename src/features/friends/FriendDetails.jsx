@@ -10,7 +10,7 @@ import {
     where,
     onSnapshot,
     updateDoc,
-    deleteDoc,
+    arrayUnion,
 } from "firebase/firestore";
 import Button from "../../components/Button";
 import { FiArrowLeft, FiCheck, FiClock, FiTrash2 } from "react-icons/fi";
@@ -24,7 +24,6 @@ const FriendDetails = () => {
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // 1. Fetch Friend Info
     useEffect(() => {
         const fetchFriend = async () => {
             try {
@@ -39,7 +38,6 @@ const FriendDetails = () => {
         fetchFriend();
     }, [friendId]);
 
-    // 2. Real-time Transactions Listener
     useEffect(() => {
         if (!user?.uid || !friendId) return;
 
@@ -58,20 +56,24 @@ const FriendDetails = () => {
         let unsub2 = null;
 
         const unsub1 = onSnapshot(q1, (snap1) => {
-            const list1 = snap1.docs.map((d) => ({
-                id: d.id,
-                ...d.data(),
-                role: "payer",
-            }));
+            const list1 = snap1.docs
+                .map((d) => ({
+                    id: d.id,
+                    ...d.data(),
+                    role: "payer",
+                }))
+                .filter((t) => !t.hiddenBy?.includes(user.uid));
 
             if (unsub2) unsub2();
 
             unsub2 = onSnapshot(q2, (snap2) => {
-                const list2 = snap2.docs.map((d) => ({
-                    id: d.id,
-                    ...d.data(),
-                    role: "debtor",
-                }));
+                const list2 = snap2.docs
+                    .map((d) => ({
+                        id: d.id,
+                        ...d.data(),
+                        role: "debtor",
+                    }))
+                    .filter((t) => !t.hiddenBy?.includes(user.uid));
 
                 const merged = [...list1, ...list2].sort((a, b) => {
                     return (b.date?.seconds || 0) - (a.date?.seconds || 0);
@@ -88,7 +90,6 @@ const FriendDetails = () => {
         };
     }, [user, friendId]);
 
-    // Calculate Net Balance
     let balance = 0;
     transactions.forEach((t) => {
         if (t.settleStatus !== "settled") {
@@ -97,7 +98,6 @@ const FriendDetails = () => {
         }
     });
 
-    // Handlers
     const handleSettle = async (t) => {
         try {
             await updateDoc(doc(db, "transactions", t.id), {
@@ -121,13 +121,15 @@ const FriendDetails = () => {
     const handleDelete = async (t) => {
         if (
             window.confirm(
-                "Are you sure you want to delete this settled transaction?",
+                "Remove this transaction from your history? It will still be visible to your friend.",
             )
         ) {
             try {
-                await deleteDoc(doc(db, "transactions", t.id));
+                await updateDoc(doc(db, "transactions", t.id), {
+                    hiddenBy: arrayUnion(user.uid),
+                });
             } catch (error) {
-                console.error("Error deleting transaction:", error);
+                console.error(error);
                 alert("Failed to delete.");
             }
         }
@@ -143,7 +145,6 @@ const FriendDetails = () => {
     return (
         <div className="min-h-screen bg-gray-50 p-4 md:p-8">
             <div className="max-w-2xl mx-auto">
-                {/* Header Card */}
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 md:p-6 mb-6 sticky top-20 z-10 transition-shadow hover:shadow-md">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3 md:gap-4">
@@ -179,7 +180,6 @@ const FriendDetails = () => {
                     </div>
                 </div>
 
-                {/* Transactions List */}
                 <div className="space-y-3 pb-24">
                     {transactions.length === 0 ? (
                         <div className="text-center py-16 bg-white rounded-2xl border border-dashed border-gray-200">
@@ -205,7 +205,6 @@ const FriendDetails = () => {
                                         : ""
                                     }`}
                             >
-                                {/* Left: Info */}
                                 <div className="flex-1 min-w-0 pr-3">
                                     <p
                                         className={`font-bold text-gray-800 text-sm md:text-base truncate ${t.settleStatus === "settled" ? "line-through text-gray-500" : ""}`}
@@ -230,7 +229,6 @@ const FriendDetails = () => {
                                     </p>
                                 </div>
 
-                                {/* Right: Amount & Actions */}
                                 <div className="flex flex-col items-end gap-2 shrink-0">
                                     <span
                                         className={`font-bold font-mono text-sm md:text-base ${t.settleStatus === "settled"
@@ -243,9 +241,7 @@ const FriendDetails = () => {
                                         {t.role === "payer" ? "+" : "-"} रु {t.amount}
                                     </span>
 
-                                    {/* Action Buttons Logic */}
                                     <div className="flex items-center gap-2">
-                                        {/* Case 1: I owe money -> Settle Button */}
                                         {t.role === "debtor" && !t.settleStatus && (
                                             <button
                                                 onClick={() => handleSettle(t)}
@@ -255,7 +251,6 @@ const FriendDetails = () => {
                                             </button>
                                         )}
 
-                                        {/* Case 2: I Paid -> Waiting for Confirmation */}
                                         {t.role === "payer" &&
                                             t.settleStatus === "pending_confirmation" && (
                                                 <button
@@ -266,7 +261,6 @@ const FriendDetails = () => {
                                                 </button>
                                             )}
 
-                                        {/* Case 3: I Owe -> Waiting for them to confirm */}
                                         {t.settleStatus === "pending_confirmation" &&
                                             t.role === "debtor" && (
                                                 <span className="flex items-center gap-1 text-[10px] bg-yellow-100 text-yellow-700 px-2 py-1 rounded-md font-bold uppercase border border-yellow-200">
@@ -274,7 +268,6 @@ const FriendDetails = () => {
                                                 </span>
                                             )}
 
-                                        {/* Case 4: SETTLED -> Show Delete Button */}
                                         {t.settleStatus === "settled" && (
                                             <button
                                                 onClick={() => handleDelete(t)}

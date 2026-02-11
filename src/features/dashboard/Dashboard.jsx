@@ -10,7 +10,9 @@ import {
     where,
     updateDoc,
     deleteDoc,
+    arrayUnion,
 } from "firebase/firestore";
+import { FiTrash2 } from "react-icons/fi";
 
 const Dashboard = () => {
     const { user } = useContext(AuthContext);
@@ -20,16 +22,15 @@ const Dashboard = () => {
     const [payerTransactions, setPayerTransactions] = useState([]);
     const [debtorTransactions, setDebtorTransactions] = useState([]);
 
-    // 1. Fetch User Profile
     useEffect(() => {
         if (!user?.uid) return;
+
         const unsubUser = onSnapshot(doc(db, "users", user.uid), (doc) => {
             if (doc.exists()) setUserProfile(doc.data());
         });
         return () => unsubUser();
     }, [user]);
 
-    // 2. Fetch Transactions (Payer & Debtor)
     useEffect(() => {
         if (!user?.uid) return;
 
@@ -37,7 +38,9 @@ const Dashboard = () => {
             query(collection(db, "transactions"), where("payerId", "==", user.uid)),
             (s) =>
                 setPayerTransactions(
-                    s.docs.map((d) => ({ id: d.id, ...d.data(), role: "payer" })),
+                    s.docs
+                        .map((d) => ({ id: d.id, ...d.data(), role: "payer" }))
+                        .filter((t) => !t.hiddenBy?.includes(user.uid)),
                 ),
         );
 
@@ -45,7 +48,9 @@ const Dashboard = () => {
             query(collection(db, "transactions"), where("debtorId", "==", user.uid)),
             (s) =>
                 setDebtorTransactions(
-                    s.docs.map((d) => ({ id: d.id, ...d.data(), role: "debtor" })),
+                    s.docs
+                        .map((d) => ({ id: d.id, ...d.data(), role: "debtor" }))
+                        .filter((t) => !t.hiddenBy?.includes(user.uid)),
                 ),
         );
 
@@ -55,14 +60,13 @@ const Dashboard = () => {
         };
     }, [user]);
 
-    // 3. New Expense Approval Handlers (For Debtor)
     const handleAcceptExpense = async (transactionId) => {
         try {
             await updateDoc(doc(db, "transactions", transactionId), {
                 status: "confirmed",
             });
         } catch (e) {
-            console.error(e);
+            console.error("Oops, couldn't confirm:", e);
         }
     };
 
@@ -71,11 +75,10 @@ const Dashboard = () => {
         try {
             await deleteDoc(doc(db, "transactions", transactionId));
         } catch (e) {
-            console.error(e);
+            console.error("Couldn't reject:", e);
         }
     };
 
-    // 4. Settlement Handlers
     const handleRequestSettle = async (transactionId) => {
         try {
             await updateDoc(doc(db, "transactions", transactionId), {
@@ -106,47 +109,59 @@ const Dashboard = () => {
         }
     };
 
-    // 5. Helpers
+    const handleDelete = async (e, id) => {
+        e.stopPropagation();
+
+        if (window.confirm("Remove this transaction from your history?")) {
+            try {
+                await updateDoc(doc(db, "transactions", id), {
+                    hiddenBy: arrayUnion(user.uid),
+                });
+            } catch (error) {
+                console.error("Error hiding transaction:", error);
+                alert("Could not remove.");
+            }
+        }
+    };
+
     const getFriendName = (targetId) => {
         if (targetId === "SELF") return "Yourself";
         if (targetId === user?.uid) return "You";
+
         const friend = userProfile?.friendsList?.find((f) => f.uid === targetId);
         return friend ? friend.username : "Unknown";
     };
 
-    // 6. Calculations & Filtering
     const allTransactions = [...payerTransactions, ...debtorTransactions].sort(
         (a, b) => (b.date?.seconds || 0) - (a.date?.seconds || 0),
     );
 
-    // LIST 1: Active History
-    // Show if: 1. Confirmed OR 2. Pending AND I am the Payer (I sent it)
     const activeTransactions = allTransactions.filter(
         (t) =>
             t.status === "confirmed" ||
             (t.status === "pending" && t.role === "payer"),
     );
 
-    // LIST 2: Incoming Requests (I need to approve these)
     const pendingExpenseRequests = allTransactions.filter(
         (t) => t.role === "debtor" && t.status === "pending",
     );
 
-    let owed = 0,
-        debt = 0;
+    let owed = 0;
+    let debt = 0;
 
-    // BALANCE LOGIC: Only sum up CONFIRMED transactions
     activeTransactions.forEach((t) => {
         if (t.status === "confirmed" && t.settleStatus !== "settled") {
-            if (t.role === "payer" && t.debtorId !== "SELF") owed += t.amount;
-            else if (t.role === "debtor") debt += t.amount;
+            if (t.role === "payer" && t.debtorId !== "SELF") {
+                owed += t.amount;
+            } else if (t.role === "debtor") {
+                debt += t.amount;
+            }
         }
     });
 
     return (
         <div className="min-h-screen bg-gray-50 p-4 md:p-8 pb-24">
             <div className="max-w-5xl mx-auto">
-                {/* HEADER */}
                 <div className="flex justify-between items-center mb-6 md:mb-8">
                     <div
                         onClick={() => navigate("/profile")}
@@ -166,7 +181,6 @@ const Dashboard = () => {
                     </div>
                 </div>
 
-                {/* INCOMING EXPENSE REQUESTS (For Debtor) */}
                 {pendingExpenseRequests.length > 0 && (
                     <div className="mb-6 space-y-2">
                         <h3 className="text-purple-600 font-bold text-xs uppercase mb-1 tracking-wider">
@@ -205,7 +219,6 @@ const Dashboard = () => {
                     </div>
                 )}
 
-                {/* BALANCE CARD */}
                 <div className="bg-blue-600 text-white rounded-2xl p-6 md:p-8 shadow-lg mb-8 transition-all hover:shadow-xl">
                     <p className="text-blue-200 text-sm font-medium uppercase tracking-wider">
                         Net Balance
@@ -233,14 +246,12 @@ const Dashboard = () => {
                     </div>
                 </div>
 
-                {/* ACTIVITY HEADER */}
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="text-gray-500 font-bold text-xs uppercase tracking-wider">
                         Recent Activity
                     </h3>
                 </div>
 
-                {/* ACTIVITY LIST */}
                 <div className="space-y-3">
                     {activeTransactions.length === 0 ? (
                         <div className="text-center py-12 bg-white rounded-2xl border border-dashed border-gray-300">
@@ -250,103 +261,120 @@ const Dashboard = () => {
                             </p>
                         </div>
                     ) : (
-                        activeTransactions.map((t) => (
-                            <div
-                                key={t.id}
-                                className={`bg-white p-3 md:p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center gap-3 group hover:border-blue-200 transition ${t.settleStatus === "settled" ? "opacity-50" : ""}`}
-                            >
-                                {/* Left Side: Info */}
-                                <div className="min-w-0 flex-1">
-                                    <p
-                                        className={`font-bold text-gray-800 text-sm md:text-base truncate ${t.settleStatus === "settled" ? "line-through" : ""}`}
-                                    >
-                                        {t.description}
-                                    </p>
-                                    <p className="text-[10px] md:text-xs text-gray-400 mt-0.5 truncate">
-                                        {t.role === "payer"
-                                            ? t.debtorId === "SELF"
-                                                ? "Personal Expense"
-                                                : `You lent to ${getFriendName(t.debtorId)}`
-                                            : `${getFriendName(t.payerId)} lent you`}
-                                        {" • "}
-                                        {t.date
-                                            ? new Date(t.date.seconds * 1000).toLocaleDateString()
-                                            : "Just now"}
-                                    </p>
-                                </div>
-
-                                {/* Right Side: Amount & Actions */}
-                                <div className="flex flex-col items-end gap-1.5 shrink-0">
-                                    <span
-                                        className={`font-bold text-sm md:text-base ${t.role === "payer" ? "text-green-600" : "text-red-500"} ${t.settleStatus === "settled" ? "line-through text-gray-400" : ""}`}
-                                    >
-                                        {t.role === "payer" ? "+" : "-"}रु {t.amount}
-                                    </span>
-
-                                    {/* --- Status Badge: Payer waiting for confirmation --- */}
-                                    {t.status === "pending" && t.role === "payer" && (
-                                        <span className="text-[10px] bg-purple-100 text-purple-700 px-2 py-1 rounded font-bold uppercase">
-                                            Pending Approval
-                                        </span>
-                                    )}
-
-                                    {/* --- Payer Actions (Edit) - Always show unless settled --- */}
-                                    {t.role === "payer" && !t.settleStatus && (
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                navigate(`/edit-expense/${t.id}`);
-                                            }}
-                                            className="text-[10px] bg-gray-100 text-gray-600 px-2 py-1 rounded font-bold uppercase hover:bg-gray-200 transition"
+                        activeTransactions.map((t) => {
+                            const canDelete =
+                                t.settleStatus === "settled" || t.debtorId === "SELF";
+                            
+                            return (
+                                <div
+                                    key={t.id}
+                                    className={`bg-white p-3 md:p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center gap-3 group hover:border-blue-200 transition ${t.settleStatus === "settled" ? "opacity-50" : ""}`}
+                                >
+                                    <div className="min-w-0 flex-1">
+                                        <p
+                                            className={`font-bold text-gray-800 text-sm md:text-base truncate ${t.settleStatus === "settled" ? "line-through" : ""}`}
                                         >
-                                            Edit
-                                        </button>
-                                    )}
+                                            {t.description}
+                                        </p>
+                                        <p className="text-[10px] md:text-xs text-gray-400 mt-0.5 truncate">
+                                            {t.role === "payer"
+                                                ? t.debtorId === "SELF"
+                                                    ? "Personal Expense"
+                                                    : `You lent to ${getFriendName(t.debtorId)}`
+                                                : `${getFriendName(t.payerId)} lent you`}
+                                            {" • "}
+                                            {t.date
+                                                ? new Date(t.date.seconds * 1000).toLocaleDateString()
+                                                : "Just now"}
+                                        </p>
+                                    </div>
 
-                                    {/* --- Confirmed Settlement Buttons --- */}
-                                    {t.status === "confirmed" && (
-                                        <>
-                                            {t.role === "debtor" && !t.settleStatus && (
-                                                <button
-                                                    onClick={() => handleRequestSettle(t.id)}
-                                                    className="text-[10px] bg-blue-50 text-blue-600 px-2 py-1 rounded font-bold uppercase hover:bg-blue-600 hover:text-white transition"
-                                                >
-                                                    Settle
-                                                </button>
+                                    <div className="flex flex-col items-end gap-1.5 shrink-0">
+                                        <div className="flex items-center gap-2">
+                                            <span
+                                                className={`font-bold text-sm md:text-base ${t.role === "payer" ? "text-green-600" : "text-red-500"} ${t.settleStatus === "settled" ? "line-through text-gray-400" : ""}`}
+                                            >
+                                                {t.role === "payer" ? "+" : "-"}Rs. {t.amount}
+                                            </span>
+
+                                            {canDelete && (
+                                                <div className="bg-gray-50 rounded-lg p-1 border border-gray-200">
+                                                    <button
+                                                        onClick={(e) => handleDelete(e, t.id)}
+                                                        className="text-gray-500 hover:text-red-500 transition p-1 rounded-full hover:bg-red-50"
+                                                        title="Remove from my history"
+                                                    >
+                                                        <FiTrash2 size={14} />
+                                                    </button>
+                                                </div>
                                             )}
-                                            {t.role === "debtor" &&
-                                                t.settleStatus === "pending_confirmation" && (
-                                                    <span className="text-[10px] bg-yellow-100 text-yellow-700 px-2 py-1 rounded font-bold uppercase">
-                                                        Waiting...
+                                        </div>
+
+                                        {t.status === "pending" && t.role === "payer" && (
+                                            <span className="text-[10px] bg-purple-100 text-purple-700 px-2 py-1 rounded font-bold uppercase">
+                                                Pending Approval
+                                            </span>
+                                        )}
+
+                                        {t.role === "payer" && !t.settleStatus && (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    navigate(`/edit-expense/${t.id}`);
+                                                }}
+                                                className="text-[10px] bg-gray-100 text-gray-600 px-2 py-1 rounded font-bold uppercase hover:bg-gray-200 transition"
+                                            >
+                                                Edit
+                                            </button>
+                                        )}
+
+                                        {t.status === "confirmed" && (
+                                            <>
+                                                {t.role === "debtor" && !t.settleStatus && (
+                                                    <button
+                                                        onClick={() => handleRequestSettle(t.id)}
+                                                        className="text-[10px] bg-blue-50 text-blue-600 px-2 py-1 rounded font-bold uppercase hover:bg-blue-600 hover:text-white transition"
+                                                    >
+                                                        Settle
+                                                    </button>
+                                                )}
+
+                                                {t.role === "debtor" &&
+                                                    t.settleStatus === "pending_confirmation" && (
+                                                        <span className="text-[10px] bg-yellow-100 text-yellow-700 px-2 py-1 rounded font-bold uppercase">
+                                                            Waiting...
+                                                        </span>
+                                                    )}
+
+                                                {t.role === "payer" &&
+                                                    t.settleStatus === "pending_confirmation" && (
+                                                        <div className="flex gap-1">
+                                                            <button
+                                                                onClick={() => handleConfirmSettle(t.id)}
+                                                                className="text-[10px] bg-green-600 text-white px-2 py-1 rounded font-bold uppercase hover:bg-green-700"
+                                                            >
+                                                                Accept
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleDeclineSettle(t.id)}
+                                                                className="text-[10px] bg-red-100 text-red-600 px-2 py-1 rounded font-bold uppercase hover:bg-red-200"
+                                                            >
+                                                                Decline
+                                                            </button>
+                                                        </div>
+                                                    )}
+
+                                                {t.settleStatus === "settled" && (
+                                                    <span className="text-[10px] bg-gray-100 text-gray-400 px-2 py-1 rounded font-bold uppercase">
+                                                        Settled
                                                     </span>
                                                 )}
-                                            {t.role === "payer" &&
-                                                t.settleStatus === "pending_confirmation" && (
-                                                    <div className="flex gap-1">
-                                                        <button
-                                                            onClick={() => handleConfirmSettle(t.id)}
-                                                            className="text-[10px] bg-green-600 text-white px-2 py-1 rounded font-bold uppercase hover:bg-green-700"
-                                                        >
-                                                            Accept
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleDeclineSettle(t.id)}
-                                                            className="text-[10px] bg-red-100 text-red-600 px-2 py-1 rounded font-bold uppercase hover:bg-red-200"
-                                                        >
-                                                            Decline
-                                                        </button>
-                                                    </div>
-                                                )}
-                                            {t.settleStatus === "settled" && (
-                                                <span className="text-[10px] bg-gray-100 text-gray-400 px-2 py-1 rounded font-bold uppercase">
-                                                    Settled
-                                                </span>
-                                            )}
-                                        </>
-                                    )}
+                                            </>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        ))
+                            );
+                        })
                     )}
                 </div>
 
