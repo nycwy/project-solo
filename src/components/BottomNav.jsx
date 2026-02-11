@@ -10,8 +10,8 @@ const BottomNav = () => {
         { id: "journal", label: "Journal", icon: FiLayout, path: "/journal" },
         { id: "dashboard", label: "Splitter", icon: FiPieChart, path: "/" },
         { id: "friends", label: "Friends", icon: FiUsers, path: "/friends" },
-        { id: "friends", label: "Statement", icon: FiFileText, path: "/statement" },
-        { id: "profile", label: "Profile", icon: FiUser, path: "/profile" },
+        { id: "statement", label: "Statement", icon: FiFileText, path: "/statement" },
+        // { id: "profile", label: "Profile", icon: FiUser, path: "/profile" },
     ];
 
     return (

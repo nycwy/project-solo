@@ -62,7 +62,7 @@ const Navbar = () => {
                     <div className="md:hidden flex items-center h-full">
                         <div
                             onClick={() => navigate("/profile")}
-                            className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+                            className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
                         >
                             <div className="w-9 h-9 bg-linear-to-tr from-blue-600 to-blue-400 text-white rounded-full flex items-center justify-center font-bold text-sm shadow-md shadow-blue-100 border-2 border-white shrink-0">
                                 {userName[0].toUpperCase()}
