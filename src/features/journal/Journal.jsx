@@ -27,29 +27,26 @@ import {
 const Journal = () => {
     const { user } = useContext(AuthContext);
 
-    // Refs for Auto-Scrolling
     const incomeRef = useRef(null);
     const expenseRef = useRef(null);
 
     const [entries, setEntries] = useState([]);
     const [loading, setLoading] = useState(true);
     const [editingId, setEditingId] = useState(null);
+    const [expandedCard, setExpandedCard] = useState(null);
 
-    // Income State
     const [incAmount, setIncAmount] = useState("");
     const [incDesc, setIncDesc] = useState("");
     const [incDate, setIncDate] = useState(
         new Date().toISOString().split("T")[0],
     );
 
-    // Expense State
     const [expAmount, setExpAmount] = useState("");
     const [expDesc, setExpDesc] = useState("");
     const [expDate, setExpDate] = useState(
         new Date().toISOString().split("T")[0],
     );
 
-    // 1. Fetch Data
     useEffect(() => {
         if (!user?.uid) return;
 
@@ -81,7 +78,6 @@ const Journal = () => {
         return () => unsub();
     }, [user]);
 
-    // 2. Calculations
     const totalIncome = entries
         .filter((e) => e.type === "income")
         .reduce((acc, curr) => acc + curr.amount, 0);
@@ -90,7 +86,6 @@ const Journal = () => {
         .reduce((acc, curr) => acc + curr.amount, 0);
     const balance = totalIncome - totalExpense;
 
-    // 3. Handlers
     const handleSaveEntry = async (type) => {
         const isIncome = type === "income";
         const amountVal = parseFloat(isIncome ? incAmount : expAmount);
@@ -154,7 +149,6 @@ const Journal = () => {
             setExpAmount("");
             setExpDesc("");
 
-            // Scroll to Income Box
             setTimeout(() => {
                 incomeRef.current?.scrollIntoView({
                     behavior: "smooth",
@@ -168,7 +162,6 @@ const Journal = () => {
             setIncAmount("");
             setIncDesc("");
 
-            // Scroll to Expense Box
             setTimeout(() => {
                 expenseRef.current?.scrollIntoView({
                     behavior: "smooth",
@@ -179,7 +172,6 @@ const Journal = () => {
     };
 
     const handleDelete = async (id, description) => {
-        // Confirmation Message
         if (window.confirm(`Are you sure you want to delete "${description}"?`)) {
             await deleteDoc(doc(db, "journal", id));
             if (editingId === id) setEditingId(null);
@@ -197,9 +189,12 @@ const Journal = () => {
     const dateInputClass =
         "w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-700 text-sm outline-none transition appearance-none";
 
+    const toggleCard = (cardName) => {
+        setExpandedCard(expandedCard === cardName ? null : cardName);
+    };
+
     return (
         <div className="min-h-screen bg-gray-50 p-4 md:p-6 pb-24">
-            {/* Header */}
             <div className="flex items-center gap-3 mb-6">
                 <div className="p-2 bg-blue-100 text-blue-600 rounded-xl">
                     <FiActivity size={20} className="md:w-6 md:h-6" />
@@ -212,37 +207,85 @@ const Journal = () => {
                 </div>
             </div>
 
-            {/* Summary Cards */}
-            <div className="grid grid-cols-3 gap-2 md:gap-4 mb-6 md:mb-8">
-                <div className="bg-white p-3 md:p-4 rounded-xl border border-gray-100 shadow-sm text-center flex flex-col justify-center">
+            <div className="grid grid-cols-3 gap-2 md:gap-4 mb-6 md:mb-8 transition-all duration-200 ease-out">
+                <div
+                    onClick={() => toggleCard("income")}
+                    className={`bg-white p-3 md:p-4 rounded-xl border border-gray-100 shadow-sm text-center flex flex-col justify-center cursor-pointer transition-all duration-200 ${expandedCard === "income"
+                            ? "col-span-3 lg:col-span-1 bg-green-50 border-green-200 shadow-md py-6"
+                            : "col-span-1 hover:shadow-md"
+                        }`}
+                >
                     <p className="text-[10px] md:text-xs text-gray-400 uppercase font-bold tracking-wider mb-1">
-                        Income
+                        Income (Rs)
                     </p>
-                    <p className="text-green-600 font-bold text-sm md:text-lg truncate">
-                        +Rs.{totalIncome.toLocaleString()}
+                    <p
+                        className={`text-green-600 font-bold transition-all duration-200 ${expandedCard === "income"
+                                ? "text-2xl break-all"
+                                : "text-sm md:text-lg truncate"
+                            }`}
+                    >
+                        {totalIncome.toLocaleString()}
                     </p>
+                    {expandedCard === "income" && (
+                        <p className="text-[10px] text-green-400 mt-1 lg:hidden">
+                            Tap to shrink
+                        </p>
+                    )}
                 </div>
-                <div className="bg-white p-3 md:p-4 rounded-xl border border-gray-100 shadow-sm text-center flex flex-col justify-center">
+
+                <div
+                    onClick={() => toggleCard("expense")}
+                    className={`bg-white p-3 md:p-4 rounded-xl border border-gray-100 shadow-sm text-center flex flex-col justify-center cursor-pointer transition-all duration-200 ${expandedCard === "expense"
+                            ? "col-span-3 lg:col-span-1 bg-red-50 border-red-200 shadow-md py-6"
+                            : "col-span-1 hover:shadow-md"
+                        }`}
+                >
                     <p className="text-[10px] md:text-xs text-gray-400 uppercase font-bold tracking-wider mb-1">
-                        Expense
+                        Expense (Rs)
                     </p>
-                    <p className="text-red-500 font-bold text-sm md:text-lg truncate">
-                        -Rs.{totalExpense.toLocaleString()}
+                    <p
+                        className={`text-red-500 font-bold transition-all duration-200 ${expandedCard === "expense"
+                                ? "text-2xl break-all"
+                                : "text-sm md:text-lg truncate"
+                            }`}
+                    >
+                        {totalExpense.toLocaleString()}
                     </p>
+                    {expandedCard === "expense" && (
+                        <p className="text-[10px] text-red-400 mt-1 lg:hidden">
+                            Tap to shrink
+                        </p>
+                    )}
                 </div>
-                <div className="bg-blue-600 p-3 md:p-4 rounded-xl shadow-lg text-center text-white flex flex-col justify-center">
+
+                {/* BALANCE CARD */}
+                <div
+                    onClick={() => toggleCard("balance")}
+                    className={`bg-blue-600 p-3 md:p-4 rounded-xl shadow-lg text-center text-white flex flex-col justify-center cursor-pointer transition-all duration-200 ${expandedCard === "balance"
+                            ? "col-span-3 lg:col-span-1 shadow-xl py-6"
+                            : "col-span-1 hover:shadow-xl"
+                        }`}
+                >
                     <p className="text-[10px] md:text-xs text-blue-200 uppercase font-bold tracking-wider mb-1">
-                        Balance
+                        Balance (Rs)
                     </p>
-                    <p className="font-bold text-sm md:text-lg truncate">
-                        Rs.{balance.toLocaleString()}
+                    <p
+                        className={`font-bold transition-all duration-200 ${expandedCard === "balance"
+                                ? "text-2xl break-all"
+                                : "text-sm md:text-lg truncate"
+                            }`}
+                    >
+                        {balance.toLocaleString()}
                     </p>
+                    {expandedCard === "balance" && (
+                        <p className="text-[10px] text-blue-300 mt-1 lg:hidden">
+                            Tap to shrink
+                        </p>
+                    )}
                 </div>
             </div>
 
-            {/* INPUT SECTION */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-8">
-                {/* 1. INCOME CARD (Added Ref) */}
                 <div
                     ref={incomeRef}
                     className={`bg-white p-4 md:p-5 rounded-2xl shadow-sm border-t-4 border-green-500 transition-all duration-300 ${editingId && incAmount ? "ring-2 ring-green-500 ring-offset-2 scale-[1.02]" : "hover:shadow-md"}`}
@@ -313,7 +356,6 @@ const Journal = () => {
                     </div>
                 </div>
 
-                {/* 2. EXPENSE CARD (Added Ref) */}
                 <div
                     ref={expenseRef}
                     className={`bg-white p-4 md:p-5 rounded-2xl shadow-sm border-t-4 border-red-500 transition-all duration-300 ${editingId && expAmount ? "ring-2 ring-red-500 ring-offset-2 scale-[1.02]" : "hover:shadow-md"}`}
@@ -385,7 +427,6 @@ const Journal = () => {
                 </div>
             </div>
 
-            {/* History List */}
             <div>
                 <h3 className="text-gray-500 font-bold text-xs uppercase tracking-wider mb-4">
                     Recent History
@@ -438,9 +479,7 @@ const Journal = () => {
                                             {e.amount.toLocaleString()}
                                         </span>
 
-                                        {/* Actions Container */}
                                         <div className="flex items-center bg-gray-50 rounded-lg p-1 border border-gray-200">
-                                            {/* Edit Button */}
                                             <button
                                                 onClick={() => handleEditClick(e)}
                                                 className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-blue-600 hover:bg-white rounded-md transition"
@@ -449,10 +488,8 @@ const Journal = () => {
                                                 <FiEdit2 size={16} />
                                             </button>
 
-                                            {/* Breaker Line */}
                                             <div className="w-px h-4 bg-gray-300 mx-1"></div>
 
-                                            {/* Delete Button */}
                                             <button
                                                 onClick={() => handleDelete(e.id, e.description)}
                                                 className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-red-600 hover:bg-white rounded-md transition"
