@@ -12,7 +12,7 @@ import {
     deleteDoc,
     arrayUnion,
 } from "firebase/firestore";
-import { FiTrash2 } from "react-icons/fi";
+import { FiGrid, FiTrash2 } from "react-icons/fi";
 
 const Dashboard = () => {
     const { user } = useContext(AuthContext);
@@ -160,9 +160,10 @@ const Dashboard = () => {
     });
 
     return (
-        <div className="min-h-screen bg-gray-50 p-4 md:p-8 pb-24">
+        <div className="min-h-screen bg-gray-50 p-4 md:p-6 pb-24">
             <div className="max-w-5xl mx-auto">
-                <div className="flex justify-between items-center mb-6 md:mb-8">
+                
+                {/* <div className="flex justify-between items-center mb-6 md:mb-8">
                     <div
                         onClick={() => navigate("/profile")}
                         className="flex items-center gap-3 cursor-pointer group"
@@ -178,6 +179,19 @@ const Dashboard = () => {
                             </h2>
                             <p className="text-xs text-gray-400">View Profile</p>
                         </div>
+                    </div>
+                </div> */}
+
+                {/* Header */}
+                <div className="flex items-center gap-3 mb-6">
+                    <div className="p-2 bg-blue-100 text-blue-600 rounded-xl">
+                        <FiGrid size={20} className="md:w-6 md:h-6" />
+                    </div>
+                    <div>
+                        <h1 className="text-xl md:text-2xl font-bold text-gray-800">
+                            Splitter Dashboard
+                        </h1>
+                        <p className="text-xs text-gray-400">Overview of shared expenses</p>
                     </div>
                 </div>
 
@@ -264,7 +278,7 @@ const Dashboard = () => {
                         activeTransactions.map((t) => {
                             const canDelete =
                                 t.settleStatus === "settled" || t.debtorId === "SELF";
-                            
+
                             return (
                                 <div
                                     key={t.id}
