@@ -27,6 +27,7 @@ import {
     FiAlertCircle,
     FiArrowRight,
     FiArrowLeft,
+    FiCalendar,
 } from "react-icons/fi";
 
 const Journal = () => {
@@ -42,14 +43,14 @@ const Journal = () => {
     const [amount, setAmount] = useState("");
     const [desc, setDesc] = useState("");
     const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
-
     const [drafts, setDrafts] = useState([]);
+
     const [expandedCard, setExpandedCard] = useState(null);
+    const [isIncomeTruncated, setIsIncomeTruncated] = useState(false);
+    const [isExpenseTruncated, setIsExpenseTruncated] = useState(false);
 
     const incomeTextRef = useRef(null);
     const expenseTextRef = useRef(null);
-    const [isIncomeTruncated, setIsIncomeTruncated] = useState(false);
-    const [isExpenseTruncated, setIsExpenseTruncated] = useState(false);
 
     const [touchStart, setTouchStart] = useState(null);
     const [touchEnd, setTouchEnd] = useState(null);
@@ -81,15 +82,57 @@ const Journal = () => {
         return () => unsubscribe();
     }, [user]);
 
-    const totalIncome = entries
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    const currentMonthEntries = entries.filter((entry) => {
+        if (!entry.date) return false;
+        const entryDate = new Date(entry.date.seconds * 1000);
+        return (
+            entryDate.getMonth() === currentMonth &&
+            entryDate.getFullYear() === currentYear
+        );
+    });
+
+    const currentMonthIncome = currentMonthEntries
         .filter((e) => e.type === "income")
         .reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0);
 
-    const totalExpense = entries
+    const currentMonthExpense = currentMonthEntries
         .filter((e) => e.type === "expense")
         .reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0);
 
-    const balance = totalIncome - totalExpense;
+    const currentMonthBalance = currentMonthIncome - currentMonthExpense;
+
+    const getGroupedEntries = () => {
+        const groups = {};
+
+        entries.forEach((entry) => {
+            if (!entry.date) return;
+            const dateObj = new Date(entry.date.seconds * 1000);
+            const key = `${dateObj.getFullYear()}-${dateObj.getMonth()}`;
+
+            if (!groups[key]) {
+                groups[key] = {
+                    dateObj: dateObj,
+                    monthIncome: 0,
+                    monthExpense: 0,
+                    items: [],
+                };
+            }
+
+            groups[key].items.push(entry);
+            if (entry.type === "income")
+                groups[key].monthIncome += Number(entry.amount);
+            if (entry.type === "expense")
+                groups[key].monthExpense += Number(entry.amount);
+        });
+
+        return Object.values(groups).sort((a, b) => b.dateObj - a.dateObj);
+    };
+
+    const groupedEntries = getGroupedEntries();
 
     useEffect(() => {
         const resetTimer = setTimeout(() => {
@@ -119,7 +162,7 @@ const Journal = () => {
             clearTimeout(checkTimer);
             window.removeEventListener("resize", checkOverflow);
         };
-    }, [totalIncome, totalExpense, expandedCard]);
+    }, [currentMonthIncome, currentMonthExpense, expandedCard]);
 
     const onTouchStart = (e) => {
         setTouchEnd(null);
@@ -272,6 +315,13 @@ const Journal = () => {
         });
     };
 
+    const getMonthName = (dateObj) => {
+        return dateObj.toLocaleDateString("en-US", {
+            month: "long",
+            year: "numeric",
+        });
+    };
+
     return (
         <div className="min-h-screen bg-gray-50 p-4 md:p-8 pb-24">
             <div className="max-w-4xl mx-auto">
@@ -285,7 +335,7 @@ const Journal = () => {
                                 Finance Journal
                             </h1>
                             <p className="text-xs text-gray-500 font-medium">
-                                Net Balance: Rs. {balance.toLocaleString()}
+                                Current Month Net: Rs. {currentMonthBalance.toLocaleString()}
                             </p>
                         </div>
                     </div>
@@ -318,7 +368,7 @@ const Journal = () => {
                     >
                         <div className="flex justify-between items-start mb-2">
                             <p className="text-[10px] md:text-xs text-gray-400 font-bold uppercase tracking-wider whitespace-nowrap">
-                                Income
+                                Income {`(${new Date().toLocaleString('default', { month: 'short' })})`}
                             </p>
                             <div className="w-6 h-6 rounded-full bg-green-50 text-green-600 flex items-center justify-center md:group-hover:bg-green-600 md:group-hover:text-white transition-colors shrink-0">
                                 <FiPlus size={14} />
@@ -328,15 +378,15 @@ const Journal = () => {
                         <div className="flex-1 flex items-center min-w-0">
                             <p
                                 ref={incomeTextRef}
-                                className={`font-bold text-gray-800 whitespace-nowrap ${expandedCard === "income"
-                                        ? "text-3xl md:text-2xl overflow-x-auto no-scrollbar"
-                                        : "text-lg md:text-2xl truncate"
+                                className={`font-bold text-gray-800 whitespace-nowrap no-scrollbar ${expandedCard === "income"
+                                    ? "text-3xl md:text-2xl overflow-x-auto"
+                                    : "text-lg md:text-2xl truncate"
                                     }`}
                             >
                                 <span className="text-green-500 text-lg align-top mr-0.5">
-                                    Rs. 
+                                    Rs.
                                 </span>
-                                {totalIncome.toLocaleString()}
+                                {currentMonthIncome.toLocaleString()}
                             </p>
                         </div>
 
@@ -351,7 +401,7 @@ const Journal = () => {
                         {expandedCard === "income" && (
                             <div className="absolute bottom-2 right-4 md:hidden animate-pulse">
                                 <p className="text-[8px] text-gray-400 flex items-center gap-1 font-medium">
-                                    <FiArrowLeft size={10} /> Swipe to collapse
+                                    Swipe <FiArrowLeft size={10} /> to collapse
                                 </p>
                             </div>
                         )}
@@ -377,7 +427,7 @@ const Journal = () => {
                     >
                         <div className="flex justify-between items-start mb-2">
                             <p className="text-[10px] md:text-xs text-gray-400 font-bold uppercase tracking-wider whitespace-nowrap">
-                                Expense
+                                Expense {`(${new Date().toLocaleString('default', { month: 'short' })})`}
                             </p>
                             <div className="w-6 h-6 rounded-full bg-red-50 text-red-500 flex items-center justify-center md:group-hover:bg-red-500 md:group-hover:text-white transition-colors shrink-0">
                                 <FiPlus size={14} />
@@ -387,13 +437,15 @@ const Journal = () => {
                         <div className="flex-1 flex items-center min-w-0">
                             <p
                                 ref={expenseTextRef}
-                                className={`font-bold text-gray-800 whitespace-nowrap ${expandedCard === "expense"
-                                        ? "text-3xl md:text-2xl overflow-x-auto no-scrollbar"
-                                        : "text-lg md:text-2xl truncate"
+                                className={`font-bold text-gray-800 whitespace-nowrap no-scrollbar ${expandedCard === "expense"
+                                    ? "text-3xl md:text-2xl overflow-x-auto"
+                                    : "text-lg md:text-2xl truncate"
                                     }`}
                             >
-                                <span className="text-red-500 text-lg align-top mr-0.5">Rs.</span>
-                                {totalExpense.toLocaleString()}
+                                <span className="text-red-500 text-lg align-top mr-0.5">
+                                    Rs.
+                                </span>
+                                {currentMonthExpense.toLocaleString()}
                             </p>
                         </div>
 
@@ -435,62 +487,92 @@ const Journal = () => {
                             </p>
                         </div>
                     ) : (
-                        <div className="space-y-3">
-                            {entries.map((entry) => (
-                                <div
-                                    key={entry.id}
-                                    className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between group hover:border-blue-100 transition-colors"
-                                >
-                                    <div className="flex items-center gap-4 overflow-hidden">
-                                        <div
-                                            className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${entry.type === "income"
-                                                    ? "bg-green-50 text-green-600"
-                                                    : "bg-red-50 text-red-500"
-                                                }`}
-                                        >
-                                            {entry.type === "income" ? (
-                                                <FiArrowUpCircle size={20} />
-                                            ) : (
-                                                <FiArrowDownCircle size={20} />
-                                            )}
+                        <div className="space-y-6">
+                            {groupedEntries.map((group, groupIndex) => (
+                                <div key={groupIndex}>
+                                    <div className="flex items-end justify-between bg-gray-100 rounded-xl p-3 mb-3 border border-gray-200">
+                                        <div className="flex items-center gap-2 text-gray-600">
+                                            <FiCalendar size={16} className="mb-0.5" />
+                                            <h4 className="font-bold text-sm text-gray-700">
+                                                {getMonthName(group.dateObj)}
+                                            </h4>
                                         </div>
-                                        <div className="min-w-0">
-                                            <p className="text-sm font-bold text-gray-800 truncate pr-2">
-                                                {entry.description}
-                                            </p>
-                                            <p className="text-[10px] text-gray-400 font-medium">
-                                                {formatDate(entry.date)}
-                                            </p>
+                                        <div className="text-right">
+                                            <div className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
+                                                Net
+                                            </div>
+                                            <div
+                                                className={`text-xs font-bold ${group.monthIncome - group.monthExpense >= 0
+                                                    ? "text-green-600"
+                                                    : "text-red-500"
+                                                    }`}
+                                            >
+                                                Rs.{" "}
+                                                {(
+                                                    group.monthIncome - group.monthExpense
+                                                ).toLocaleString()}
+                                            </div>
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center gap-3 shrink-0">
-                                        <span
-                                            className={`font-bold text-sm ${entry.type === "income"
-                                                    ? "text-green-600"
-                                                    : "text-red-500"
-                                                }`}
-                                        >
-                                            {entry.type === "income" ? "+" : "-"}{" "}
-                                            {Number(entry.amount).toLocaleString()}
-                                        </span>
+                                    <div className="space-y-3">
+                                        {group.items.map((entry) => (
+                                            <div
+                                                key={entry.id}
+                                                className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between group hover:border-blue-100 transition-colors"
+                                            >
+                                                <div className="flex items-center gap-4 overflow-hidden">
+                                                    <div
+                                                        className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${entry.type === "income"
+                                                            ? "bg-green-50 text-green-600"
+                                                            : "bg-red-50 text-red-500"
+                                                            }`}
+                                                    >
+                                                        {entry.type === "income" ? (
+                                                            <FiArrowUpCircle size={20} />
+                                                        ) : (
+                                                            <FiArrowDownCircle size={20} />
+                                                        )}
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="text-sm font-bold text-gray-800 truncate pr-2">
+                                                            {entry.description}
+                                                        </p>
+                                                        <p className="text-[10px] text-gray-400 font-medium">
+                                                            {formatDate(entry.date)}
+                                                        </p>
+                                                    </div>
+                                                </div>
 
-                                        <div className="flex gap-1 pl-2 border-l border-gray-100 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button
-                                                onClick={() => openEditModal(entry)}
-                                                className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
-                                            >
-                                                <FiEdit2 size={14} />
-                                            </button>
-                                            <button
-                                                onClick={() =>
-                                                    handleDelete(entry.id, entry.description)
-                                                }
-                                                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
-                                            >
-                                                <FiTrash2 size={14} />
-                                            </button>
-                                        </div>
+                                                <div className="flex items-center gap-3 shrink-0">
+                                                    <span
+                                                        className={`font-bold text-sm ${entry.type === "income"
+                                                            ? "text-green-600"
+                                                            : "text-red-500"
+                                                            }`}
+                                                    >
+                                                        Rs. {Number(entry.amount).toLocaleString()}
+                                                    </span>
+
+                                                    <div className="flex gap-1 pl-2 border-l border-gray-100 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <button
+                                                            onClick={() => openEditModal(entry)}
+                                                            className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                                                        >
+                                                            <FiEdit2 size={14} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() =>
+                                                                handleDelete(entry.id, entry.description)
+                                                            }
+                                                            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                                                        >
+                                                            <FiTrash2 size={14} />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
                             ))}
@@ -508,15 +590,15 @@ const Journal = () => {
                         <div className="bg-white w-full md:max-w-lg rounded-t-3xl md:rounded-3xl shadow-2xl relative z-10 flex flex-col max-h-[90vh] md:max-h-[80vh] animate-slide-up">
                             <div
                                 className={`px-6 py-4 flex justify-between items-center border-b ${modalType === "income"
-                                        ? "bg-green-50 border-green-100"
-                                        : "bg-red-50 border-red-100"
+                                    ? "bg-green-50 border-green-100"
+                                    : "bg-red-50 border-red-100"
                                     } rounded-t-3xl`}
                             >
                                 <div className="flex items-center gap-2">
                                     <div
                                         className={`p-1.5 rounded-lg ${modalType === "income"
-                                                ? "bg-green-200 text-green-700"
-                                                : "bg-red-200 text-red-700"
+                                            ? "bg-green-200 text-green-700"
+                                            : "bg-red-200 text-red-700"
                                             }`}
                                     >
                                         {modalType === "income" ? (
@@ -585,8 +667,8 @@ const Journal = () => {
                                         <button
                                             onClick={addToDraft}
                                             className={`w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 border-2 border-dashed transition-all active:scale-95 ${modalType === "income"
-                                                    ? "border-green-300 text-green-600 hover:bg-green-50"
-                                                    : "border-red-300 text-red-500 hover:bg-red-50"
+                                                ? "border-green-300 text-green-600 hover:bg-green-50"
+                                                : "border-red-300 text-red-500 hover:bg-red-50"
                                                 }`}
                                         >
                                             <FiPlus /> Add Another to List
@@ -618,8 +700,8 @@ const Journal = () => {
                                                         <div className="flex items-center gap-3">
                                                             <span
                                                                 className={`font-mono font-bold ${d.type === "income"
-                                                                        ? "text-green-600"
-                                                                        : "text-red-500"
+                                                                    ? "text-green-600"
+                                                                    : "text-red-500"
                                                                     }`}
                                                             >
                                                                 {d.amount}
@@ -651,8 +733,8 @@ const Journal = () => {
                                     onClick={handleSave}
                                     disabled={loading}
                                     className={`w-full shadow-lg flex justify-center items-center gap-2 ${modalType === "income"
-                                            ? "bg-green-600 hover:bg-green-700 shadow-green-200"
-                                            : "bg-red-500 hover:bg-red-600 shadow-red-200"
+                                        ? "bg-green-600 hover:bg-green-700 shadow-green-200"
+                                        : "bg-red-500 hover:bg-red-600 shadow-red-200"
                                         }`}
                                 >
                                     <FiSave />
