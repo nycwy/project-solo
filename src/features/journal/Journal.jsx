@@ -46,13 +46,11 @@ const Journal = () => {
     const [drafts, setDrafts] = useState([]);
     const [expandedCard, setExpandedCard] = useState(null);
 
-    // --- OVERFLOW DETECTION REFS ---
     const incomeTextRef = useRef(null);
     const expenseTextRef = useRef(null);
     const [isIncomeTruncated, setIsIncomeTruncated] = useState(false);
     const [isExpenseTruncated, setIsExpenseTruncated] = useState(false);
 
-    // --- TOUCH STATE ---
     const [touchStart, setTouchStart] = useState(null);
     const [touchEnd, setTouchEnd] = useState(null);
     const minSwipeDistance = 50;
@@ -336,7 +334,7 @@ const Journal = () => {
                                     }`}
                             >
                                 <span className="text-green-500 text-lg align-top mr-0.5">
-                                    +
+                                    Rs. 
                                 </span>
                                 {totalIncome.toLocaleString()}
                             </p>
@@ -394,7 +392,7 @@ const Journal = () => {
                                         : "text-lg md:text-2xl truncate"
                                     }`}
                             >
-                                <span className="text-red-500 text-lg align-top mr-0.5">-</span>
+                                <span className="text-red-500 text-lg align-top mr-0.5">Rs.</span>
                                 {totalExpense.toLocaleString()}
                             </p>
                         </div>
