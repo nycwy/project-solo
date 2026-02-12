@@ -5,7 +5,7 @@ import Already from "../../components/Already";
 import Button from "../../components/Button";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../services/firebase";
-import { FiPieChart, FiTrendingUp, FiShield } from "react-icons/fi";
+import { FiTrendingUp, FiShield } from "react-icons/fi";
 
 const Login = () => {
     const [email, setEmail] = useState("");
