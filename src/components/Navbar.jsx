@@ -42,7 +42,7 @@ const Navbar = () => {
                         <NavLink to="/journal" className={desktopLinkClasses}>
                             <FiLayout size={18} /> <span>Journal</span>
                         </NavLink>
-                        <NavLink to="/" className={desktopLinkClasses}>
+                        <NavLink to="/split" className={desktopLinkClasses}>
                             <FiPieChart size={18} /> <span>Splitter</span>
                         </NavLink>
                         <NavLink to="/friends" className={desktopLinkClasses}>

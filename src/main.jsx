@@ -1,7 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { createBrowserRouter, Navigate, RouterProvider } from "react-router-dom";
 
 import AuthProvider from "./context/AuthProvider";
 import Layout from "./components/Layout";
@@ -47,6 +47,10 @@ const router = createBrowserRouter([
         children: [
             {
                 path: "/",
+                element: <Navigate to="/journal" replace />,
+            },
+            {
+                path: "/split",
                 element: <Dashboard />,
             },
             {
