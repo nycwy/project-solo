@@ -178,7 +178,7 @@ const FriendDetails = () => {
                                     {balance >= 0 ? "You get back" : "You owe"}
                                 </span>
                                 <span className="text-xl md:text-3xl font-bold font-mono">
-                                    रु {Math.abs(balance).toFixed(2)}
+                                    Rs {Math.abs(balance).toFixed(2)}
                                 </span>
                             </div>
                         </div>
@@ -225,7 +225,7 @@ const FriendDetails = () => {
                                     <span
                                         className={`font-bold font-mono text-sm md:text-base ${t.settleStatus === "settled" ? "text-gray-400" : t.role === "payer" ? "text-green-600" : "text-red-500"}`}
                                     >
-                                        {t.role === "payer" ? "+" : "-"} रु {t.amount}
+                                        {t.role === "payer" ? "+" : "-"} Rs. {t.amount}
                                     </span>
                                     <div className="flex items-center gap-2">
                                         {t.role === "debtor" && !t.settleStatus && (

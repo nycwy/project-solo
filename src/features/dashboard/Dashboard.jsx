@@ -208,7 +208,7 @@ const Dashboard = () => {
                                 <div>
                                     <p className="text-sm font-bold text-gray-800">
                                         {getFriendName(req.payerId)} claims you owe{" "}
-                                        <span className="text-red-500">रु {req.amount}</span>
+                                        <span className="text-red-500">Rs. {req.amount}</span>
                                     </p>
                                     <p className="text-[10px] text-gray-400">
                                         For: {req.description}
@@ -246,7 +246,7 @@ const Dashboard = () => {
                                 Owed to you
                             </p>
                             <p className="text-green-300 font-bold text-lg md:text-xl">
-                                +Rs. {owed.toFixed(2)}
+                                Rs. {owed.toFixed(2)}
                             </p>
                         </div>
                         <div className="w-1/2 text-right">
