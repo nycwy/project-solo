@@ -175,17 +175,24 @@ const Statement = () => {
                 let type = "PERSONAL";
                 let amountStr = `${t.amount}`;
 
+                let statusText = "Unknown";
+                if (t.status === "confirmed") {
+                    statusText = "Settled";
+                } else if (t.status === "pending") {
+                    statusText = "Pending";
+                }
+
                 if (!isPersonal) {
                     if (t.role === "payer") {
                         type = "LENT";
                         partyName = getName(t.debtorId);
                         amountStr = `+ ${t.amount}`;
-                        if (t.status === "confirmed") totalLent += t.amount;
+                        if (t.status === "confirmed") totalLent += Number(t.amount);
                     } else {
                         type = "BORROWED";
                         partyName = getName(t.payerId);
                         amountStr = `- ${t.amount}`;
-                        if (t.status === "confirmed") totalBorrowed += t.amount;
+                        if (t.status === "confirmed") totalBorrowed += Number(t.amount);
                     }
                 }
 
@@ -194,7 +201,7 @@ const Statement = () => {
                     t.description,
                     partyName,
                     type,
-                    t.status === "confirmed" ? "Confirmed" : "Pending",
+                    statusText,
                     amountStr,
                 ];
             });
@@ -222,9 +229,9 @@ const Statement = () => {
             doc.setFontSize(12);
             doc.setTextColor(0, 0, 0);
 
-            doc.text(`Total Lent (Confirmed): Rs. ${totalLent}`, 14, finalY);
+            doc.text(`Total Lent (Settled): Rs. ${totalLent}`, 14, finalY);
             doc.text(
-                `Total Borrowed (Confirmed): Rs. ${totalBorrowed}`,
+                `Total Borrowed (Settled): Rs. ${totalBorrowed}`,
                 14,
                 finalY + 6,
             );
@@ -330,7 +337,7 @@ const Statement = () => {
                                 <p className="text-xs opacity-80 leading-relaxed">
                                     {activeTab === "journal"
                                         ? "Generates a PDF of your personal income and expense records, including totals and net savings calculations."
-                                        : "Generates a detailed history of money lent and borrowed, including friend names, status, and pending requests."}
+                                        : "Generates a detailed history of money lent and borrowed, including friend names, status (Settled/Pending), and amounts."}
                                 </p>
                             </div>
                         </div>
