@@ -636,7 +636,7 @@ const Journal = () => {
                                                 placeholder="0.00"
                                                 value={amount}
                                                 setValue={setAmount}
-                                                className="font-mono"
+                                                className="font-mono text-gray-700"
                                             />
                                         </div>
                                         <div>
@@ -660,6 +660,7 @@ const Journal = () => {
                                             placeholder="e.g. Freelance, Groceries"
                                             value={desc}
                                             setValue={setDesc}
+                                            className="text-gray-700"
                                         />
                                     </div>
 

@@ -19,6 +19,7 @@ import FriendDetails from "./features/friends/FriendDetails";
 import Friends from "./features/friends/Friends";
 import Journal from "./features/journal/Journal";
 import Statement from "./features/statement/Statement";
+import Remember from "./features/journal/Remember";
 
 const router = createBrowserRouter([
     {
@@ -64,6 +65,10 @@ const router = createBrowserRouter([
             {
                 path: "/journal",
                 element: <Journal />,
+            },
+            {
+                path: "/remember",
+                element: <Remember />,
             },
             {
                 path: "/add-expense",
