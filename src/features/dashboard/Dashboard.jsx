@@ -162,26 +162,6 @@ const Dashboard = () => {
     return (
         <div className="min-h-screen bg-gray-50 p-4 md:p-6 pb-24">
             <div className="max-w-5xl mx-auto">
-                
-                {/* <div className="flex justify-between items-center mb-6 md:mb-8">
-                    <div
-                        onClick={() => navigate("/profile")}
-                        className="flex items-center gap-3 cursor-pointer group"
-                    >
-                        <div className="w-10 h-10 md:w-12 md:h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-lg md:text-xl group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                            {userProfile?.username
-                                ? userProfile.username[0].toUpperCase()
-                                : "?"}
-                        </div>
-                        <div>
-                            <h2 className="text-xl md:text-2xl font-bold text-gray-800 group-hover:text-blue-600 transition-colors">
-                                {userProfile?.username || "Friend"}
-                            </h2>
-                            <p className="text-xs text-gray-400">View Profile</p>
-                        </div>
-                    </div>
-                </div> */}
-
                 {/* Header */}
                 <div className="flex items-center gap-3 mb-6">
                     <div className="p-2 bg-blue-100 text-blue-600 rounded-xl">
