@@ -1,6 +1,7 @@
 import React, { useState, useContext, useEffect, useRef } from "react";
 import { AuthContext } from "../../context/AuthContext";
 import { db } from "../../services/firebase";
+import { Link } from "react-router-dom";
 import {
     collection,
     query,
@@ -29,6 +30,7 @@ import {
     FiArrowLeft,
     FiCalendar,
 } from "react-icons/fi";
+import { LuShoppingBasket } from "react-icons/lu";
 
 const Journal = () => {
     const { user } = useContext(AuthContext);
@@ -339,6 +341,12 @@ const Journal = () => {
                             </p>
                         </div>
                     </div>
+                    <div>
+                        <Link to='/purchase-list' className="flex items-center gap-2 px-3 py-2 text-slate-600 bg-white border border-slate-200 rounded-lg hover:border-amber-400 hover:text-amber-600 hover:shadow-sm transition-all">
+                            <span className="hidden sm:block font-medium">Market List</span>
+                            <LuShoppingBasket size={20} strokeWidth={2} />
+                        </Link>
+                    </div>
                 </div>
 
                 <div
@@ -368,7 +376,8 @@ const Journal = () => {
                     >
                         <div className="flex justify-between items-start mb-2">
                             <p className="text-[10px] md:text-xs text-gray-400 font-bold uppercase tracking-wider whitespace-nowrap">
-                                Income {`(${new Date().toLocaleString('default', { month: 'short' })})`}
+                                Income{" "}
+                                {`(${new Date().toLocaleString("default", { month: "short" })})`}
                             </p>
                             <div className="w-6 h-6 rounded-full bg-green-50 text-green-600 flex items-center justify-center md:group-hover:bg-green-600 md:group-hover:text-white transition-colors shrink-0">
                                 <FiPlus size={14} />
@@ -427,7 +436,8 @@ const Journal = () => {
                     >
                         <div className="flex justify-between items-start mb-2">
                             <p className="text-[10px] md:text-xs text-gray-400 font-bold uppercase tracking-wider whitespace-nowrap">
-                                Expense {`(${new Date().toLocaleString('default', { month: 'short' })})`}
+                                Expense{" "}
+                                {`(${new Date().toLocaleString("default", { month: "short" })})`}
                             </p>
                             <div className="w-6 h-6 rounded-full bg-red-50 text-red-500 flex items-center justify-center md:group-hover:bg-red-500 md:group-hover:text-white transition-colors shrink-0">
                                 <FiPlus size={14} />

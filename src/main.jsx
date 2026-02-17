@@ -67,7 +67,7 @@ const router = createBrowserRouter([
                 element: <Journal />,
             },
             {
-                path: "/remember",
+                path: "/purchase-list",
                 element: <Remember />,
             },
             {
