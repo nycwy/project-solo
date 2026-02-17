@@ -105,7 +105,7 @@ const Login = () => {
                         </span>
                     </div>
 
-                    <div className="max-w-sm mx-auto w-full">
+                    <div className="max-w-sm mx-auto w-full text-gray-900">
                         {!isResetMode ? (
                             <>
                                 <div className="mb-8">

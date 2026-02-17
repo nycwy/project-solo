@@ -133,8 +133,8 @@ const Remember = () => {
                         <FiArrowLeft size={22} />
                     </button>
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-800">Remember!</h1>
-                        <p className="text-xs text-gray-500">Shopping List & Estimates</p>
+                        <h1 className="text-2xl font-bold text-gray-800">Shopping List</h1>
+                        <p className="text-xs text-gray-500">Add items to be Purchased</p>
                     </div>
                 </div>
 
@@ -143,7 +143,7 @@ const Remember = () => {
                         <div className="flex-1 space-y-2">
                             <input
                                 type="text"
-                                placeholder="Item name (e.g. Milk)"
+                                placeholder="Item name (e.g. Milk, Sugar ...)"
                                 value={itemName}
                                 onChange={(e) => setItemName(e.target.value)}
                                 className="w-full bg-gray-50 px-4 py-3 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-blue-100 border border-transparent focus:border-blue-200 transition-all text-gray-700"
@@ -220,7 +220,7 @@ const Remember = () => {
                                         </button>
                                         <button
                                             onClick={() => handleDelete(item.id)}
-                                            className="w-9 h-9 rounded-lg bg-gray-50 text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                                            className="w-9 h-9 rounded-lg bg-gray-50 text-gray-400 flex items-center justify-center hover:text-red-500 hover:bg-red-50 transition-colors"
                                         >
                                             <FiTrash2 size={16} />
                                         </button>

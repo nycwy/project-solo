@@ -108,7 +108,7 @@ const Register = () => {
                 </div>
 
                 {/* 2. FORM SECTION (Mobile + Desktop) */}
-                <div className="w-full md:w-1/2 p-6 sm:p-10 md:p-12 flex flex-col justify-center bg-white">
+                <div className="w-full md:w-1/2 p-6 sm:p-10 md:p-12 flex flex-col justify-center bg-white text-gray-900">
                     {/* Mobile Branding (Visible only on small screens) */}
                     <div className="md:hidden flex items-center gap-2 mb-8">
                         <div className="w-8 h-8 bg-blue-600 text-white rounded-lg flex items-center justify-center font-bold text-lg">
