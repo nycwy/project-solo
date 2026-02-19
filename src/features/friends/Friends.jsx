@@ -125,7 +125,6 @@ const Friends = () => {
         setLoading(false);
     };
 
-    // 2. UNFRIEND LOGIC (Updated to allow removal if all debts are settled)
     const handleUnfriend = async (e, friendId, friendName) => {
         e.stopPropagation();
 
@@ -133,14 +132,12 @@ const Friends = () => {
             return;
 
         try {
-            // Check for transactions where I paid THEM
             const q1 = query(
                 collection(db, "transactions"),
                 where("payerId", "==", user.uid),
                 where("debtorId", "==", friendId),
             );
 
-            // Check for transactions where THEY paid ME
             const q2 = query(
                 collection(db, "transactions"),
                 where("payerId", "==", friendId),
@@ -153,8 +150,6 @@ const Friends = () => {
                 d.data(),
             );
 
-            // FILTER: Look for any transaction that is NOT settled
-            // This includes: null (active debt), "pending_confirmation" (in progress)
             const hasUnsettledDebt = allTransactions.some(
                 (t) => t.settleStatus !== "settled",
             );
@@ -165,10 +160,6 @@ const Friends = () => {
                 );
                 return;
             }
-
-            // --- PROCEED TO REMOVE ---
-
-            // 1. Remove Friend from MY list
             const myRef = doc(db, "users", user.uid);
             const mySnap = await getDoc(myRef);
             if (mySnap.exists()) {
@@ -177,7 +168,6 @@ const Friends = () => {
                 await updateDoc(myRef, { friendsList: updatedMyList });
             }
 
-            // 2. Remove ME from FRIEND'S list
             const friendRef = doc(db, "users", friendId);
             const friendSnap = await getDoc(friendRef);
             if (friendSnap.exists()) {
@@ -193,7 +183,6 @@ const Friends = () => {
         }
     };
 
-    // 3. ACCEPT / DECLINE (Same as before)
     const handleAccept = async (req) => {
         try {
             await updateDoc(doc(db, "users", user.uid), {
