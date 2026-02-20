@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
-import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { twMerge } from 'tailwind-merge';
 
 const SwipeableCard = ({ children, onEdit, canEdit = true, onDelete, canDelete = true, className }) => {
     const [swiping, setSwiping] = useState(false);
     const [swipedOpen, setSwipedOpen] = useState(false); // false, 'edit', or 'delete'
     const [offset, setOffset] = useState(0);
+    const [showHint, setShowHint] = useState(false);
+    const instanceId = useRef(Math.random().toString(36).slice(2));
 
     // Store starting coordinates
     const startX = useRef(null);
@@ -37,7 +38,7 @@ const SwipeableCard = ({ children, onEdit, canEdit = true, onDelete, canDelete =
     };
 
     const handleMove = (clientX, clientY) => {
-        if (!canEdit || startX.current === null) return;
+        if ((!canEdit && (!canDelete || !onDelete)) || startX.current === null) return;
 
         const diffX = clientX - startX.current;
         const diffY = clientY - startY.current;
@@ -53,6 +54,9 @@ const SwipeableCard = ({ children, onEdit, canEdit = true, onDelete, canDelete =
 
         // If user is just scrolling down the list, don't swipe the card
         if (!isHorizontalSwipe.current) return;
+
+        // Hide hint once actual swiping starts
+        if (showHint) setShowHint(false);
 
         // Calculate offset
         const baseOffset = swipedOpen === 'edit' ? maxSwipe.current : (swipedOpen === 'delete' ? -maxSwipe.current : 0);
@@ -106,6 +110,17 @@ const SwipeableCard = ({ children, onEdit, canEdit = true, onDelete, canDelete =
         };
     }, [swipedOpen]);
 
+    // Close this card's hint when another card opens its hint
+    useEffect(() => {
+        const handleOtherHint = (e) => {
+            if (e.detail !== instanceId.current) {
+                setShowHint(false);
+            }
+        };
+        document.addEventListener('swipeable-hint-open', handleOtherHint);
+        return () => document.removeEventListener('swipeable-hint-open', handleOtherHint);
+    }, []);
+
     return (
         <div ref={containerRef} className={twMerge("relative w-full rounded-2xl group", className)}>
             {/* Background Edit Button Reveal (Left Side) */}
@@ -154,7 +169,7 @@ const SwipeableCard = ({ children, onEdit, canEdit = true, onDelete, canDelete =
             <div
                 ref={cardRef}
                 className={twMerge(
-                    "relative w-full touch-pan-y z-10 transition-transform",
+                    "relative w-full touch-pan-y z-10 transition-transform rounded-2xl overflow-hidden bg-[var(--color-surface)]",
                     !swiping && "duration-300"
                 )}
                 style={{
@@ -175,34 +190,42 @@ const SwipeableCard = ({ children, onEdit, canEdit = true, onDelete, canDelete =
                     if (swiping) handleEnd();
                 }}
                 onClick={(e) => {
-                    // Close the swiped card if you tap on the foreground card
                     if (swipedOpen) {
                         e.stopPropagation();
                         e.preventDefault();
                         setOffset(0);
                         setSwipedOpen(false);
+                    } else if (offset === 0 && !swiping) {
+                        // Simple toggle
+                        const next = !showHint;
+                        setShowHint(next);
+                        if (next) {
+                            document.dispatchEvent(new CustomEvent('swipeable-hint-open', { detail: instanceId.current }));
+                        }
                     }
                 }}
             >
                 {/* Prevent child clicks if swiped open */}
-                <div className={swipedOpen ? "pointer-events-none" : ""}>
+                <div className={twMerge("pb-4 [&>*]:border-0 [&>*]:shadow-none [&>*]:rounded-none", swipedOpen ? "pointer-events-none" : "")}>
                     {children}
                 </div>
 
-                {/* Subtle Swipe Indicators (Only visible when closed) */}
-                {offset === 0 && !swiping && (
-                    <>
-                        {canEdit && (
-                            <div className="absolute top-1/2 -left-1.5 -translate-y-1/2 text-[var(--color-text-muted)] opacity-30 pointer-events-none">
-                                <FiChevronRight size={12} />
-                            </div>
-                        )}
-                        {canDelete && onDelete && (
-                            <div className="absolute top-1/2 -right-1.5 -translate-y-1/2 text-[var(--color-text-muted)] opacity-30 pointer-events-none">
-                                <FiChevronLeft size={12} />
-                            </div>
-                        )}
-                    </>
+                {/* Swipe hint overlay — toggle on tap */}
+                {showHint && offset === 0 && !swiping && (canEdit || (canDelete && onDelete)) && (
+                    <div
+                        className="absolute bottom-2 left-3 right-3 flex items-center justify-between pointer-events-none select-none animate-fade-in z-20"
+                    >
+                        {canEdit ? (
+                            <span className="text-[10px] text-[var(--color-primary)] opacity-80 tracking-wide font-medium">
+                                Swipe right to edit →
+                            </span>
+                        ) : <span />}
+                        {canDelete && onDelete ? (
+                            <span className="text-[10px] text-[var(--color-danger)] opacity-80 tracking-wide font-medium">
+                                ← Swipe left to delete
+                            </span>
+                        ) : <span />}
+                    </div>
                 )}
             </div>
         </div>

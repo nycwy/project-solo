@@ -7,6 +7,7 @@ import {
     where,
     onSnapshot,
     updateDoc,
+    deleteDoc,
     doc,
     arrayUnion,
     getDoc,
@@ -243,7 +244,7 @@ const Dashboard = () => {
                             return (
                                 <SwipeableCard
                                     key={t.id}
-                                    canEdit={isPayer && t.settleStatus !== 'settled' && t.status !== 'confirmed'}
+                                    canEdit={isPayer && !t.settleStatus && t.status !== 'confirmed'}
                                     onEdit={() => navigate(`/edit-expense/${t.id}`)}
                                     canDelete={true}
                                     onDelete={() => handleDelete(t.id)}
