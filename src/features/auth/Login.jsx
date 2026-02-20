@@ -1,202 +1,139 @@
-import React, { useState } from "react";
-import Input from "../../components/Input";
-import Heading from "../../components/Heading";
-import Already from "../../components/Already";
-import Button from "../../components/Button";
-import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
-import { auth } from "../../services/firebase";
-import { FiTrendingUp, FiShield, FiArrowLeft } from "react-icons/fi";
+import { useState, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { AuthContext } from '../../context/AuthContext';
+import { auth } from '../../services/firebase';
+import {
+    signInWithEmailAndPassword,
+    sendPasswordResetEmail,
+} from 'firebase/auth';
+import { FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
+
+import Button from '../../components/Button';
+import Input from '../../components/Input';
+import Heading from '../../components/Heading';
+import Already from '../../components/Already';
+import Card from '../../components/Card';
 
 const Login = () => {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
+    const navigate = useNavigate();
+    const { user } = useContext(AuthContext);
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
-    
-    const [isResetMode, setIsResetMode] = useState(false);
+    const [error, setError] = useState('');
 
-    const handleLogin = async () => {
+    if (user) {
+        navigate('/journal');
+        return null;
+    }
+
+    const handleLogin = async (e) => {
+        e.preventDefault();
         setLoading(true);
+        setError('');
+
         try {
-            if (!email || !password) {
-                alert("Please fill in all fields.");
-                setLoading(false);
-                return;
-            }
             await signInWithEmailAndPassword(auth, email, password);
-        } catch (error) {
-            console.log("Error: ", error);
-            alert("Login failed. Check your email or password.");
+            navigate('/journal');
+        } catch (err) {
+            setError(
+                err.code === 'auth/user-not-found'
+                    ? 'No account found with this email'
+                    : err.code === 'auth/wrong-password'
+                        ? 'Incorrect password'
+                        : 'Login failed. Please try again.'
+            );
         }
         setLoading(false);
     };
 
-    const handlePasswordReset = async () => {
-        if (!email) {
-            alert("Please enter your email address first.");
-            return;
-        }
-        setLoading(true);
+    const handleReset = async () => {
+        if (!email) return alert('Enter your email first');
         try {
             await sendPasswordResetEmail(auth, email);
-            alert("Password reset link sent! Check your inbox.");
-            setIsResetMode(false);
-        } catch (error) {
-            console.error("Reset Error:", error);
-            alert("Failed to send reset email. Please check the email address.");
+            alert('Password reset email sent!');
+        } catch (err) {
+            alert('Failed to send reset email');
         }
-        setLoading(false);
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 sm:p-6">
-            <div className="w-full max-w-5xl bg-white rounded-2xl sm:rounded-3xl shadow-xl overflow-hidden flex flex-col md:flex-row">
-                <div className="hidden md:flex md:w-1/2 bg-blue-600 p-12 flex-col justify-between text-white relative overflow-hidden">
-                    <div className="absolute top-0 left-0 w-64 h-64 bg-blue-500 opacity-20 rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl"></div>
-                    <div className="absolute bottom-0 right-0 w-64 h-64 bg-indigo-600 opacity-20 rounded-full translate-x-1/3 translate-y-1/3 blur-3xl"></div>
+        <div className="min-h-screen bg-[var(--color-bg)] flex items-center justify-center p-4 relative overflow-hidden">
+            {/* Decorative gradient blobs */}
+            <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] bg-[var(--color-primary)] opacity-[0.07] rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute bottom-[-20%] right-[-10%] w-[400px] h-[400px] bg-[var(--color-primary)] opacity-[0.05] rounded-full blur-3xl pointer-events-none" />
 
-                    <div className="relative z-10">
-                        <div className="flex items-center gap-3 mb-8">
-                            <div className="w-10 h-10 bg-white text-blue-600 rounded-lg flex items-center justify-center font-bold text-xl shadow-md">
-                                K
-                            </div>
-                            <span className="text-2xl font-bold tracking-tight">
-                                King!
-                            </span>
-                        </div>
-
-                        <h2 className="text-3xl lg:text-4xl font-bold leading-tight mb-6">
-                            Welcome Back!
-                        </h2>
-                        <p className="text-blue-100 text-lg mb-8">
-                            Log in to track your expenses, settle debts, and manage shared
-                            costs with friends instantly.
-                        </p>
-
-                        <div className="space-y-5">
-                            <div className="flex items-center gap-4">
-                                <div className="p-2 bg-blue-500 rounded-lg shadow-sm">
-                                    <FiTrendingUp size={20} />
-                                </div>
-                                <span className="font-medium">See your spending habits</span>
-                            </div>
-                            <div className="flex items-center gap-4">
-                                <div className="p-2 bg-blue-500 rounded-lg shadow-sm">
-                                    <FiShield size={20} />
-                                </div>
-                                <span className="font-medium">Secure and private data</span>
-                            </div>
-                        </div>
+            <div className="w-full max-w-md relative z-10">
+                {/* Logo */}
+                <div className="text-center mb-8">
+                    <div className="w-16 h-16 rounded-2xl bg-[var(--color-primary)] flex items-center justify-center text-white font-extrabold text-2xl mx-auto mb-5 shadow-lg shadow-indigo-500/30">
+                        K
                     </div>
-
-                    <div className="relative z-10 mt-12">
-                        <p className="text-sm text-blue-200 font-medium">
-                            "The best way to split bills without the awkwardness."
-                        </p>
-                    </div>
+                    <Heading headingText="Welcome Back" text="Sign in to your account" />
                 </div>
 
-                <div className="w-full md:w-1/2 p-6 sm:p-10 md:p-12 flex flex-col justify-center bg-white">
-                    <div className="md:hidden flex items-center gap-2 mb-8">
-                        <div className="w-8 h-8 bg-blue-600 text-white rounded-lg flex items-center justify-center font-bold text-lg">
-                            K
-                        </div>
-                        <span className="text-xl font-bold text-gray-800 tracking-tight">
-                            King!
-                        </span>
-                    </div>
-
-                    <div className="max-w-sm mx-auto w-full text-gray-900">
-                        {!isResetMode ? (
-                            <>
-                                <div className="mb-8">
-                                    <Heading
-                                        headingText="Sign In"
-                                        text="Please enter your details to continue."
-                                    />
-                                </div>
-
-                                <div className="space-y-4">
-                                    <Input
-                                        type="email"
-                                        value={email}
-                                        placeholder="Email address"
-                                        setValue={setEmail}
-                                        className="bg-gray-50 focus:bg-white"
-                                    />
-                                    <div className="space-y-1">
-                                        <Input
-                                            type="password"
-                                            value={password}
-                                            placeholder="Password"
-                                            setValue={setPassword}
-                                            className="bg-gray-50 focus:bg-white"
-                                        />
-                                        <div className="flex justify-end">
-                                            <button
-                                                onClick={() => setIsResetMode(true)}
-                                                className="text-xs font-medium text-blue-600 hover:underline transition-colors"
-                                            >
-                                                Forgot Password?
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div className="pt-2">
-                                        <Button
-                                            text={loading ? "Logging in..." : "Login"}
-                                            onClick={handleLogin}
-                                            disabled={loading}
-                                            className="bg-blue-600 hover:bg-blue-700 text-white w-full py-3 rounded-xl font-bold shadow-lg shadow-blue-200"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="mt-8 text-center">
-                                    <Already
-                                        text="Don't have an account yet?"
-                                        linkText="Register"
-                                        link="/register"
-                                    />
-                                </div>
-                            </>
-                        ) : (
-                            <>
-                                <div className="mb-8">
-                                    <Heading
-                                        headingText="Reset Password"
-                                        text="Enter your email and we'll send you a link to reset your password."
-                                    />
-                                </div>
-
-                                <div className="space-y-4">
-                                    <Input
-                                        type="email"
-                                        value={email}
-                                        placeholder="Enter your email address"
-                                        setValue={setEmail}
-                                        className="bg-gray-50 focus:bg-white"
-                                    />
-
-                                    <div className="pt-2">
-                                        <Button
-                                            text={loading ? "Sending..." : "Send Reset Link"}
-                                            onClick={handlePasswordReset}
-                                            disabled={loading}
-                                            className="bg-blue-600 hover:bg-blue-700 text-white w-full py-3 rounded-xl font-bold shadow-lg shadow-blue-200"
-                                        />
-                                    </div>
-
-                                    <button
-                                        onClick={() => setIsResetMode(false)}
-                                        className="w-full py-3 text-sm font-bold text-gray-500 hover:text-gray-700 flex items-center justify-center gap-2 transition-colors"
-                                    >
-                                        <FiArrowLeft /> Back to Login
-                                    </button>
-                                </div>
-                            </>
+                <Card padding="lg" className="shadow-[0_8px_32px_var(--color-shadow-lg)] border-[var(--color-border-light)]">
+                    <form onSubmit={handleLogin} className="space-y-4">
+                        {error && (
+                            <div className="p-3 bg-[var(--color-danger-light)] border border-[var(--color-danger)]/20 rounded-xl text-sm text-[var(--color-danger)] font-medium">
+                                {error}
+                            </div>
                         )}
-                    </div>
-                </div>
+
+                        <Input
+                            label="Email"
+                            type="email"
+                            placeholder="you@example.com"
+                            value={email}
+                            setValue={setEmail}
+                            icon={FiMail}
+                        />
+
+                        <div className="relative">
+                            <Input
+                                label="Password"
+                                type={showPassword ? 'text' : 'password'}
+                                placeholder="••••••••"
+                                value={password}
+                                setValue={setPassword}
+                                icon={FiLock}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-8 text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] transition-colors"
+                            >
+                                {showPassword ? <FiEyeOff size={16} /> : <FiEye size={16} />}
+                            </button>
+                        </div>
+
+                        <div className="text-right">
+                            <button
+                                type="button"
+                                onClick={handleReset}
+                                className="text-xs text-[var(--color-primary)] font-semibold hover:underline"
+                            >
+                                Forgot password?
+                            </button>
+                        </div>
+
+                        <Button
+                            type="submit"
+                            text="Sign In"
+                            loading={loading}
+                            fullWidth
+                            size="lg"
+                        />
+                    </form>
+                </Card>
+
+                <Already
+                    text="Don't have an account?"
+                    link="/register"
+                    linkText="Sign Up"
+                    className="mt-6"
+                />
             </div>
         </div>
     );

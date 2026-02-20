@@ -11,8 +11,10 @@ import {
 import { AuthContext } from "../../context/AuthContext";
 import Button from "../../components/Button";
 import Input from "../../components/Input";
+import Card from "../../components/Card";
+import PageHeader from "../../components/PageHeader";
 import { useNavigate } from "react-router-dom";
-import { FiArrowLeft } from "react-icons/fi";
+import { FiUserPlus, FiMail, FiSend } from "react-icons/fi";
 
 const AddFriend = () => {
     const { user } = useContext(AuthContext);
@@ -58,7 +60,7 @@ const AddFriend = () => {
             setMessage(`Request sent to ${friendData.username || targetEmail}!`);
             setEmail("");
 
-            setTimeout(() => navigate("/"), 2000);
+            setTimeout(() => navigate("/friends"), 2000);
         } catch (err) {
             setError(err.message);
         } finally {
@@ -67,51 +69,46 @@ const AddFriend = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 p-4 md:p-8 flex flex-col items-center justify-center">
-            <div className="w-full max-w-md bg-white rounded-3xl shadow-xl p-8 transition-all hover:shadow-2xl">
-                <div className="flex items-center gap-2 mb-6">
-                    <button
-                        onClick={() => navigate(-1)}
-                        className="p-2 -ml-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-full transition"
-                    >
-                        <FiArrowLeft size={20} />
-                    </button>
-                    <h2 className="text-xl font-bold text-gray-800">Add New Friend</h2>
-                </div>
+        <div className="p-4 md:p-6 pb-24 lg:pb-6">
+            <PageHeader
+                title="Add New Friend"
+                subtitle="Connect with friends"
+                icon={FiUserPlus}
+                onBack={true}
+            />
 
+            <Card padding="lg" className="max-w-md mx-auto">
                 <div className="space-y-6">
                     {error && (
-                        <div className="p-3 bg-red-50 text-red-600 rounded-xl text-sm border border-red-100 font-medium text-center">
+                        <div className="p-3 bg-[var(--color-danger-light)] text-[var(--color-danger)] rounded-xl text-sm border border-[var(--color-border)] font-medium text-center">
                             {error}
                         </div>
                     )}
                     {message && (
-                        <div className="p-3 bg-green-50 text-green-600 rounded-xl text-sm border border-green-100 font-medium text-center">
+                        <div className="p-3 bg-[var(--color-success-light)] text-[var(--color-success)] rounded-xl text-sm border border-[var(--color-border)] font-medium text-center">
                             {message}
                         </div>
                     )}
 
-                    <div>
-                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
-                            Friend's Email
-                        </label>
-                        <Input
-                            type="email"
-                            placeholder="friend@example.com"
-                            value={email}
-                            setValue={setEmail}
-                            className="bg-gray-50 focus:bg-white"
-                        />
-                    </div>
+                    <Input
+                        label="Friend's Email"
+                        type="email"
+                        placeholder="friend@example.com"
+                        value={email}
+                        setValue={setEmail}
+                        icon={FiMail}
+                    />
 
                     <Button
                         text={loading ? "Sending Request..." : "Send Request"}
                         onClick={handleAddFriend}
-                        disabled={loading}
-                        className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md shadow-blue-200"
+                        loading={loading}
+                        icon={FiSend}
+                        fullWidth
+                        size="lg"
                     />
                 </div>
-            </div>
+            </Card>
         </div>
     );
 };

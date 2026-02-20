@@ -1,174 +1,144 @@
-import React, { useState } from "react";
-import Input from "../../components/Input";
-import Heading from "../../components/Heading";
-import Button from "../../components/Button";
-import Already from "../../components/Already";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { auth, db } from "../../services/firebase";
-import { doc, serverTimestamp, setDoc } from "firebase/firestore";
-import { FiPieChart, FiUsers, FiCheckCircle, FiActivity } from "react-icons/fi";
+import { useState, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { AuthContext } from '../../context/AuthContext';
+import { auth, db } from '../../services/firebase';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { FiUser, FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
+
+import Button from '../../components/Button';
+import Input from '../../components/Input';
+import Heading from '../../components/Heading';
+import Already from '../../components/Already';
+import Card from '../../components/Card';
 
 const Register = () => {
-    const [email, setEmail] = useState("");
-    const [username, setUsername] = useState("");
-    const [password, setPassword] = useState("");
+    const navigate = useNavigate();
+    const { user } = useContext(AuthContext);
+    const [username, setUsername] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
 
-    const handleRegister = async () => {
+    if (user) {
+        navigate('/journal');
+        return null;
+    }
+
+    const handleRegister = async (e) => {
+        e.preventDefault();
         setLoading(true);
+        setError('');
+
+        if (!username.trim()) {
+            setError('Please enter your name');
+            setLoading(false);
+            return;
+        }
+
         try {
-            if (!email || !username || !password) {
-                alert("Please fill all fields");
-                setLoading(false);
-                return;
-            }
-            const userCredential = await createUserWithEmailAndPassword(
-                auth,
-                email,
-                password,
-            );
-            const userRef = doc(db, "users", userCredential.user.uid);
-            await setDoc(userRef, {
-                email,
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            const newUser = userCredential.user;
+
+            await updateProfile(newUser, { displayName: username });
+
+            await setDoc(doc(db, 'users', newUser.uid), {
                 username,
-                photoURL: "",
-                total_owed: 0,
-                total_debt: 0,
+                email,
+                createdAt: serverTimestamp(),
                 friendsList: [],
-                created_at: serverTimestamp(),
             });
-        } catch (error) {
-            console.log("Error: ", error);
-            alert("Registration failed. " + error.message);
+
+            navigate('/journal');
+        } catch (err) {
+            setError(
+                err.code === 'auth/email-already-in-use'
+                    ? 'An account with this email already exists'
+                    : err.code === 'auth/weak-password'
+                        ? 'Password should be at least 6 characters'
+                        : 'Registration failed. Please try again.'
+            );
         }
         setLoading(false);
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 sm:p-6">
-            <div className="w-full max-w-5xl bg-white rounded-2xl sm:rounded-3xl shadow-xl overflow-hidden flex flex-col md:flex-row">
-                {/* 1. BRANDING SECTION (Desktop Only) */}
-                <div className="hidden md:flex md:w-1/2 bg-blue-600 p-12 flex-col justify-between text-white relative overflow-hidden">
-                    {/* Background decoration */}
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl"></div>
-                    <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-900 opacity-20 rounded-full translate-y-1/3 -translate-x-1/3 blur-xl"></div>
+        <div className="min-h-screen bg-[var(--color-bg)] flex items-center justify-center p-4 relative overflow-hidden">
+            {/* Decorative gradient blobs */}
+            <div className="absolute top-[-20%] right-[-10%] w-[500px] h-[500px] bg-[var(--color-primary)] opacity-[0.07] rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute bottom-[-20%] left-[-10%] w-[400px] h-[400px] bg-[var(--color-primary)] opacity-[0.05] rounded-full blur-3xl pointer-events-none" />
 
-                    <div className="relative z-10">
-                        <div className="flex items-center gap-3 mb-8">
-                            <div className="w-10 h-10 bg-white text-blue-600 rounded-lg flex items-center justify-center font-bold text-xl shadow-md">
-                                K
-                            </div>
-                            <span className="text-2xl font-bold tracking-tight">
-                                King!
-                            </span>
-                        </div>
-
-                        <h2 className="text-3xl lg:text-4xl font-bold leading-tight mb-6">
-                            Stop worrying about who paid what.
-                        </h2>
-                        <p className="text-blue-100 text-lg mb-8">
-                            Join thousands of users who trust King! to track shared
-                            expenses for trips, roommates, and dinners.
-                        </p>
-
-                        <div className="space-y-5">
-                            <div className="flex items-center gap-4">
-                                <div className="p-2 bg-blue-500 rounded-lg shadow-sm">
-                                    <FiPieChart size={20} />
-                                </div>
-                                <span className="font-medium">Track balances in real-time</span>
-                            </div>
-                            <div className="flex items-center gap-4">
-                                <div className="p-2 bg-blue-500 rounded-lg shadow-sm">
-                                    <FiUsers size={20} />
-                                </div>
-                                <span className="font-medium">Split equally or customized</span>
-                            </div>
-                            <div className="flex items-center gap-4">
-                                <div className="p-2 bg-blue-500 rounded-lg shadow-sm">
-                                    <FiCheckCircle size={20} />
-                                </div>
-                                <span className="font-medium">Settle debts easily</span>
-                            </div>
-                        </div>
+            <div className="w-full max-w-md relative z-10">
+                {/* Logo */}
+                <div className="text-center mb-8">
+                    <div className="w-16 h-16 rounded-2xl bg-[var(--color-primary)] flex items-center justify-center text-white font-extrabold text-2xl mx-auto mb-5 shadow-lg shadow-indigo-500/30">
+                        K
                     </div>
-
-                    <div className="relative z-10 mt-12">
-                        <div className="flex items-center gap-3">
-                            <div className="flex -space-x-3">
-                                <div className="w-9 h-9 rounded-full bg-yellow-400 border-2 border-blue-600"></div>
-                                <div className="w-9 h-9 rounded-full bg-green-400 border-2 border-blue-600"></div>
-                                <div className="w-9 h-9 rounded-full bg-purple-400 border-2 border-blue-600"></div>
-                            </div>
-                            <p className="text-sm text-blue-200 font-medium ml-2">
-                                Used by groups everywhere
-                            </p>
-                        </div>
-                    </div>
+                    <Heading headingText="Create Account" text="Sign up to get started" />
                 </div>
 
-                {/* 2. FORM SECTION (Mobile + Desktop) */}
-                <div className="w-full md:w-1/2 p-6 sm:p-10 md:p-12 flex flex-col justify-center bg-white text-gray-900">
-                    {/* Mobile Branding (Visible only on small screens) */}
-                    <div className="md:hidden flex items-center gap-2 mb-8">
-                        <div className="w-8 h-8 bg-blue-600 text-white rounded-lg flex items-center justify-center font-bold text-lg">
-                            K
-                        </div>
-                        <span className="text-xl font-bold text-gray-800 tracking-tight">
-                            King!
-                        </span>
-                    </div>
+                <Card padding="lg" className="shadow-[0_8px_32px_var(--color-shadow-lg)] border-[var(--color-border-light)]">
+                    <form onSubmit={handleRegister} className="space-y-4">
+                        {error && (
+                            <div className="p-3 bg-[var(--color-danger-light)] border border-[var(--color-danger)]/20 rounded-xl text-sm text-[var(--color-danger)] font-medium">
+                                {error}
+                            </div>
+                        )}
 
-                    <div className="max-w-sm mx-auto w-full">
-                        <div className="mb-8">
-                            <Heading
-                                headingText="Create Account"
-                                text="The awkward-free way to split bills."
-                            />
-                        </div>
+                        <Input
+                            label="Full Name"
+                            type="text"
+                            placeholder="John Doe"
+                            value={username}
+                            setValue={setUsername}
+                            icon={FiUser}
+                        />
 
-                        <div className="space-y-4">
+                        <Input
+                            label="Email"
+                            type="email"
+                            placeholder="you@example.com"
+                            value={email}
+                            setValue={setEmail}
+                            icon={FiMail}
+                        />
+
+                        <div className="relative">
                             <Input
-                                type="email"
-                                value={email}
-                                placeholder="Email address"
-                                setValue={setEmail}
-                                className="bg-gray-50 focus:bg-white"
-                            />
-                            <Input
-                                type="text"
-                                value={username}
-                                placeholder="Full Name"
-                                setValue={setUsername}
-                                className="bg-gray-50 focus:bg-white"
-                            />
-                            <Input
-                                type="password"
+                                label="Password"
+                                type={showPassword ? 'text' : 'password'}
+                                placeholder="Min. 6 characters"
                                 value={password}
-                                placeholder="Password"
                                 setValue={setPassword}
-                                className="bg-gray-50 focus:bg-white"
+                                icon={FiLock}
                             />
-
-                            <div className="pt-2">
-                                <Button
-                                    text={loading ? "Creating Account..." : "Sign Up"}
-                                    onClick={handleRegister}
-                                    disabled={loading}
-                                    className="bg-blue-600 hover:bg-blue-700 text-white w-full py-3 rounded-xl font-bold shadow-lg shadow-blue-200"
-                                />
-                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-8 text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] transition-colors"
+                            >
+                                {showPassword ? <FiEyeOff size={16} /> : <FiEye size={16} />}
+                            </button>
                         </div>
 
-                        <div className="mt-8 text-center">
-                            <Already
-                                text="Already have an account?"
-                                linkText="Log in"
-                                link="/login"
-                            />
-                        </div>
-                    </div>
-                </div>
+                        <Button
+                            type="submit"
+                            text="Create Account"
+                            loading={loading}
+                            fullWidth
+                            size="lg"
+                        />
+                    </form>
+                </Card>
+
+                <Already
+                    text="Already have an account?"
+                    link="/login"
+                    linkText="Sign In"
+                    className="mt-6"
+                />
             </div>
         </div>
     );

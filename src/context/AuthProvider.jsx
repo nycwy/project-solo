@@ -51,8 +51,8 @@ const AuthProvider = ({ children }) => {
 
     if (loading) {
         return (
-            <div className="h-screen flex items-center justify-center bg-gray-50">
-                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+            <div className="h-screen flex items-center justify-center bg-[var(--color-bg)]">
+                <div className="animate-spin rounded-full h-10 w-10 border-[3px] border-[var(--color-primary)] border-t-transparent"></div>
             </div>
         );
     }

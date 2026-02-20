@@ -1,384 +1,319 @@
-import React, { useContext, useEffect, useState } from "react";
-import { AuthContext } from "../../context/AuthContext";
-import { useNavigate } from "react-router-dom";
-import { db } from "../../services/firebase";
+import { useState, useContext, useEffect } from 'react';
+import { AuthContext } from '../../context/AuthContext';
+import { db } from '../../services/firebase';
 import {
-    doc,
-    onSnapshot,
     collection,
     query,
     where,
+    onSnapshot,
     updateDoc,
-    deleteDoc,
+    doc,
     arrayUnion,
-} from "firebase/firestore";
-import { FiGrid, FiTrash2 } from "react-icons/fi";
+    getDoc,
+    serverTimestamp,
+} from 'firebase/firestore';
+import { useNavigate } from 'react-router-dom';
+import {
+    FiArrowUpRight,
+    FiArrowDownLeft,
+    FiCheck,
+    FiX,
+    FiEdit2,
+    FiTrash2,
+    FiClock,
+    FiCheckCircle,
+    FiDollarSign,
+    FiPlus,
+} from 'react-icons/fi';
+
+import Card from '../../components/Card';
+import Badge from '../../components/Badge';
+import Button from '../../components/Button';
+import PageHeader from '../../components/PageHeader';
+import EmptyState from '../../components/EmptyState';
+import Avatar from '../../components/Avatar';
+import Spinner from '../../components/Spinner';
+
 
 const Dashboard = () => {
     const { user } = useContext(AuthContext);
     const navigate = useNavigate();
-
-    const [userProfile, setUserProfile] = useState(null);
     const [payerTransactions, setPayerTransactions] = useState([]);
     const [debtorTransactions, setDebtorTransactions] = useState([]);
+    const [friendsMap, setFriendsMap] = useState({});
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         if (!user?.uid) return;
-
-        const unsubUser = onSnapshot(doc(db, "users", user.uid), (doc) => {
-            if (doc.exists()) setUserProfile(doc.data());
-        });
-        return () => unsubUser();
-    }, [user]);
-
-    useEffect(() => {
-        if (!user?.uid) return;
-
-        const unsubP = onSnapshot(
-            query(collection(db, "transactions"), where("payerId", "==", user.uid)),
-            (s) =>
-                setPayerTransactions(
-                    s.docs
-                        .map((d) => ({ id: d.id, ...d.data(), role: "payer" }))
-                        .filter((t) => !t.hiddenBy?.includes(user.uid)),
-                ),
-        );
-
-        const unsubD = onSnapshot(
-            query(collection(db, "transactions"), where("debtorId", "==", user.uid)),
-            (s) =>
-                setDebtorTransactions(
-                    s.docs
-                        .map((d) => ({ id: d.id, ...d.data(), role: "debtor" }))
-                        .filter((t) => !t.hiddenBy?.includes(user.uid)),
-                ),
-        );
-
-        return () => {
-            unsubP();
-            unsubD();
-        };
-    }, [user]);
-
-    const handleAcceptExpense = async (transactionId) => {
-        try {
-            await updateDoc(doc(db, "transactions", transactionId), {
-                status: "confirmed",
-            });
-        } catch (e) {
-            console.error("Oops, couldn't confirm:", e);
-        }
-    };
-
-    const handleRejectExpense = async (transactionId) => {
-        if (!window.confirm("Reject and delete this expense request?")) return;
-        try {
-            await deleteDoc(doc(db, "transactions", transactionId));
-        } catch (e) {
-            console.error("Couldn't reject:", e);
-        }
-    };
-
-    const handleRequestSettle = async (transactionId) => {
-        try {
-            await updateDoc(doc(db, "transactions", transactionId), {
-                settleStatus: "pending_confirmation",
-            });
-        } catch (e) {
-            console.error(e);
-        }
-    };
-
-    const handleConfirmSettle = async (transactionId) => {
-        try {
-            await updateDoc(doc(db, "transactions", transactionId), {
-                settleStatus: "settled",
-            });
-        } catch (e) {
-            console.error(e);
-        }
-    };
-
-    const handleDeclineSettle = async (transactionId) => {
-        try {
-            await updateDoc(doc(db, "transactions", transactionId), {
-                settleStatus: null,
-            });
-        } catch (e) {
-            console.error(e);
-        }
-    };
-
-    const handleDelete = async (e, id) => {
-        e.stopPropagation();
-
-        if (window.confirm("Remove this transaction from your history?")) {
-            try {
-                await updateDoc(doc(db, "transactions", id), {
-                    hiddenBy: arrayUnion(user.uid),
-                });
-            } catch (error) {
-                console.error("Error hiding transaction:", error);
-                alert("Could not remove.");
+        const fetchFriends = async () => {
+            const docSnap = await getDoc(doc(db, 'users', user.uid));
+            if (docSnap.exists()) {
+                const list = docSnap.data().friendsList || [];
+                const map = {};
+                list.forEach((f) => (map[f.uid] = f.username));
+                setFriendsMap(map);
             }
-        }
+        };
+        fetchFriends();
+    }, [user]);
+
+    useEffect(() => {
+        if (!user?.uid) return;
+        const q = query(
+            collection(db, 'transactions'),
+            where('payerId', '==', user.uid)
+        );
+        const unsub = onSnapshot(q, (snap) => {
+            setPayerTransactions(
+                snap.docs
+                    .map((d) => ({ id: d.id, ...d.data() }))
+                    .filter((t) => !t.hiddenBy?.includes(user.uid))
+            );
+            setLoading(false);
+        });
+        return () => unsub();
+    }, [user]);
+
+    useEffect(() => {
+        if (!user?.uid) return;
+        const q = query(
+            collection(db, 'transactions'),
+            where('debtorId', '==', user.uid)
+        );
+        const unsub = onSnapshot(q, (snap) => {
+            setDebtorTransactions(
+                snap.docs
+                    .map((d) => ({ id: d.id, ...d.data() }))
+                    .filter((t) => !t.hiddenBy?.includes(user.uid))
+            );
+        });
+        return () => unsub();
+    }, [user]);
+
+    const getName = (uid) => {
+        if (uid === user.uid) return 'You';
+        if (uid === 'SELF') return 'Self';
+        return friendsMap[uid] || 'Unknown';
     };
 
-    const getFriendName = (targetId) => {
-        if (targetId === "SELF") return "Yourself";
-        if (targetId === user?.uid) return "You";
+    const totalOwed = payerTransactions
+        .filter((t) => t.debtorId !== 'SELF' && t.status !== 'confirmed')
+        .reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
 
-        const friend = userProfile?.friendsList?.find((f) => f.uid === targetId);
-        return friend ? friend.username : "Unknown";
-    };
+    const totalDebt = debtorTransactions
+        .filter((t) => t.status !== 'confirmed')
+        .reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+
+    const netBalance = totalOwed - totalDebt;
 
     const allTransactions = [...payerTransactions, ...debtorTransactions].sort(
-        (a, b) => (b.date?.seconds || 0) - (a.date?.seconds || 0),
+        (a, b) => (b.date?.seconds || 0) - (a.date?.seconds || 0)
     );
 
-    const activeTransactions = allTransactions.filter(
-        (t) =>
-            t.status === "confirmed" ||
-            (t.status === "pending" && t.role === "payer"),
-    );
+    const handleAccept = async (id) => {
+        await updateDoc(doc(db, 'transactions', id), { status: 'confirmed' });
+    };
 
-    const pendingExpenseRequests = allTransactions.filter(
-        (t) => t.role === "debtor" && t.status === "pending",
-    );
+    const handleReject = async (id) => {
+        await updateDoc(doc(db, 'transactions', id), { status: 'rejected' });
+    };
 
-    let owed = 0;
-    let debt = 0;
+    const handleSettle = async (id) => {
+        await updateDoc(doc(db, 'transactions', id), {
+            settleStatus: 'settle_pending',
+            settleRequestedAt: serverTimestamp(),
+        });
+    };
 
-    activeTransactions.forEach((t) => {
-        if (t.status === "confirmed" && t.settleStatus !== "settled") {
-            if (t.role === "payer" && t.debtorId !== "SELF") {
-                owed += t.amount;
-            } else if (t.role === "debtor") {
-                debt += t.amount;
-            }
-        }
-    });
+    const handleConfirmSettle = async (id) => {
+        await updateDoc(doc(db, 'transactions', id), {
+            settleStatus: 'settled',
+            status: 'confirmed',
+        });
+    };
+
+    const handleDelete = async (id) => {
+        if (!window.confirm('Remove from your view?')) return;
+        await updateDoc(doc(db, 'transactions', id), {
+            hiddenBy: arrayUnion(user.uid),
+        });
+    };
+
+    const formatDate = (timestamp) => {
+        if (!timestamp?.seconds) return '';
+        return new Date(timestamp.seconds * 1000).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+        });
+    };
+
+    const getStatusBadge = (t) => {
+        if (t.debtorId === 'SELF') return <Badge variant="gray">Personal</Badge>;
+        if (t.settleStatus === 'settled') return <Badge variant="success" icon={FiCheckCircle}>Settled</Badge>;
+        if (t.settleStatus === 'settle_pending') return <Badge variant="purple" icon={FiClock}>Settling</Badge>;
+        if (t.status === 'confirmed') return <Badge variant="success" icon={FiCheckCircle}>Confirmed</Badge>;
+        if (t.status === 'pending') return <Badge variant="pending" icon={FiClock}>Pending</Badge>;
+        if (t.status === 'rejected') return <Badge variant="danger" icon={FiX}>Rejected</Badge>;
+        return null;
+    };
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-[60vh]">
+                <Spinner size="lg" />
+            </div>
+        );
+    }
 
     return (
-        <div className="min-h-screen bg-gray-50 p-4 md:p-6 pb-24">
-            <div className="max-w-5xl mx-auto">
-                {/* Header */}
-                <div className="flex items-center gap-3 mb-6">
-                    <div className="p-2 bg-blue-100 text-blue-600 rounded-xl">
-                        <FiGrid size={20} className="md:w-6 md:h-6" />
-                    </div>
-                    <div>
-                        <h1 className="text-xl md:text-2xl font-bold text-gray-800">
-                            Splitter Dashboard
-                        </h1>
-                        <p className="text-xs text-gray-400">Overview of shared expenses</p>
-                    </div>
-                </div>
+        <div className="p-4 md:p-6 pb-24 lg:pb-6">
+            <PageHeader
+                title="Splitter"
+                subtitle={<>Manage shared expenses <span className="lg:hidden">· Tap + to split</span></>}
+                icon={FiDollarSign}
+                rightContent={
+                    <span className="hidden lg:inline-flex">
+                        <Button
+                            text="Add Expense"
+                            icon={FiPlus}
+                            size="sm"
+                            onClick={() => navigate('/add-expense')}
+                        />
+                    </span>
+                }
+            />
 
-                {pendingExpenseRequests.length > 0 && (
-                    <div className="mb-6 space-y-2">
-                        <h3 className="text-purple-600 font-bold text-xs uppercase mb-1 tracking-wider">
-                            Expense Requests
-                        </h3>
-                        {pendingExpenseRequests.map((req) => (
-                            <div
-                                key={req.id}
-                                className="bg-white border-l-4 border-purple-500 p-4 rounded-xl shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 transition hover:shadow-md"
-                            >
-                                <div>
-                                    <p className="text-sm font-bold text-gray-800">
-                                        {getFriendName(req.payerId)} claims you owe{" "}
-                                        <span className="text-red-500">Rs. {req.amount}</span>
-                                    </p>
-                                    <p className="text-[10px] text-gray-400">
-                                        For: {req.description}
-                                    </p>
-                                </div>
-                                <div className="flex gap-2 w-full sm:w-auto">
-                                    <button
-                                        onClick={() => handleAcceptExpense(req.id)}
-                                        className="flex-1 sm:flex-none bg-green-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-green-700 transition"
-                                    >
-                                        Confirm
-                                    </button>
-                                    <button
-                                        onClick={() => handleRejectExpense(req.id)}
-                                        className="flex-1 sm:flex-none bg-gray-100 text-gray-600 px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-gray-200 transition"
-                                    >
-                                        Reject
-                                    </button>
-                                </div>
+            {/* Summary Card */}
+            <div className="mb-6">
+                <div className="rounded-2xl p-5 bg-[var(--color-surface)] border border-[var(--color-border-light)] shadow-[0_1px_4px_var(--color-shadow)]">
+                    {/* You Get / You Pay */}
+                    <div className="grid grid-cols-2 divide-x divide-[var(--color-border-light)]">
+                        {/* You Get Back */}
+                        <div className="pr-4">
+                            <div className="flex items-center gap-1.5 mb-1.5">
+                                <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                                <span className="text-[10px] text-[var(--color-text-muted)] font-semibold uppercase tracking-widest">You Get Back</span>
                             </div>
-                        ))}
-                    </div>
-                )}
-
-                <div className="bg-blue-600 text-white rounded-2xl p-6 md:p-8 shadow-lg mb-8 transition-all hover:shadow-xl">
-                    <p className="text-blue-200 text-sm font-medium uppercase tracking-wider">
-                        Net Balance
-                    </p>
-                    <h3 className="text-3xl md:text-5xl font-bold my-3">
-                        {owed - debt >= 0 ? "+" : "-"}Rs. {Math.abs(owed - debt).toFixed(2)}
-                    </h3>
-                    <div className="flex mt-6 pt-4 border-t border-blue-500/50">
-                        <div className="w-1/2">
-                            <p className="text-blue-200 text-xs uppercase font-bold tracking-wide">
-                                Owed to you
-                            </p>
-                            <p className="text-green-300 font-bold text-lg md:text-xl">
-                                Rs. {owed.toFixed(2)}
-                            </p>
+                            <p className="text-xl font-bold text-[var(--color-text)] tracking-tight">Rs. {totalOwed.toFixed(0)}</p>
                         </div>
-                        <div className="w-1/2 text-right">
-                            <p className="text-blue-200 text-xs uppercase font-bold tracking-wide">
-                                You owe
-                            </p>
-                            <p className="text-red-300 font-bold text-lg md:text-xl">
-                                -Rs. {debt.toFixed(2)}
-                            </p>
+
+                        {/* You Need to Pay */}
+                        <div className="pl-4">
+                            <div className="flex items-center gap-1.5 mb-1.5">
+                                <div className="w-2 h-2 rounded-full bg-rose-500" />
+                                <span className="text-[10px] text-[var(--color-text-muted)] font-semibold uppercase tracking-widest">You Pay</span>
+                            </div>
+                            <p className="text-xl font-bold text-[var(--color-text)] tracking-tight">Rs. {totalDebt.toFixed(0)}</p>
                         </div>
                     </div>
+
+                    {/* Total */}
+                    <div className="border-t border-[var(--color-border-light)] mt-4 pt-3 flex items-center justify-between">
+                        <span className="text-xs text-[var(--color-text-muted)] font-medium">Total</span>
+                        <span className={`text-base font-bold ${netBalance >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                            {netBalance >= 0 ? '+' : '-'} Rs. {Math.abs(netBalance).toFixed(0)}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Transactions */}
+            <div className="pb-20 lg:pb-0">
+                <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-sm font-bold text-[var(--color-text-muted)] uppercase tracking-wider">
+                        All Activity ({allTransactions.length})
+                    </h2>
                 </div>
 
-                <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-gray-500 font-bold text-xs uppercase tracking-wider">
-                        Recent Activity
-                    </h3>
-                </div>
-
-                <div className="space-y-3">
-                    {activeTransactions.length === 0 ? (
-                        <div className="text-center py-12 bg-white rounded-2xl border border-dashed border-gray-300">
-                            <p className="text-gray-400 font-medium">No expenses yet.</p>
-                            <p className="text-xs text-gray-300 mt-1">
-                                Tap the + button to add one!
-                            </p>
-                        </div>
-                    ) : (
-                        activeTransactions.map((t) => {
-                            const canDelete =
-                                t.settleStatus === "settled" || t.debtorId === "SELF";
+                {allTransactions.length === 0 ? (
+                    <EmptyState
+                        icon={FiDollarSign}
+                        title="No expenses yet"
+                        subtitle="Add your first shared expense to get started"
+                        actionText="Add Expense"
+                        onAction={() => navigate('/add-expense')}
+                    />
+                ) : (
+                    <div className="space-y-2">
+                        {allTransactions.map((t) => {
+                            const isPayer = t.payerId === user.uid;
+                            const otherName = isPayer ? getName(t.debtorId) : getName(t.payerId);
 
                             return (
-                                <div
-                                    key={t.id}
-                                    className={`bg-white p-3 md:p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center gap-3 group hover:border-blue-200 transition ${t.settleStatus === "settled" ? "opacity-50" : ""}`}
-                                >
-                                    <div className="min-w-0 flex-1">
-                                        <p
-                                            className={`font-bold text-gray-800 text-sm md:text-base truncate ${t.settleStatus === "settled" ? "line-through" : ""}`}
-                                        >
-                                            {t.description}
-                                        </p>
-                                        <p className="text-[10px] md:text-xs text-gray-400 mt-0.5 truncate">
-                                            {t.role === "payer"
-                                                ? t.debtorId === "SELF"
-                                                    ? "Personal Expense"
-                                                    : `You lent to ${getFriendName(t.debtorId)}`
-                                                : `${getFriendName(t.payerId)} lent you`}
-                                            {" • "}
-                                            {t.date
-                                                ? new Date(t.date.seconds * 1000).toLocaleDateString()
-                                                : "Just now"}
-                                        </p>
-                                    </div>
+                                <Card key={t.id} padding="sm" hover className="animate-fade-in-up">
+                                    <div className="flex items-center gap-3">
+                                        <Avatar name={otherName} size="sm" />
 
-                                    <div className="flex flex-col items-end gap-1.5 shrink-0">
-                                        <div className="flex items-center gap-2">
-                                            <span
-                                                className={`font-bold text-sm md:text-base ${t.role === "payer" ? "text-green-600" : "text-red-500"} ${t.settleStatus === "settled" ? "line-through text-gray-400" : ""}`}
-                                            >
-                                                {t.role === "payer" ? "+" : "-"}Rs. {t.amount}
-                                            </span>
-
-                                            {canDelete && (
-                                                <div className="bg-gray-50 rounded-lg p-1 border border-gray-200">
-                                                    <button
-                                                        onClick={(e) => handleDelete(e, t.id)}
-                                                        className="text-gray-500 hover:text-red-500 transition p-1 rounded-full hover:bg-red-50"
-                                                        title="Remove from my history"
-                                                    >
-                                                        <FiTrash2 size={14} />
+                                        {/* Details — stacked layout */}
+                                        <div className="flex-1 min-w-0">
+                                            {/* Row 1: description + amount + edit */}
+                                            <div className="flex items-center justify-between gap-2">
+                                                <p className="text-sm font-semibold text-[var(--color-text)] truncate">
+                                                    {t.description}
+                                                </p>
+                                                <div className="flex items-center gap-1.5 shrink-0">
+                                                    <span className={`text-sm font-semibold ${isPayer ? 'text-[var(--color-text)]' : 'text-[var(--color-text-secondary)]'}`}>
+                                                        {isPayer ? '+' : '-'} Rs.{t.amount}
+                                                    </span>
+                                                    <button onClick={() => handleDelete(t.id)} className="p-1 rounded-md border border-[var(--color-danger)]/20 text-[var(--color-danger)] bg-[var(--color-danger-light)] hover:opacity-80 active:scale-95 transition-all" title="Delete">
+                                                        <FiTrash2 size={11} />
                                                     </button>
                                                 </div>
-                                            )}
-                                        </div>
+                                            </div>
 
-                                        {t.status === "pending" && t.role === "payer" && (
-                                            <span className="text-[10px] bg-purple-100 text-purple-700 px-2 py-1 rounded font-bold uppercase">
-                                                Pending Approval
-                                            </span>
-                                        )}
-
-                                        {t.role === "payer" && !t.settleStatus && (
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    navigate(`/edit-expense/${t.id}`);
-                                                }}
-                                                className="text-[10px] bg-gray-100 text-gray-600 px-2 py-1 rounded font-bold uppercase hover:bg-gray-200 transition"
-                                            >
-                                                Edit
-                                            </button>
-                                        )}
-
-                                        {t.status === "confirmed" && (
-                                            <>
-                                                {t.role === "debtor" && !t.settleStatus && (
-                                                    <button
-                                                        onClick={() => handleRequestSettle(t.id)}
-                                                        className="text-[10px] bg-blue-50 text-blue-600 px-2 py-1 rounded font-bold uppercase hover:bg-blue-600 hover:text-white transition"
-                                                    >
-                                                        Settle
-                                                    </button>
-                                                )}
-
-                                                {t.role === "debtor" &&
-                                                    t.settleStatus === "pending_confirmation" && (
-                                                        <span className="text-[10px] bg-yellow-100 text-yellow-700 px-2 py-1 rounded font-bold uppercase">
-                                                            Waiting...
-                                                        </span>
-                                                    )}
-
-                                                {t.role === "payer" &&
-                                                    t.settleStatus === "pending_confirmation" && (
-                                                        <div className="flex gap-1">
-                                                            <button
-                                                                onClick={() => handleConfirmSettle(t.id)}
-                                                                className="text-[10px] bg-green-600 text-white px-2 py-1 rounded font-bold uppercase hover:bg-green-700"
-                                                            >
-                                                                Accept
-                                                            </button>
-                                                            <button
-                                                                onClick={() => handleDeclineSettle(t.id)}
-                                                                className="text-[10px] bg-red-100 text-red-600 px-2 py-1 rounded font-bold uppercase hover:bg-red-200"
-                                                            >
-                                                                Decline
-                                                            </button>
-                                                        </div>
-                                                    )}
-
-                                                {t.settleStatus === "settled" && (
-                                                    <span className="text-[10px] bg-gray-100 text-gray-400 px-2 py-1 rounded font-bold uppercase">
-                                                        Settled
+                                            {/* Row 2: person+date left, badge+actions right */}
+                                            <div className="flex items-center justify-between mt-1">
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className="text-[10px] text-[var(--color-text-muted)]">
+                                                        {isPayer ? `To ${otherName}` : `From ${otherName}`}
                                                     </span>
-                                                )}
-                                            </>
-                                        )}
-                                    </div>
-                                </div>
-                            );
-                        })
-                    )}
-                </div>
+                                                    <span className="text-[9px] text-[var(--color-text-muted)]">•</span>
+                                                    <span className="text-[10px] text-[var(--color-text-muted)]">{formatDate(t.date)}</span>
+                                                </div>
 
-                <button
-                    onClick={() => navigate("/add-expense")}
-                    className="fixed bottom-20 right-6 w-14 h-14 bg-blue-600 text-white rounded-full shadow-xl flex items-center justify-center text-3xl pb-1 hover:bg-blue-700 transition transform hover:scale-110 active:scale-95 z-50"
-                >
-                    +
-                </button>
+                                                <div className="flex items-center gap-1 shrink-0">
+                                                    {!isPayer && t.status === 'pending' && (
+                                                        <>
+                                                            <button onClick={() => handleAccept(t.id)} className="p-1 rounded-md bg-[var(--color-success-light)] text-[var(--color-success)] hover:opacity-80 transition-all" title="Accept">
+                                                                <FiCheck size={12} />
+                                                            </button>
+                                                            <button onClick={() => handleReject(t.id)} className="p-1 rounded-md bg-[var(--color-danger-light)] text-[var(--color-danger)] hover:opacity-80 transition-all" title="Reject">
+                                                                <FiX size={12} />
+                                                            </button>
+                                                        </>
+                                                    )}
+
+                                                    {!isPayer && t.status === 'confirmed' && t.settleStatus !== 'settled' && t.settleStatus !== 'settle_pending' && (
+                                                        <Button size="xs" variant="outline" text="Settle" onClick={() => handleSettle(t.id)} />
+                                                    )}
+
+                                                    {isPayer && t.settleStatus === 'settle_pending' && (
+                                                        <Button size="xs" variant="success" text="Confirm" onClick={() => handleConfirmSettle(t.id)} />
+                                                    )}
+
+                                                    {getStatusBadge(t)}
+                                                    <button onClick={() => navigate(`/add-expense/${t.id}`)} className="p-1 rounded-md border border-[var(--color-primary)]/20 text-[var(--color-primary)] bg-[var(--color-primary-light)] hover:opacity-80 active:scale-95 transition-all" title="Edit">
+                                                        <FiEdit2 size={11} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </Card>
+                            );
+                        })}
+                    </div>
+                )}
             </div>
+
+            {/* Mobile FAB */}
+            <button
+                onClick={() => navigate('/add-expense')}
+                className="lg:hidden fixed bottom-24 right-5 z-40 w-14 h-14 rounded-full bg-[var(--color-primary)] text-white shadow-lg shadow-[var(--color-primary)]/30 flex items-center justify-center hover:opacity-90 active:scale-90 transition-all"
+                title="Split Expense"
+            >
+                <FiPlus size={24} />
+            </button>
         </div>
     );
 };

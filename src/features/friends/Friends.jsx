@@ -1,53 +1,62 @@
-import React, { useState, useContext, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { AuthContext } from "../../context/AuthContext";
-import { db } from "../../services/firebase";
+import { useState, useContext, useEffect } from 'react';
+import { AuthContext } from '../../context/AuthContext';
+import { db } from '../../services/firebase';
 import {
     collection,
     query,
     where,
-    getDocs,
-    getDoc,
+    onSnapshot,
     updateDoc,
+    deleteDoc,
     doc,
     arrayUnion,
-    onSnapshot,
+    arrayRemove,
     addDoc,
     serverTimestamp,
-    deleteDoc,
-} from "firebase/firestore";
-import Button from "../../components/Button";
-import Input from "../../components/Input";
+    getDocs,
+} from 'firebase/firestore';
+import { useNavigate } from 'react-router-dom';
 import {
-    FiUserPlus,
-    FiSearch,
-    FiChevronRight,
     FiUsers,
+    FiSearch,
+    FiUserPlus,
+    FiUserX,
     FiCheck,
     FiX,
-    FiUserMinus, // <--- New Icon
-} from "react-icons/fi";
+    FiChevronRight,
+    FiMail,
+    FiSend,
+} from 'react-icons/fi';
+
+import Card from '../../components/Card';
+import Button from '../../components/Button';
+import Input from '../../components/Input';
+import Avatar from '../../components/Avatar';
+import Badge from '../../components/Badge';
+import PageHeader from '../../components/PageHeader';
+import EmptyState from '../../components/EmptyState';
+import Spinner from '../../components/Spinner';
 
 const Friends = () => {
     const { user } = useContext(AuthContext);
     const navigate = useNavigate();
-
-    const [friendsList, setFriendsList] = useState([]);
+    const [friends, setFriends] = useState([]);
     const [requests, setRequests] = useState([]);
-    const [searchQuery, setSearchQuery] = useState("");
+    const [sentRequests, setSentRequests] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [loading, setLoading] = useState(true);
 
-    // Add Friend Form State
-    const [email, setEmail] = useState("");
-    const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState("");
+    const [showAddFriend, setShowAddFriend] = useState(false);
+    const [friendEmail, setFriendEmail] = useState('');
+    const [addLoading, setAddLoading] = useState('');
 
-    // --- LISTENERS (Same as before) ---
     useEffect(() => {
         if (!user?.uid) return;
-        const unsub = onSnapshot(doc(db, "users", user.uid), (docSnap) => {
+        const unsub = onSnapshot(doc(db, 'users', user.uid), (docSnap) => {
             if (docSnap.exists()) {
-                setFriendsList(docSnap.data().friendsList || []);
+                setFriends(docSnap.data().friendsList || []);
             }
+            setLoading(false);
         });
         return () => unsub();
     }, [user]);
@@ -55,328 +64,320 @@ const Friends = () => {
     useEffect(() => {
         if (!user?.uid) return;
         const q = query(
-            collection(db, "friend_requests"),
-            where("toId", "==", user.uid),
-            where("status", "==", "pending"),
+            collection(db, 'friend_requests'),
+            where('toId', '==', user.uid),
+            where('status', '==', 'pending')
         );
-        const unsub = onSnapshot(q, (snapshot) => {
-            setRequests(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+        const unsub = onSnapshot(q, (snap) => {
+            setRequests(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
         });
         return () => unsub();
     }, [user]);
 
-    // --- ACTIONS ---
+    useEffect(() => {
+        if (!user?.uid) return;
+        const q = query(
+            collection(db, 'friend_requests'),
+            where('fromId', '==', user.uid),
+            where('status', '==', 'pending')
+        );
+        const unsub = onSnapshot(q, (snap) => {
+            setSentRequests(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+        });
+        return () => unsub();
+    }, [user]);
 
-    // 1. SEND REQUEST (Same as before)
-    const handleSendRequest = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        setMessage("");
-
+    const handleAccept = async (req) => {
         try {
-            const targetEmail = email.toLowerCase().trim();
-            if (targetEmail === user.email)
-                throw new Error("You cannot add yourself.");
+            const myName = user.displayName || user.email;
+            await updateDoc(doc(db, 'users', user.uid), {
+                friendsList: arrayUnion({
+                    uid: req.fromId,
+                    username: req.fromName,
+                    email: req.fromEmail,
+                }),
+            });
+            await updateDoc(doc(db, 'users', req.fromId), {
+                friendsList: arrayUnion({
+                    uid: user.uid,
+                    username: myName,
+                    email: user.email,
+                }),
+            });
+            await deleteDoc(doc(db, 'friend_requests', req.id));
+        } catch (error) {
+            console.error('Error accepting request:', error);
+        }
+    };
 
-            const myDocSnap = await getDoc(doc(db, "users", user.uid));
-            if (!myDocSnap.exists()) throw new Error("Your profile error.");
-            const myData = myDocSnap.data();
-            const myName = myData.username || user.email.split("@")[0];
+    const handleDecline = async (req) => {
+        await deleteDoc(doc(db, 'friend_requests', req.id));
+    };
 
-            const q = query(
-                collection(db, "users"),
-                where("email", "==", targetEmail),
+    const handleUnfriend = async (friend) => {
+        if (!window.confirm(`Remove ${friend.username} from friends?`)) return;
+
+        const q1 = query(
+            collection(db, 'transactions'),
+            where('payerId', '==', user.uid),
+            where('debtorId', '==', friend.uid)
+        );
+        const q2 = query(
+            collection(db, 'transactions'),
+            where('payerId', '==', friend.uid),
+            where('debtorId', '==', user.uid)
+        );
+        const [snap1, snap2] = await Promise.all([getDocs(q1), getDocs(q2)]);
+        const allTxns = [...snap1.docs.map((d) => d.data()), ...snap2.docs.map((d) => d.data())];
+        const hasUnsettled = allTxns.some((t) => t.settleStatus !== 'settled');
+
+        if (hasUnsettled) {
+            alert(`Cannot remove ${friend.username}. There are outstanding debts.`);
+            return;
+        }
+
+        await updateDoc(doc(db, 'users', user.uid), {
+            friendsList: arrayRemove(friend),
+        });
+        await updateDoc(doc(db, 'users', friend.uid), {
+            friendsList: arrayRemove({
+                uid: user.uid,
+                username: user.displayName || user.email,
+                email: user.email,
+            }),
+        });
+    };
+
+    const handleSendRequest = async () => {
+        if (!friendEmail.trim()) return alert('Enter an email address');
+        if (friendEmail.trim() === user.email) return alert("That's your own email!");
+
+        setAddLoading(true);
+        try {
+            const usersQuery = query(
+                collection(db, 'users'),
+                where('email', '==', friendEmail.trim())
             );
-            const querySnapshot = await getDocs(q);
-
-            if (querySnapshot.empty) {
-                throw new Error("User not found. Ask them to sign up!");
+            const usersSnap = await getDocs(usersQuery);
+            if (usersSnap.empty) {
+                alert('No user found with this email');
+                setAddLoading(false);
+                return;
             }
 
-            const friendDoc = querySnapshot.docs[0];
-            const friendData = friendDoc.data();
+            const friendDoc = usersSnap.docs[0];
             const friendId = friendDoc.id;
 
-            const alreadyFriends = friendsList.some((f) => f.uid === friendId);
-            if (alreadyFriends) throw new Error("You are already friends!");
+            if (friends.some((f) => f.uid === friendId)) {
+                alert('Already friends!');
+                setAddLoading(false);
+                return;
+            }
 
-            const pendingQ = query(
-                collection(db, "friend_requests"),
-                where("fromId", "==", user.uid),
-                where("toId", "==", friendId),
+            const reqQuery = query(
+                collection(db, 'friend_requests'),
+                where('fromId', '==', user.uid),
+                where('toId', '==', friendId),
+                where('status', '==', 'pending')
             );
-            const pendingSnap = await getDocs(pendingQ);
-            if (!pendingSnap.empty) throw new Error("Request already sent!");
+            const reqSnap = await getDocs(reqQuery);
+            if (!reqSnap.empty) {
+                alert('Request already sent!');
+                setAddLoading(false);
+                return;
+            }
 
-            await addDoc(collection(db, "friend_requests"), {
+            const myName = user.displayName || user.email;
+            await addDoc(collection(db, 'friend_requests'), {
                 fromId: user.uid,
                 fromName: myName,
                 fromEmail: user.email,
                 toId: friendId,
-                status: "pending",
+                status: 'pending',
                 createdAt: serverTimestamp(),
             });
 
-            setMessage(`Request sent to ${friendData.username}!`);
-            setEmail("");
+            setFriendEmail('');
+            setShowAddFriend(false);
+            alert('Friend request sent!');
         } catch (error) {
-            setMessage(error.message);
+            console.error('Error sending request:', error);
+            alert('Failed to send request');
         }
-        setLoading(false);
+        setAddLoading(false);
     };
 
-    const handleUnfriend = async (e, friendId, friendName) => {
-        e.stopPropagation();
-
-        if (!window.confirm(`Are you sure you want to remove ${friendName}?`))
-            return;
-
-        try {
-            const q1 = query(
-                collection(db, "transactions"),
-                where("payerId", "==", user.uid),
-                where("debtorId", "==", friendId),
-            );
-
-            const q2 = query(
-                collection(db, "transactions"),
-                where("payerId", "==", friendId),
-                where("debtorId", "==", user.uid),
-            );
-
-            const [snap1, snap2] = await Promise.all([getDocs(q1), getDocs(q2)]);
-
-            const allTransactions = [...snap1.docs, ...snap2.docs].map((d) =>
-                d.data(),
-            );
-
-            const hasUnsettledDebt = allTransactions.some(
-                (t) => t.settleStatus !== "settled",
-            );
-
-            if (hasUnsettledDebt) {
-                alert(
-                    `Cannot remove ${friendName}. There are outstanding debts (unsettled transactions) between you. Please settle them first.`,
-                );
-                return;
-            }
-            const myRef = doc(db, "users", user.uid);
-            const mySnap = await getDoc(myRef);
-            if (mySnap.exists()) {
-                const myList = mySnap.data().friendsList || [];
-                const updatedMyList = myList.filter((f) => f.uid !== friendId);
-                await updateDoc(myRef, { friendsList: updatedMyList });
-            }
-
-            const friendRef = doc(db, "users", friendId);
-            const friendSnap = await getDoc(friendRef);
-            if (friendSnap.exists()) {
-                const theirList = friendSnap.data().friendsList || [];
-                const updatedTheirList = theirList.filter((f) => f.uid !== user.uid);
-                await updateDoc(friendRef, { friendsList: updatedTheirList });
-            }
-
-            alert(`${friendName} removed from connections.`);
-        } catch (error) {
-            console.error(error);
-            alert("Error removing friend.");
-        }
-    };
-
-    const handleAccept = async (req) => {
-        try {
-            await updateDoc(doc(db, "users", user.uid), {
-                friendsList: arrayUnion({
-                    uid: req.fromId,
-                    email: req.fromEmail,
-                    username: req.fromName,
-                }),
-            });
-
-            const myDocSnap = await getDoc(doc(db, "users", user.uid));
-            const myData = myDocSnap.data();
-            const myName = myData.username || user.email;
-
-            await updateDoc(doc(db, "users", req.fromId), {
-                friendsList: arrayUnion({
-                    uid: user.uid,
-                    email: user.email,
-                    username: myName,
-                }),
-            });
-
-            await deleteDoc(doc(db, "friend_requests", req.id));
-        } catch (error) {
-            console.error(error);
-        }
-    };
-
-    const handleDecline = async (reqId) => {
-        try {
-            await deleteDoc(doc(db, "friend_requests", reqId));
-        } catch (error) {
-            console.error(error);
-        }
-    };
-
-    const filteredFriends = friendsList.filter(
-        (f) =>
-            f.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            f.email.toLowerCase().includes(searchQuery.toLowerCase()),
+    const filteredFriends = friends.filter((f) =>
+        f.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        f.email?.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-[60vh]">
+                <Spinner size="lg" />
+            </div>
+        );
+    }
 
     return (
-        <div className="min-h-screen bg-gray-50 p-4 md:p-8 pb-24">
-            <div className="max-w-xl mx-auto">
-                {/* Header */}
-                <div className="flex items-center gap-3 mb-6 md:mb-8">
-                    <div className="p-2 bg-blue-100 text-blue-600 rounded-xl">
-                        <FiUsers size={20} className="md:w-6 md:h-6" />
-                    </div>
-                    <div>
-                        <h1 className="text-xl md:text-2xl font-bold text-gray-800">
-                            Connections
-                        </h1>
-                        <p className="text-xs text-gray-400">
-                            {friendsList.length} Friends
-                        </p>
-                    </div>
-                </div>
+        <div className="p-4 md:p-6 pb-24 lg:pb-6">
+            <PageHeader
+                title="Friends"
+                subtitle={`${friends.length} friend${friends.length !== 1 ? 's' : ''}`}
+                icon={FiUsers}
+                rightContent={
+                    <Button
+                        text="Add Friend"
+                        icon={FiUserPlus}
+                        size="sm"
+                        onClick={() => setShowAddFriend(!showAddFriend)}
+                    />
+                }
+            />
 
-                <div className="space-y-6">
-                    {/* SEND REQUEST CARD */}
-                    <div className="bg-white p-5 rounded-2xl shadow-sm border border-blue-100 transition hover:shadow-md">
-                        <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                            <FiUserPlus /> Add New Contact
-                        </h2>
-                        <form onSubmit={handleSendRequest} className="flex gap-2">
-                            <Input
-                                type="email"
-                                placeholder="friend@email.com"
-                                value={email}
-                                setValue={setEmail}
-                                className="text-sm bg-gray-50"
-                            />
-                            <Button
-                                text={loading ? "..." : "Send"}
-                                disabled={loading || !email}
-                                className="w-auto px-6 py-2 text-sm bg-blue-600 hover:bg-blue-700"
-                            />
-                        </form>
-                        {message && (
-                            <div
-                                className={`mt-3 p-2 rounded-lg text-xs font-bold text-center ${message.includes("sent") ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600"}`}
-                            >
-                                {message}
-                            </div>
-                        )}
+            {/* Add Friend Section */}
+            {showAddFriend && (
+                <Card className="mb-4 animate-fade-in-up">
+                    <div className="flex gap-2">
+                        <Input
+                            type="email"
+                            placeholder="Enter friend's email"
+                            value={friendEmail}
+                            setValue={setFriendEmail}
+                            icon={FiMail}
+                            className="flex-1"
+                            autoFocus
+                        />
+                        <Button
+                            icon={FiSend}
+                            variant="primary"
+                            onClick={handleSendRequest}
+                            loading={addLoading}
+                        />
                     </div>
+                </Card>
+            )}
 
-                    {/* INCOMING REQUESTS */}
-                    {requests.length > 0 && (
-                        <div>
-                            <h3 className="text-orange-600 font-bold text-xs uppercase mb-2 tracking-wider ml-1">
-                                Pending Requests ({requests.length})
-                            </h3>
-                            <div className="space-y-2">
-                                {requests.map((req) => (
-                                    <div
-                                        key={req.id}
-                                        className="bg-white border-l-4 border-orange-500 p-4 rounded-xl shadow-sm flex items-center justify-between transition hover:shadow-md"
-                                    >
+            {/* Incoming Requests */}
+            {requests.length > 0 && (
+                <div className="mb-6">
+                    <h3 className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest mb-3 ml-1">
+                        Pending Requests ({requests.length})
+                    </h3>
+                    <div className="space-y-2">
+                        {requests.map((req) => (
+                            <Card key={req.id} padding="sm" className="animate-fade-in-up">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <Avatar name={req.fromName} size="sm" />
                                         <div>
-                                            <p className="font-bold text-gray-800 text-sm">
-                                                {req.fromName}
-                                            </p>
-                                            <p className="text-xs text-gray-400">{req.fromEmail}</p>
-                                        </div>
-                                        <div className="flex gap-2">
-                                            <button
-                                                onClick={() => handleAccept(req)}
-                                                className="w-8 h-8 bg-green-100 text-green-600 rounded-full flex items-center justify-center hover:bg-green-200 transition"
-                                            >
-                                                <FiCheck />
-                                            </button>
-                                            <button
-                                                onClick={() => handleDecline(req.id)}
-                                                className="w-8 h-8 bg-red-100 text-red-600 rounded-full flex items-center justify-center hover:bg-red-200 transition"
-                                            >
-                                                <FiX />
-                                            </button>
+                                            <p className="text-sm font-bold text-[var(--color-text)]">{req.fromName}</p>
+                                            <p className="text-[10px] text-[var(--color-text-muted)]">{req.fromEmail}</p>
                                         </div>
                                     </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* FRIENDS LIST */}
-                    <div className="pt-2">
-                        <div className="relative mb-4">
-                            <FiSearch
-                                className="absolute left-4 top-3.5 text-gray-400"
-                                size={18}
-                            />
-                            <input
-                                type="text"
-                                placeholder="Search friends..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-xl outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition text-sm text-gray-700"
-                            />
-                        </div>
-
-                        <div className="space-y-3">
-                            {filteredFriends.length > 0 ? (
-                                filteredFriends.map((friend) => (
-                                    <div
-                                        key={friend.uid}
-                                        onClick={() => navigate(`/friend/${friend.uid}`)}
-                                        className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between cursor-pointer hover:border-blue-200 hover:shadow-md transition group"
-                                    >
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-10 h-10 md:w-12 md:h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center font-bold text-lg group-hover:bg-blue-600 group-hover:text-white transition">
-                                                {friend.username[0].toUpperCase()}
-                                            </div>
-                                            <div>
-                                                <h3 className="font-bold text-gray-800 text-sm md:text-base">
-                                                    {friend.username}
-                                                </h3>
-                                                <p className="text-xs text-gray-400">{friend.email}</p>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center gap-2">
-                                            {/* UNFRIEND BUTTON */}
-                                            <button
-                                                onClick={(e) =>
-                                                    handleUnfriend(e, friend.uid, friend.username)
-                                                }
-                                                className="w-8 h-8 flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full transition z-10"
-                                                title="Unfriend"
-                                            >
-                                                <FiUserMinus size={18} />
-                                            </button>
-
-                                            <FiChevronRight className="text-gray-300 group-hover:text-blue-500 transition" />
-                                        </div>
+                                    <div className="flex gap-1.5">
+                                        <button
+                                            onClick={() => handleAccept(req)}
+                                            className="p-2 rounded-xl bg-[var(--color-success-light)] text-[var(--color-success)] hover:opacity-80 transition-all"
+                                        >
+                                            <FiCheck size={16} />
+                                        </button>
+                                        <button
+                                            onClick={() => handleDecline(req)}
+                                            className="p-2 rounded-xl bg-[var(--color-danger-light)] text-[var(--color-danger)] hover:opacity-80 transition-all"
+                                        >
+                                            <FiX size={16} />
+                                        </button>
                                     </div>
-                                ))
-                            ) : (
-                                <div className="text-center py-12 bg-white rounded-xl border border-dashed border-gray-200">
-                                    <p className="text-gray-400 text-sm">
-                                        {searchQuery
-                                            ? "No matching friends found."
-                                            : "No friends yet."}
-                                    </p>
                                 </div>
-                            )}
-                        </div>
+                            </Card>
+                        ))}
                     </div>
                 </div>
-            </div>
+            )}
+
+            {/* Sent Requests */}
+            {sentRequests.length > 0 && (
+                <div className="mb-6">
+                    <h3 className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest mb-3 ml-1">
+                        Sent Requests ({sentRequests.length})
+                    </h3>
+                    <div className="space-y-2">
+                        {sentRequests.map((req) => (
+                            <Card key={req.id} padding="sm">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <Avatar name={req.toId} size="sm" />
+                                        <p className="text-sm text-[var(--color-text-secondary)]">Request sent</p>
+                                    </div>
+                                    <Badge variant="pending">Pending</Badge>
+                                </div>
+                            </Card>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Search */}
+            {friends.length > 0 && (
+                <div className="mb-4">
+                    <Input
+                        type="text"
+                        placeholder="Search friends..."
+                        value={searchTerm}
+                        setValue={setSearchTerm}
+                        icon={FiSearch}
+                    />
+                </div>
+            )}
+
+            {/* Friends List */}
+            {filteredFriends.length === 0 && friends.length === 0 ? (
+                <EmptyState
+                    icon={FiUsers}
+                    title="No friends yet"
+                    subtitle="Add friends to start splitting expenses"
+                    actionText="Add Friend"
+                    onAction={() => setShowAddFriend(true)}
+                />
+            ) : filteredFriends.length === 0 ? (
+                <EmptyState
+                    icon={FiSearch}
+                    title="No results"
+                    subtitle={`No friends matching "${searchTerm}"`}
+                />
+            ) : (
+                <div className="space-y-2">
+                    {filteredFriends.map((friend) => (
+                        <Card key={friend.uid} padding="sm" hover onClick={() => navigate(`/friend/${friend.uid}`)}>
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <Avatar name={friend.username} size="md" />
+                                    <div>
+                                        <p className="text-sm font-bold text-[var(--color-text)]">{friend.username}</p>
+                                        <p className="text-[10px] text-[var(--color-text-muted)]">{friend.email}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleUnfriend(friend);
+                                        }}
+                                        className="p-1.5 rounded-lg text-[var(--color-text-muted)] hover:text-[var(--color-danger)] hover:bg-[var(--color-danger-light)] transition-all"
+                                    >
+                                        <FiUserX size={14} />
+                                    </button>
+                                    <FiChevronRight size={16} className="text-[var(--color-text-muted)]" />
+                                </div>
+                            </div>
+                        </Card>
+                    ))}
+                </div>
+            )}
         </div>
     );
-};;
+};
 
 export default Friends;

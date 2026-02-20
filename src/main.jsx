@@ -4,6 +4,7 @@ import "./index.css";
 import { createBrowserRouter, Navigate, RouterProvider } from "react-router-dom";
 
 import AuthProvider from "./context/AuthProvider";
+import ThemeProvider from "./context/ThemeContext";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import PublicRoute from "./routes/PublicRoute";
@@ -75,6 +76,10 @@ const router = createBrowserRouter([
                 element: <AddExpense />,
             },
             {
+                path: "/add-expense/:id",
+                element: <AddExpense />,
+            },
+            {
                 path: "/add-friend",
                 element: <AddFriend />,
             },
@@ -100,8 +105,10 @@ const router = createBrowserRouter([
 
 createRoot(document.getElementById("root")).render(
     <StrictMode>
-        <AuthProvider>
-            <RouterProvider router={router} />
-        </AuthProvider>
+        <ThemeProvider>
+            <AuthProvider>
+                <RouterProvider router={router} />
+            </AuthProvider>
+        </ThemeProvider>
     </StrictMode>,
 );

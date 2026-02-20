@@ -1,54 +1,48 @@
-import React from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { FiUsers, FiUser, FiPieChart, FiLayout, FiFileText } from "react-icons/fi";
+import { NavLink, useLocation } from 'react-router-dom';
+import { FiLayout, FiPieChart, FiUsers, FiFileText } from 'react-icons/fi';
+
+const tabs = [
+    { id: 'journal', label: 'Journal', icon: FiLayout, path: '/journal' },
+    { id: 'dashboard', label: 'Splitter', icon: FiPieChart, path: '/split' },
+    { id: 'friends', label: 'Friends', icon: FiUsers, path: '/friends' },
+    { id: 'statement', label: 'Statement', icon: FiFileText, path: '/statement' },
+];
 
 const BottomNav = () => {
-    const navigate = useNavigate();
     const location = useLocation();
 
-    const tabs = [
-        { id: "journal", label: "Journal", icon: FiLayout, path: "/journal" },
-        { id: "dashboard", label: "Splitter", icon: FiPieChart, path: "/split" },
-        { id: "friends", label: "Friends", icon: FiUsers, path: "/friends" },
-        { id: "statement", label: "Statement", icon: FiFileText, path: "/statement" },
-        // { id: "profile", label: "Profile", icon: FiUser, path: "/profile" },
-    ];
-
     return (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 py-2 px-6 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-40 md:hidden">
-            <div className="max-w-md mx-auto flex justify-between items-center">
-                {tabs.map((tab) => {
-                    const isActive = location.pathname === tab.path;
-
-                    return (
-                        <button
-                            key={tab.id}
-                            onClick={() => navigate(tab.path)}
-                            className={`flex flex-col items-center justify-center w-16 py-1 transition-all duration-200 ${isActive ? "text-blue-600" : "text-gray-400 hover:text-gray-600"
-                                }`}
-                        >
-                            <div
-                                className={`transition-transform duration-200 ${isActive ? "-translate-y-1" : ""}`}
+        <nav className="fixed bottom-0 left-0 right-0 z-50 lg:hidden">
+            <div className="bg-[var(--color-nav-bg)] backdrop-blur-xl border-t border-[var(--color-border-light)] safe-area-bottom shadow-[0_-2px_10px_var(--color-shadow)]">
+                <div className="flex justify-around items-center h-[60px] max-w-md mx-auto">
+                    {tabs.map((tab) => {
+                        const isActive = location.pathname.startsWith(tab.path);
+                        return (
+                            <NavLink
+                                key={tab.id}
+                                to={tab.path}
+                                className="flex flex-col items-center justify-center gap-0.5 py-1 px-3 relative"
                             >
+                                {isActive && (
+                                    <span className="absolute -top-0 left-1/2 -translate-x-1/2 w-8 h-[3px] bg-[var(--color-primary)] rounded-full" />
+                                )}
                                 <tab.icon
-                                    size={isActive ? 24 : 22}
-                                    className={`transition-all ${isActive ? "stroke-[2.5px]" : "stroke-2"}`}
+                                    size={20}
+                                    className={`transition-all duration-200 ${isActive ? 'text-[var(--color-primary)] scale-110' : 'text-[var(--color-text-muted)]'
+                                        }`}
                                 />
-                            </div>
-
-                            <span
-                                className={`text-[10px] font-bold mt-0.5 transition-all duration-200 ${isActive
-                                        ? "opacity-100 translate-y-0"
-                                        : "opacity-0 translate-y-2 hidden"
-                                    }`}
-                            >
-                                {tab.label}
-                            </span>
-                        </button>
-                    );
-                })}
+                                <span
+                                    className={`text-[10px] font-semibold transition-colors ${isActive ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-muted)]'
+                                        }`}
+                                >
+                                    {tab.label}
+                                </span>
+                            </NavLink>
+                        );
+                    })}
+                </div>
             </div>
-        </div>
+        </nav>
     );
 };
 
