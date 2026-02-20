@@ -32,6 +32,7 @@ import Avatar from '../../components/Avatar';
 import PageHeader from '../../components/PageHeader';
 import EmptyState from '../../components/EmptyState';
 import Spinner from '../../components/Spinner';
+import SwipeableCard from '../../components/SwipeableCard';
 
 const FriendDetails = () => {
     const { user } = useContext(AuthContext);
@@ -169,14 +170,14 @@ const FriendDetails = () => {
                     </div>
                     <div className="text-right">
                         <p className="text-xs text-white/70">
-                            {balance > 0 ? `${friendName} owes you` : balance < 0 ? `You owe ${friendName}` : 'All settled!'}
+                            {balance > 0 ? `${friendName} will pay you` : balance < 0 ? `You will pay ${friendName}` : 'All settled!'}
                         </p>
                     </div>
                 </div>
             </Card>
 
             {/* Transactions */}
-            <h3 className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest mb-3 ml-1">
+            <h3 className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-widest mb-3 ml-1">
                 Transaction History ({transactions.length})
             </h3>
 
@@ -191,46 +192,50 @@ const FriendDetails = () => {
                     {transactions.map((t) => {
                         const isPayer = t.role === 'payer';
                         return (
-                            <Card key={t.id} padding="sm" hover className="animate-fade-in-up">
-                                <div className="flex items-center gap-3">
-                                    <div className={`p-2 rounded-xl shrink-0 ${isPayer ? 'bg-[var(--color-success-light)] text-[var(--color-success)]' : 'bg-[var(--color-danger-light)] text-[var(--color-danger)]'}`}>
-                                        {isPayer ? <FiArrowUpRight size={16} /> : <FiArrowDownLeft size={16} />}
-                                    </div>
+                            <SwipeableCard
+                                key={t.id}
+                                canEdit={isPayer && t.settleStatus !== 'settled' && t.status !== 'confirmed'}
+                                onEdit={() => navigate(`/edit-expense/${t.id}`)}
+                                canDelete={true}
+                                onDelete={() => handleDelete(t.id)}
+                            >
+                                <Card padding="sm" className="animate-fade-in-up transition-transform active:scale-[0.98]">
+                                    <div className="flex items-center gap-3">
+                                        <div className={`p-2 rounded-xl shrink-0 ${isPayer ? 'bg-[var(--color-success-light)] text-[var(--color-success)]' : 'bg-[var(--color-danger-light)] text-[var(--color-danger)]'}`}>
+                                            {isPayer ? <FiArrowUpRight size={16} /> : <FiArrowDownLeft size={16} />}
+                                        </div>
 
-                                    <div className="flex-1 min-w-0">
-                                        {/* Row 1: description + amount + edit */}
-                                        <div className="flex items-center justify-between gap-2">
-                                            <p className="text-sm font-bold text-[var(--color-text)] truncate">{t.description}</p>
-                                            <div className="flex items-center gap-1.5 shrink-0">
-                                                <span className={`text-sm font-bold ${isPayer ? 'text-[var(--color-text)]' : 'text-[var(--color-text-secondary)]'}`}>
+                                        {/* Details — flex rows layout */}
+                                        <div className="flex-1 min-w-0 flex flex-col justify-center">
+                                            {/* Top Row: Description & Amount */}
+                                            <div className="flex items-start justify-between gap-2">
+                                                <p className="text-sm font-semibold text-[var(--color-text)] truncate">
+                                                    {t.description}
+                                                </p>
+                                                <span className={`text-sm font-semibold shrink-0 ${isPayer ? 'text-[var(--color-text)]' : 'text-[var(--color-text-secondary)]'}`}>
                                                     {isPayer ? '+' : '-'} Rs.{t.amount}
                                                 </span>
-                                                <button onClick={() => handleDelete(t.id)} className="p-1 rounded-md border border-[var(--color-danger)]/20 text-[var(--color-danger)] bg-[var(--color-danger-light)] hover:opacity-80 active:scale-95 transition-all" title="Delete">
-                                                    <FiTrash2 size={11} />
-                                                </button>
                                             </div>
-                                        </div>
 
-                                        {/* Row 2: date left, badge+actions right */}
-                                        <div className="flex items-center justify-between mt-1">
-                                            <span className="text-[10px] text-[var(--color-text-muted)]">{formatDate(t.date)}</span>
-
-                                            <div className="flex items-center gap-1 shrink-0">
-                                                {!isPayer && t.status === 'confirmed' && t.settleStatus !== 'settled' && t.settleStatus !== 'settle_pending' && (
-                                                    <Button size="xs" variant="outline" text="Settle" onClick={() => handleSettle(t.id)} />
-                                                )}
-                                                {isPayer && t.settleStatus === 'settle_pending' && (
-                                                    <Button size="xs" variant="success" icon={FiCheck} onClick={() => handleConfirmSettle(t.id)} />
-                                                )}
-                                                {getStatusBadge(t)}
-                                                <button onClick={() => navigate(`/add-expense/${t.id}`)} className="p-1 rounded-md border border-[var(--color-primary)]/20 text-[var(--color-primary)] bg-[var(--color-primary-light)] hover:opacity-80 active:scale-95 transition-all" title="Edit">
-                                                    <FiEdit2 size={11} />
-                                                </button>
+                                            {/* Bottom Row: Date & Status Badge */}
+                                            <div className="flex items-center justify-between gap-2 mt-0.5">
+                                                <div className="flex items-center gap-1.5 text-xs text-[var(--color-text-muted)] truncate">
+                                                    <span>{formatDate(t.date)}</span>
+                                                </div>
+                                                <div className="flex items-center gap-1 justify-end shrink-0">
+                                                    {!isPayer && t.status === 'confirmed' && t.settleStatus !== 'settled' && t.settleStatus !== 'settle_pending' && (
+                                                        <Button size="xs" variant="outline" text="Settle" onClick={() => handleSettle(t.id)} />
+                                                    )}
+                                                    {isPayer && t.settleStatus === 'settle_pending' && (
+                                                        <Button size="xs" variant="success" icon={FiCheck} onClick={() => handleConfirmSettle(t.id)} />
+                                                    )}
+                                                    {getStatusBadge(t)}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            </Card>
+                                </Card>
+                            </SwipeableCard>
                         );
                     })}
                 </div>

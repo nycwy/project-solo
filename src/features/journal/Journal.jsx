@@ -35,6 +35,7 @@ import Modal from '../../components/Modal';
 import PageHeader from '../../components/PageHeader';
 import EmptyState from '../../components/EmptyState';
 import Badge from '../../components/Badge';
+import SwipeableCard from '../../components/SwipeableCard';
 
 import Spinner from '../../components/Spinner';
 
@@ -240,20 +241,20 @@ const Journal = () => {
                         <div className="pr-4 cursor-pointer group" onClick={() => openAddModal('income')}>
                             <div className="flex items-center gap-1.5 mb-1.5">
                                 <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                                <span className="text-[10px] text-[var(--color-text-muted)] font-semibold uppercase tracking-widest">Income</span>
+                                <span className="text-xs text-[var(--color-text-muted)] font-semibold uppercase tracking-widest">Income</span>
                             </div>
                             <p className="text-xl font-bold text-[var(--color-text)] tracking-tight">Rs. {totalIncome.toFixed(0)}</p>
-                            <span className="text-[9px] text-emerald-500/70 font-medium mt-1 inline-flex items-center gap-0.5 group-active:scale-95 transition-transform">+ Add Income</span>
+                            <span className="text-[10px] text-emerald-500/70 font-medium mt-1 inline-flex items-center gap-0.5 group-active:scale-95 transition-transform">+ Add Income</span>
                         </div>
 
                         {/* Expense */}
                         <div className="pl-4 cursor-pointer group" onClick={() => openAddModal('expense')}>
                             <div className="flex items-center gap-1.5 mb-1.5">
                                 <div className="w-2 h-2 rounded-full bg-rose-500" />
-                                <span className="text-[10px] text-[var(--color-text-muted)] font-semibold uppercase tracking-widest">Expense</span>
+                                <span className="text-xs text-[var(--color-text-muted)] font-semibold uppercase tracking-widest">Expense</span>
                             </div>
                             <p className="text-xl font-bold text-[var(--color-text)] tracking-tight">Rs. {totalExpense.toFixed(0)}</p>
-                            <span className="text-[9px] text-rose-500/70 font-medium mt-1 inline-flex items-center gap-0.5 group-active:scale-95 transition-transform">+ Add Expense</span>
+                            <span className="text-[10px] text-rose-500/70 font-medium mt-1 inline-flex items-center gap-0.5 group-active:scale-95 transition-transform">+ Add Expense</span>
                         </div>
                     </div>
 
@@ -287,7 +288,7 @@ const Journal = () => {
                             >
                                 <div className="flex items-center gap-2">
                                     <span className="text-sm font-bold text-[var(--color-text)]">{group.month}</span>
-                                    <span className="text-[10px] text-[var(--color-text-muted)]">{group.items.length} entries</span>
+                                    <span className="text-xs text-[var(--color-text-muted)]">{group.items.length} entries</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <span className={`text-sm font-bold ${(group.monthIncome - group.monthExpense) >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
@@ -304,35 +305,42 @@ const Journal = () => {
                             {expandedMonth === group.key && (
                                 <div className="space-y-1.5 animate-fade-in-up">
                                     {group.items.map((entry) => (
-                                        <Card key={entry.id} padding="sm" hover>
-                                            <div className="flex items-center gap-3">
-                                                {/* Icon */}
-                                                <div className={`w-9 h-9 rounded-xl shrink-0 flex items-center justify-center ${entry.type === 'income' ? 'bg-[var(--color-success-light)] text-[var(--color-success)]' : 'bg-[var(--color-danger-light)] text-[var(--color-danger)]'}`}>
-                                                    {entry.type === 'income' ? <FiTrendingUp size={15} /> : <FiTrendingDown size={15} />}
-                                                </div>
-
-                                                {/* Details */}
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center justify-between gap-2">
-                                                        <p className="text-sm font-semibold text-[var(--color-text)] truncate">{entry.description || entry.type}</p>
-                                                        <span className={`text-sm font-semibold shrink-0 ${entry.type === 'income' ? 'text-[var(--color-text)]' : 'text-[var(--color-text-secondary)]'}`}>
-                                                            {entry.type === 'income' ? '+' : '-'} Rs.{entry.amount}
-                                                        </span>
+                                        <SwipeableCard
+                                            key={entry.id}
+                                            canEdit={true}
+                                            onEdit={() => openEditModal(entry)}
+                                            canDelete={true}
+                                            onDelete={() => handleDeleteEntry(entry.id)}
+                                        >
+                                            <Card padding="sm" className="transition-transform active:scale-[0.98]">
+                                                <div className="flex items-center gap-3">
+                                                    {/* Icon */}
+                                                    <div className={`w-9 h-9 rounded-xl shrink-0 flex items-center justify-center ${entry.type === 'income' ? 'bg-[var(--color-success-light)] text-[var(--color-success)]' : 'bg-[var(--color-danger-light)] text-[var(--color-danger)]'}`}>
+                                                        {entry.type === 'income' ? <FiTrendingUp size={15} /> : <FiTrendingDown size={15} />}
                                                     </div>
-                                                    <div className="flex items-center justify-between mt-0.5">
-                                                        <span className="text-[10px] text-[var(--color-text-muted)]">{formatDate(entry.date)}</span>
-                                                        <div className="flex items-center gap-1">
-                                                            <button onClick={() => openEditModal(entry)} className="p-1 rounded-md border border-[var(--color-primary)]/20 text-[var(--color-primary)] bg-[var(--color-primary-light)] hover:opacity-80 active:scale-95 transition-all">
-                                                                <FiEdit2 size={11} />
-                                                            </button>
-                                                            <button onClick={() => handleDeleteEntry(entry.id)} className="p-1 rounded-md border border-[var(--color-danger)]/20 text-[var(--color-danger)] bg-[var(--color-danger-light)] hover:opacity-80 active:scale-95 transition-all">
-                                                                <FiTrash2 size={11} />
-                                                            </button>
+
+                                                    {/* Details — flex rows layout */}
+                                                    <div className="flex-1 min-w-0 flex flex-col justify-center">
+                                                        {/* Top Row */}
+                                                        <div className="flex items-start justify-between gap-2">
+                                                            <p className="text-sm font-semibold text-[var(--color-text)] truncate">{entry.description || entry.type}</p>
+                                                            <span className={`text-sm font-semibold shrink-0 ${entry.type === 'income' ? 'text-[var(--color-text)]' : 'text-[var(--color-text-secondary)]'}`}>
+                                                                {entry.type === 'income' ? '+' : '-'} Rs.{entry.amount}
+                                                            </span>
+                                                        </div>
+
+                                                        {/* Bottom Row */}
+                                                        <div className="flex items-center justify-between gap-2 mt-0.5">
+                                                            <div className="flex items-center gap-1.5 text-xs text-[var(--color-text-muted)] truncate">
+                                                                <span>{formatDate(entry.date)}</span>
+                                                            </div>
+                                                            <div className="flex items-center gap-1 justify-end shrink-0">
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        </Card>
+                                            </Card>
+                                        </SwipeableCard>
                                     ))}
                                 </div>
                             )}
@@ -416,7 +424,7 @@ const Journal = () => {
                     {/* Drafts List */}
                     {drafts.length > 0 && (
                         <div className="space-y-2 pt-2 border-t border-[var(--color-border-light)]">
-                            <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase">Draft List ({drafts.length})</p>
+                            <p className="text-xs font-bold text-[var(--color-text-muted)] uppercase">Draft List ({drafts.length})</p>
                             {drafts.map((draft, i) => (
                                 <div key={i} className="flex items-center justify-between p-2.5 bg-[var(--color-surface-alt)] rounded-xl">
                                     <div>

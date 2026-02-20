@@ -47,8 +47,8 @@ const Layout = () => {
         navigate('/login');
     };
 
-    const sidebarWidth = sidebarOpen ? 'w-64' : 'w-[72px]';
-    const mainMargin = sidebarOpen ? 'lg:ml-64' : 'lg:ml-[72px]';
+    const sidebarWidth = sidebarOpen ? 'w-64' : 'w-20';
+    const mainMargin = sidebarOpen ? 'lg:ml-64' : 'lg:ml-20';
 
     const linkClasses = ({ isActive }) =>
         `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group relative ${sidebarOpen ? '' : 'justify-center'
@@ -88,7 +88,7 @@ const Layout = () => {
                 {/* Nav Links */}
                 <nav className="flex-1 px-3 space-y-1 mt-2">
                     {sidebarOpen && (
-                        <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest px-3 mb-2">Menu</p>
+                        <p className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-widest px-3 mb-2">Menu</p>
                     )}
                     {navItems.map((item) => (
                         <NavLink key={item.path} to={item.path} className={linkClasses} title={!sidebarOpen ? item.label : undefined}>
@@ -123,7 +123,7 @@ const Layout = () => {
                                         <p className="text-sm font-bold text-[var(--color-text)] truncate">
                                             {user?.displayName || 'User'}
                                         </p>
-                                        <p className="text-[10px] text-[var(--color-text-muted)] truncate">{user?.email}</p>
+                                        <p className="text-xs text-[var(--color-text-muted)] truncate">{user?.email}</p>
                                     </div>
                                 </div>
                                 <button

@@ -151,7 +151,7 @@ const Remember = () => {
             </Card>
 
             {/* Items List */}
-            <h3 className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest mb-3 ml-1">
+            <h3 className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-widest mb-3 ml-1">
                 To Buy ({items.length})
             </h3>
 

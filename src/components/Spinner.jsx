@@ -3,7 +3,7 @@ import { twMerge } from 'tailwind-merge';
 const Spinner = ({ fullPage = false, size = 'md', className }) => {
     const sizes = {
         sm: 'h-5 w-5 border-2',
-        md: 'h-8 w-8 border-[3px]',
+        md: 'h-8 w-8 border-4',
         lg: 'h-10 w-10 border-4',
     };
 

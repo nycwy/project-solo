@@ -1,11 +1,13 @@
 import React, { useContext } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
+import { NotificationContext } from "../context/NotificationContext";
 import { FiUser, FiPieChart, FiLayout, FiFileText } from "react-icons/fi";
 import { FaUserFriends } from "react-icons/fa";
 
 const Navbar = () => {
     const { user } = useContext(AuthContext);
+    const { friendRequestsCount, splitRequestsCount } = useContext(NotificationContext);
     const navigate = useNavigate();
 
     const userName = user?.username || user?.displayName?.split(" ")[0] || "User";
@@ -19,7 +21,7 @@ const Navbar = () => {
     };
 
     const desktopLinkClasses = ({ isActive }) =>
-        `flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-200 font-medium text-sm
+        `flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-200 font-medium text-sm relative
         ${isActive
             ? "text-blue-600 bg-blue-50 font-bold"
             : "text-gray-500 hover:text-blue-600 hover:bg-gray-50"
@@ -43,10 +45,30 @@ const Navbar = () => {
                             <FiLayout size={18} /> <span>Journal</span>
                         </NavLink>
                         <NavLink to="/split" className={desktopLinkClasses}>
-                            <FiPieChart size={18} /> <span>Splitter</span>
+                            <div className="relative">
+                                <FiPieChart size={18} />
+                                {splitRequestsCount > 0 && (
+                                    <div className="absolute -top-2 -right-2 flex items-center justify-center w-5 h-5 rounded-full bg-purple-500 border border-white shadow-[0_1px_3px_rgba(0,0,0,0.1)] dark:border-gray-900">
+                                        <span className="text-xs font-bold text-white leading-none transform scale-90 pt-[1px]">
+                                            {splitRequestsCount}
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+                            <span>Splitter</span>
                         </NavLink>
                         <NavLink to="/friends" className={desktopLinkClasses}>
-                            <FaUserFriends size={18} /> <span>Friends</span>
+                            <div className="relative">
+                                <FaUserFriends size={18} />
+                                {friendRequestsCount > 0 && (
+                                    <div className="absolute -top-2 -right-2 flex items-center justify-center w-5 h-5 rounded-full bg-rose-500 border border-white shadow-[0_1px_3px_rgba(0,0,0,0.1)] dark:border-gray-900">
+                                        <span className="text-xs font-bold text-white leading-none transform scale-90 pt-[1px]">
+                                            {friendRequestsCount}
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+                            <span>Friends</span>
                         </NavLink>
                         <NavLink to="/statement" className={desktopLinkClasses}>
                             <FiFileText size={18} /> <span>Statement</span>

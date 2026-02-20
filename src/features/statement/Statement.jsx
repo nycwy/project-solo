@@ -177,12 +177,12 @@ const Statement = () => {
 
                 if (!isPersonal) {
                     if (t.role === 'payer') {
-                        type = 'LENT';
+                        type = 'YOU PAID';
                         partyName = getName(t.debtorId);
                         amountStr = `+ ${t.amount}`;
                         if (t.status === 'confirmed') totalLent += Number(t.amount);
                     } else {
-                        type = 'BORROWED';
+                        type = 'THEY PAID';
                         partyName = getName(t.payerId);
                         amountStr = `- ${t.amount}`;
                         if (t.status === 'confirmed') totalBorrowed += Number(t.amount);
@@ -219,8 +219,8 @@ const Statement = () => {
             const finalY = pdfDoc.lastAutoTable.finalY + 10;
             pdfDoc.setFontSize(12);
             pdfDoc.setTextColor(0, 0, 0);
-            pdfDoc.text(`Total Lent (Settled): Rs. ${totalLent}`, 14, finalY);
-            pdfDoc.text(`Total Borrowed (Settled): Rs. ${totalBorrowed}`, 14, finalY + 6);
+            pdfDoc.text(`Total You Paid (Settled): Rs. ${totalLent}`, 14, finalY);
+            pdfDoc.text(`Total They Paid (Settled): Rs. ${totalBorrowed}`, 14, finalY + 6);
 
             pdfDoc.save(`Splitter_${startDate}_${endDate}.pdf`);
         } catch (error) {
@@ -299,7 +299,7 @@ const Statement = () => {
                             <p className="text-xs opacity-80 leading-relaxed">
                                 {activeTab === 'journal'
                                     ? 'Generates a PDF of your personal income and expense records, including totals and net savings calculations.'
-                                    : 'Generates a detailed history of money lent and borrowed, including friend names, status (Settled/Pending), and amounts.'}
+                                    : 'Generates a detailed history of money paid by you and for you, including friend names, status (Settled/Pending), and amounts.'}
                             </p>
                         </div>
                     </div>

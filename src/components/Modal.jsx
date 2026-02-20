@@ -42,7 +42,7 @@ const Modal = ({ isOpen, onClose, title, icon: Icon, headerClassName, children, 
 
                 {/* Footer */}
                 {footer && (
-                    <div className="p-5 border-t border-[var(--color-border-light)] bg-[var(--color-surface-alt)] md:rounded-b-3xl safe-area-bottom">
+                    <div className="p-5 pb-10 md:pb-6 border-t border-[var(--color-border-light)] bg-[var(--color-surface-alt)] md:rounded-b-3xl">
                         {footer}
                     </div>
                 )}

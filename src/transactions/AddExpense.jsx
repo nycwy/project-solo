@@ -15,9 +15,10 @@ import {
 import {
     FiUsers,
     FiCheck,
-    FiChevronDown,
     FiChevronUp,
+    FiChevronDown,
     FiDollarSign,
+    FiSearch,
 } from 'react-icons/fi';
 
 import Card from '../components/Card';
@@ -39,6 +40,7 @@ const AddExpense = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [showFriendSelector, setShowFriendSelector] = useState(false);
     const [existingBatchId, setExistingBatchId] = useState(null);
+    const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
         const fetchFriends = async () => {
@@ -112,6 +114,7 @@ const AddExpense = () => {
         setParticipants((prev) =>
             prev.includes(friendId) ? prev.filter((p) => p !== friendId) : [...prev, friendId]
         );
+        setSearchTerm('');
     };
 
     const handleSubmit = async (e) => {
@@ -250,7 +253,7 @@ const AddExpense = () => {
 
                     {/* Friend Selector */}
                     <div>
-                        <label className="block text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider mb-1.5 ml-1">
+                        <label className="block text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider mb-1.5 ml-1">
                             Split with
                         </label>
                         <button
@@ -269,7 +272,7 @@ const AddExpense = () => {
                                     <p className="text-sm font-bold">
                                         {participants.length === 1 ? 'Just Me' : `${participants.length} People`}
                                     </p>
-                                    <p className="text-[10px] opacity-70">
+                                    <p className="text-xs opacity-70">
                                         {participants.length === 1 ? 'Personal Expense' : 'Split Equally'}
                                     </p>
                                 </div>
@@ -278,44 +281,64 @@ const AddExpense = () => {
                         </button>
 
                         {showFriendSelector && (
-                            <div className="mt-2 bg-[var(--color-surface)] border border-[var(--color-border-light)] rounded-2xl shadow-xl overflow-hidden animate-fade-in-up">
-                                <div className="p-2 max-h-56 overflow-y-auto space-y-1">
-                                    {/* You */}
-                                    <div className="flex items-center justify-between p-3 bg-[var(--color-surface-alt)] rounded-xl opacity-60">
-                                        <div className="flex items-center gap-3">
-                                            <Avatar name="You" size="sm" />
-                                            <span className="font-bold text-sm text-[var(--color-text-secondary)]">You (Payer)</span>
-                                        </div>
-                                        <FiCheck className="text-[var(--color-primary)]" />
+                            <div className="mt-2 bg-[var(--color-surface)] border border-[var(--color-border-light)] rounded-2xl shadow-xl overflow-hidden animate-fade-in-up flex flex-col">
+                                <div className="p-3 border-b border-[var(--color-border-light)] sticky top-0 bg-[var(--color-surface)] z-10">
+                                    <div className="relative">
+                                        <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" size={16} />
+                                        <input
+                                            type="text"
+                                            placeholder="Search friends..."
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                            className="w-full pl-9 pr-3 py-2 bg-[var(--color-surface-hover)] border-none rounded-xl text-sm focus:ring-2 focus:ring-[var(--color-primary-subtle)] transition-all outline-none text-[var(--color-text)] placeholder:text-[var(--color-text-muted)]"
+                                            autoFocus
+                                        />
                                     </div>
+                                </div>
+                                <div className="p-2 max-h-56 overflow-y-auto space-y-1 relative">
+                                    {/* You */}
+                                    {(!searchTerm || 'you (payer)'.includes(searchTerm.toLowerCase())) && (
+                                        <div className="flex items-center justify-between p-3 bg-[var(--color-surface-alt)] rounded-xl opacity-60">
+                                            <div className="flex items-center gap-3">
+                                                <Avatar name="You" size="sm" />
+                                                <span className="font-bold text-sm text-[var(--color-text-secondary)]">You (Payer)</span>
+                                            </div>
+                                            <FiCheck className="text-[var(--color-primary)]" />
+                                        </div>
+                                    )}
 
                                     {friends.length > 0 ? (
-                                        friends.map((friend) => {
-                                            const isSelected = participants.includes(friend.uid);
-                                            return (
-                                                <div
-                                                    key={friend.uid}
-                                                    onClick={() => toggleParticipant(friend.uid)}
-                                                    className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all ${isSelected
-                                                        ? 'bg-[var(--color-primary-light)] border border-[var(--color-primary-subtle)]'
-                                                        : 'hover:bg-[var(--color-surface-hover)] border border-transparent'
-                                                        }`}
-                                                >
-                                                    <div className="flex items-center gap-3">
-                                                        <Avatar name={friend.username} size="sm" className={isSelected ? '' : 'opacity-60'} />
-                                                        <div>
-                                                            <span className={`text-sm font-bold ${isSelected ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-secondary)]'}`}>
-                                                                {friend.username}
-                                                            </span>
-                                                            <p className="text-[10px] text-[var(--color-text-muted)]">{friend.email}</p>
+                                        friends
+                                            .filter(f => f.username.toLowerCase().includes(searchTerm.toLowerCase()) || f.email.toLowerCase().includes(searchTerm.toLowerCase()))
+                                            .map((friend) => {
+                                                const isSelected = participants.includes(friend.uid);
+                                                return (
+                                                    <div
+                                                        key={friend.uid}
+                                                        onClick={() => toggleParticipant(friend.uid)}
+                                                        className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all ${isSelected
+                                                            ? 'bg-[var(--color-primary-light)] border border-[var(--color-primary-subtle)]'
+                                                            : 'hover:bg-[var(--color-surface-hover)] border border-transparent'
+                                                            }`}
+                                                    >
+                                                        <div className="flex items-center gap-3">
+                                                            <Avatar name={friend.username} size="sm" className={isSelected ? '' : 'opacity-60'} />
+                                                            <div>
+                                                                <span className={`text-sm font-bold ${isSelected ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-secondary)]'}`}>
+                                                                    {friend.username}
+                                                                </span>
+                                                                <p className="text-xs text-[var(--color-text-muted)]">{friend.email}</p>
+                                                            </div>
                                                         </div>
+                                                        {isSelected && <FiCheck className="text-[var(--color-primary)]" />}
                                                     </div>
-                                                    {isSelected && <FiCheck className="text-[var(--color-primary)]" />}
-                                                </div>
-                                            );
-                                        })
+                                                );
+                                            })
                                     ) : (
                                         <p className="p-4 text-xs text-[var(--color-text-muted)] text-center">No friends added yet.</p>
+                                    )}
+                                    {friends.length > 0 && searchTerm && friends.filter(f => f.username.toLowerCase().includes(searchTerm.toLowerCase()) || f.email.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 && (
+                                        <p className="p-4 text-xs text-[var(--color-text-muted)] text-center">No friends found for "{searchTerm}".</p>
                                     )}
                                 </div>
                             </div>
@@ -325,7 +348,7 @@ const AddExpense = () => {
                     {/* Summary */}
                     {amount && participants.length > 0 && (
                         <Card className="bg-[var(--color-surface-alt)] border-[var(--color-border)]" padding="sm">
-                            <p className="text-[10px] text-[var(--color-text-muted)] uppercase font-bold tracking-widest mb-2 text-center">Summary</p>
+                            <p className="text-xs text-[var(--color-text-muted)] uppercase font-bold tracking-widest mb-2 text-center">Summary</p>
                             <div className="flex justify-between items-center text-sm">
                                 <div className="text-center flex-1 border-r border-[var(--color-border)] pr-3">
                                     <p className="text-xs text-[var(--color-text-muted)] mb-1">Per Person</p>

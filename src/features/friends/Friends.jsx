@@ -14,6 +14,7 @@ import {
     addDoc,
     serverTimestamp,
     getDocs,
+    getDoc,
 } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -81,8 +82,30 @@ const Friends = () => {
             where('fromId', '==', user.uid),
             where('status', '==', 'pending')
         );
-        const unsub = onSnapshot(q, (snap) => {
-            setSentRequests(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+        const unsub = onSnapshot(q, async (snap) => {
+            const requestsData = await Promise.all(
+                snap.docs.map(async (d) => {
+                    const data = d.data();
+                    let toName = data.toName;
+                    let toEmail = data.toEmail;
+
+                    // Fetch missing data for older requests
+                    if (!toName && data.toId) {
+                        try {
+                            const userDoc = await getDoc(doc(db, 'users', data.toId));
+                            if (userDoc.exists()) {
+                                toName = userDoc.data().username || userDoc.data().email;
+                                toEmail = userDoc.data().email;
+                            }
+                        } catch (err) {
+                            console.error("Error fetching user detail:", err);
+                        }
+                    }
+
+                    return { id: d.id, ...data, toName, toEmail };
+                })
+            );
+            setSentRequests(requestsData);
         });
         return () => unsub();
     }, [user]);
@@ -199,7 +222,7 @@ const Friends = () => {
 
             setFriendEmail('');
             setShowAddFriend(false);
-            alert('Friend request sent!');
+            alert(`Request sent to ${friendDoc.data().username || friendEmail}!`);
         } catch (error) {
             console.error('Error sending request:', error);
             alert('Failed to send request');
@@ -262,7 +285,7 @@ const Friends = () => {
             {/* Incoming Requests */}
             {requests.length > 0 && (
                 <div className="mb-6">
-                    <h3 className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest mb-3 ml-1">
+                    <h3 className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-widest mb-3 ml-1">
                         Pending Requests ({requests.length})
                     </h3>
                     <div className="space-y-2">
@@ -273,7 +296,7 @@ const Friends = () => {
                                         <Avatar name={req.fromName} size="sm" />
                                         <div>
                                             <p className="text-sm font-bold text-[var(--color-text)]">{req.fromName}</p>
-                                            <p className="text-[10px] text-[var(--color-text-muted)]">{req.fromEmail}</p>
+                                            <p className="text-xs text-[var(--color-text-muted)]">{req.fromEmail}</p>
                                         </div>
                                     </div>
                                     <div className="flex gap-1.5">
@@ -300,7 +323,7 @@ const Friends = () => {
             {/* Sent Requests */}
             {sentRequests.length > 0 && (
                 <div className="mb-6">
-                    <h3 className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest mb-3 ml-1">
+                    <h3 className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-widest mb-3 ml-1">
                         Sent Requests ({sentRequests.length})
                     </h3>
                     <div className="space-y-2">
@@ -308,8 +331,8 @@ const Friends = () => {
                             <Card key={req.id} padding="sm">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
-                                        <Avatar name={req.toId} size="sm" />
-                                        <p className="text-sm text-[var(--color-text-secondary)]">Request sent</p>
+                                        <Avatar name={req.toName || req.toEmail || "User"} size="sm" />
+                                        <p className="text-sm text-[var(--color-text-secondary)]">Request sent to <span className="font-bold text-[var(--color-text)]">{req.toName || req.toEmail || "User"}</span></p>
                                     </div>
                                     <Badge variant="pending">Pending</Badge>
                                 </div>
@@ -356,7 +379,7 @@ const Friends = () => {
                                     <Avatar name={friend.username} size="md" />
                                     <div>
                                         <p className="text-sm font-bold text-[var(--color-text)]">{friend.username}</p>
-                                        <p className="text-[10px] text-[var(--color-text-muted)]">{friend.email}</p>
+                                        <p className="text-xs text-[var(--color-text-muted)]">{friend.email}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">

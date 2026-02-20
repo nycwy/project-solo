@@ -4,6 +4,7 @@ import "./index.css";
 import { createBrowserRouter, Navigate, RouterProvider } from "react-router-dom";
 
 import AuthProvider from "./context/AuthProvider";
+import { NotificationProvider } from "./context/NotificationContext";
 import ThemeProvider from "./context/ThemeContext";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./routes/ProtectedRoute";
@@ -107,7 +108,9 @@ createRoot(document.getElementById("root")).render(
     <StrictMode>
         <ThemeProvider>
             <AuthProvider>
-                <RouterProvider router={router} />
+                <NotificationProvider>
+                    <RouterProvider router={router} />
+                </NotificationProvider>
             </AuthProvider>
         </ThemeProvider>
     </StrictMode>,

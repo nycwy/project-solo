@@ -11,9 +11,9 @@ const variants = {
 };
 
 const sizes = {
-    sm: 'text-[8px] px-1 py-px rounded gap-0.5',
-    md: 'text-[9px] px-1.5 py-0.5 rounded gap-0.5',
-    lg: 'text-[10px] px-2 py-0.5 rounded-md gap-1',
+    sm: 'text-[9px] px-1 py-px rounded gap-0.5 transform scale-90 origin-right',
+    md: 'text-xs px-1.5 py-0.5 rounded gap-0.5 transform scale-75 origin-right',
+    lg: 'text-xs px-2 py-0.5 rounded-md gap-1',
 };
 
 const Badge = ({ children, variant = 'gray', size = 'md', icon: Icon, dot = false, className }) => {
