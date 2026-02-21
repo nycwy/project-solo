@@ -115,19 +115,7 @@ const FriendDetails = () => {
             const friendName = friendInfo?.username || 'Friend';
             const otherNameDebtorView = txData.payerId === user.uid ? friendName : 'User';
 
-            // Record Expense for the Debtor (they are accepting they owe this money)
-            await addDoc(collection(db, 'journal'), {
-                uid: txData.debtorId,
-                type: 'expense',
-                amount: amount,
-                category: 'Split Bill',
-                description: `[Split from ${otherNameDebtorView}] ${txData.description || ''}`,
-                date: serverTimestamp(),
-                createdAt: serverTimestamp(),
-                autoSplit: true,
-                batchId: txData.batchId || id
-            });
-
+            // Record Expense for the Debtor only upon settlement, not just acceptance
             // Update status to confirmed
             await updateDoc(txRef, { status: 'confirmed' });
         } catch (error) {
@@ -157,14 +145,14 @@ const FriendDetails = () => {
             const payerViewOtherName = txData.payerId === user.uid ? friendName : 'User';
             const debtorViewOtherName = txData.debtorId === user.uid ? friendName : 'User';
 
-            // User requested to NOT show anything on Person A's journal when Person B settles
-            // So we only record Expense for the original Debtor (Person B paying the settlement)
+            // User requested to strictly log the Expense to Person B's journal upon settlement completion
+            // No prefix, just the raw description
             await addDoc(collection(db, 'journal'), {
                 uid: txData.debtorId,
                 type: 'expense',
                 amount: amount,
-                category: 'Settlement',
-                description: `[Settlement to ${txData.debtorId === user.uid ? friendName : (user.displayName || 'Friend')}] ${txData.description || ''}`,
+                category: 'Split Bill',
+                description: txData.description || 'Split Expense',
                 date: serverTimestamp(),
                 createdAt: serverTimestamp(),
                 autoSplit: true

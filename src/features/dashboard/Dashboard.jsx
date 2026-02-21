@@ -159,19 +159,7 @@ const Dashboard = () => {
             // or maybe it's already recorded.
             // If we want it to show up on the Debtor's journal so they know they owe/spent it:
 
-            // Record Expense for the Debtor (they are accepting they owe this money)
-            await addDoc(collection(db, 'journal'), {
-                uid: txData.debtorId,
-                type: 'expense',
-                amount: amount,
-                category: 'Split Bill',
-                description: `[Split from ${otherNameDebtorView}] ${txData.description || ''}`,
-                date: serverTimestamp(),
-                createdAt: serverTimestamp(),
-                autoSplit: true,
-                batchId: txData.batchId || id // link it if possible
-            });
-
+            // Record Expense for the Debtor only upon settlement, not just acceptance
             // Update status to confirmed
             await updateDoc(txRef, { status: 'confirmed' });
         } catch (error) {
@@ -205,14 +193,14 @@ const Dashboard = () => {
             const otherNamePayerView = getName(txData.debtorId);
             const otherNameDebtorView = getName(txData.payerId);
 
-            // User requested to NOT show anything on Person A's journal when Person B settles
-            // So we only record Expense for the original Debtor (Person B paying the settlement)
+            // User requested to strictly log the Expense to Person B's journal upon settlement completion
+            // No prefix, just the raw description
             await addDoc(collection(db, 'journal'), {
                 uid: txData.debtorId,
                 type: 'expense',
                 amount: amount,
-                category: 'Settlement',
-                description: `[Settlement to ${otherNameDebtorView}] ${txData.description || ''}`,
+                category: 'Split Bill',
+                description: txData.description || 'Split Expense',
                 date: serverTimestamp(),
                 createdAt: serverTimestamp(),
                 autoSplit: true
