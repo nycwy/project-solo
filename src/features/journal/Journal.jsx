@@ -93,11 +93,24 @@ const Journal = () => {
         return Object.values(groups).sort((a, b) => b.dateObj - a.dateObj);
     };
 
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth();
+    const currentMonthKey = `${currentYear}-${currentMonth}`;
+
     const totalIncome = entries
-        .filter((e) => e.type === 'income')
+        .filter((e) => {
+            if (!e.date?.seconds) return false;
+            const dateObj = new Date(e.date.seconds * 1000);
+            return `${dateObj.getFullYear()}-${dateObj.getMonth()}` === currentMonthKey && e.type === 'income';
+        })
         .reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+
     const totalExpense = entries
-        .filter((e) => e.type === 'expense')
+        .filter((e) => {
+            if (!e.date?.seconds) return false;
+            const dateObj = new Date(e.date.seconds * 1000);
+            return `${dateObj.getFullYear()}-${dateObj.getMonth()}` === currentMonthKey && e.type === 'expense';
+        })
         .reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
 
     const openAddModal = (type) => {
@@ -287,14 +300,33 @@ const Journal = () => {
                                 onClick={() => setExpandedMonth(expandedMonth === group.key ? null : group.key)}
                                 className="w-full flex items-center justify-between p-3 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border-light)] hover:border-[var(--color-primary)]/30 transition-all mb-2"
                             >
-                                <div className="flex items-center gap-2">
+                                <div className="flex flex-col items-start gap-0.5">
                                     <span className="text-sm font-bold text-[var(--color-text)]">{group.month}</span>
-                                    <span className="text-xs text-[var(--color-text-muted)]">{group.items.length} entries</span>
+                                    <span className="text-xs font-semibold text-[var(--color-text-muted)]">{group.items.length} entries</span>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <span className={`text-sm font-bold ${(group.monthIncome - group.monthExpense) >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
-                                        {(group.monthIncome - group.monthExpense) >= 0 ? '+' : ''}Rs. {(group.monthIncome - group.monthExpense).toFixed(0)}
-                                    </span>
+                                <div className="flex items-center gap-3">
+                                    {group.key !== currentMonthKey && (
+                                        <div className="flex items-center gap-2 sm:gap-3 mr-1 sm:mr-2">
+                                            {/* Income */}
+                                            <div className="flex flex-col items-start min-w-[50px]">
+                                                <span className="text-[9px] sm:text-[10px] text-[var(--color-text-muted)] font-bold uppercase tracking-wider">Income</span>
+                                                <span className="text-[10px] sm:text-xs font-bold text-emerald-500">Rs. {group.monthIncome.toFixed(0)}</span>
+                                            </div>
+                                            {/* Expense */}
+                                            <div className="flex flex-col items-start min-w-[50px]">
+                                                <span className="text-[9px] sm:text-[10px] text-[var(--color-text-muted)] font-bold uppercase tracking-wider">Expense</span>
+                                                <span className="text-[10px] sm:text-xs font-bold text-rose-500">Rs. {group.monthExpense.toFixed(0)}</span>
+                                            </div>
+                                            {/* Net */}
+                                            <div className="flex flex-col items-start border-l border-[var(--color-border)] pl-2 sm:pl-3 min-w-[50px]">
+                                                <span className="text-[9px] sm:text-[10px] text-[var(--color-text-muted)] font-bold uppercase tracking-wider">Net</span>
+                                                <span className={`text-[10px] sm:text-xs font-bold ${(group.monthIncome - group.monthExpense) >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                                                    Rs. {(group.monthIncome - group.monthExpense).toFixed(0)}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    )}
+
                                     <FiChevronDown
                                         size={14}
                                         className={`text-[var(--color-text-muted)] transition-transform duration-200 ${expandedMonth === group.key ? 'rotate-180' : ''}`}
@@ -326,7 +358,7 @@ const Journal = () => {
                                                         <div className="flex items-start justify-between gap-2">
                                                             <p className="text-sm font-semibold text-[var(--color-text)] truncate">{entry.description || entry.type}</p>
                                                             <span className={`text-sm font-semibold shrink-0 ${entry.type === 'income' ? 'text-[var(--color-text)]' : 'text-[var(--color-text-secondary)]'}`}>
-                                                                {entry.type === 'income' ? '+' : '-'} Rs.{entry.amount}
+                                                                {entry.type === 'income' ? '' : '-'} Rs.{entry.amount}
                                                             </span>
                                                         </div>
 
