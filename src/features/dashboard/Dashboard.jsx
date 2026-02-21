@@ -103,20 +103,18 @@ const Dashboard = () => {
 
     // Transactions where you are the payer (they owe you)
     payerTransactions.forEach((t) => {
-        if (t.debtorId !== 'SELF' && t.settleStatus !== 'settled') {
+        if (t.debtorId !== 'SELF' && t.status === 'confirmed' && t.settleStatus !== 'settled') {
             const amount = Number(t.amount) || 0;
-            // 'confirmed' status conceptually means the other person accepted the debt exists,
-            // or 'pending' means it's still proposed by you. Both count towards the balance.
+            // Only count if the other user has confirmed the debt
             friendBalances[t.debtorId] = (friendBalances[t.debtorId] || 0) + amount;
         }
     });
 
     // Transactions where you are the debtor (you owe them)
     debtorTransactions.forEach((t) => {
-        if (t.settleStatus !== 'settled') {
+        if (t.status === 'confirmed' && t.settleStatus !== 'settled') {
             const amount = Number(t.amount) || 0;
-            // Even if they haven't explicitly 'confirmed' yet, or if it's pending,
-            // we factor it into the balance.
+            // Only count if you have confirmed the debt
             friendBalances[t.payerId] = (friendBalances[t.payerId] || 0) - amount;
         }
     });
