@@ -43,7 +43,6 @@ const FriendDetails = () => {
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // Fetch friend info
     useEffect(() => {
         if (!friendId) return;
         const fetchFriend = async () => {
@@ -53,7 +52,6 @@ const FriendDetails = () => {
         fetchFriend();
     }, [friendId]);
 
-    // Fetch transactions between user and friend
     useEffect(() => {
         if (!user?.uid || !friendId) return;
 
@@ -90,7 +88,6 @@ const FriendDetails = () => {
 
     const balance = transactions.reduce((sum, t) => {
         if (t.settleStatus === 'settled') return sum;
-        // Only include fully accepted (confirmed) transactions
         if (t.role === 'payer' && t.status === 'confirmed') return sum + (Number(t.amount) || 0);
         if (t.role === 'debtor' && t.status === 'confirmed') return sum - (Number(t.amount) || 0);
         return sum;
@@ -115,8 +112,6 @@ const FriendDetails = () => {
             const friendName = friendInfo?.username || 'Friend';
             const otherNameDebtorView = txData.payerId === user.uid ? friendName : 'User';
 
-            // Record Expense for the Debtor only upon settlement, not just acceptance
-            // Update status to confirmed
             await updateDoc(txRef, { status: 'confirmed' });
         } catch (error) {
             console.error('Error accepting transaction:', error);
@@ -129,7 +124,6 @@ const FriendDetails = () => {
 
     const handleConfirmSettle = async (id) => {
         try {
-            // Get the transaction details
             const txRef = doc(db, 'transactions', id);
             const txSnap = await getDoc(txRef);
 
@@ -139,14 +133,9 @@ const FriendDetails = () => {
             const amount = Number(txData.amount) || 0;
             const friendName = friendInfo?.username || 'Friend';
 
-            // Name mapping
-            // If the user confirming is the original payer (they are getting their money back)
-            // txData.payerId is them. txData.debtorId is the friend.
             const payerViewOtherName = txData.payerId === user.uid ? friendName : 'User';
             const debtorViewOtherName = txData.debtorId === user.uid ? friendName : 'User';
 
-            // User requested to strictly log the Expense to Person B's journal upon settlement completion
-            // No prefix, just the raw description
             await addDoc(collection(db, 'journal'), {
                 uid: txData.debtorId,
                 type: 'expense',
@@ -158,7 +147,6 @@ const FriendDetails = () => {
                 autoSplit: true
             });
 
-            // Update transaction status
             await updateDoc(txRef, {
                 settleStatus: 'settled',
                 status: 'confirmed',
@@ -170,13 +158,11 @@ const FriendDetails = () => {
 
     const handleDelete = async (id) => {
         if (window.confirm('Delete this transaction permanently?')) {
-            // Get the transaction to find its batchId
             const txSnap = await getDoc(doc(db, 'transactions', id));
             const txData = txSnap.exists() ? txSnap.data() : null;
 
             await deleteDoc(doc(db, 'transactions', id));
 
-            // Also delete linked auto-journal entry
             if (txData?.batchId) {
                 const jq = query(
                     collection(db, 'journal'),
@@ -220,7 +206,6 @@ const FriendDetails = () => {
                 icon={FiUser}
             />
 
-            {/* Balance Card */}
             <Card className={`mb-6 ${balance >= 0 ? 'bg-gradient-to-r from-emerald-500 to-teal-600' : 'bg-gradient-to-r from-rose-500 to-pink-600'} border-none text-white`}>
                 <div className="flex items-center justify-between">
                     <div>
@@ -235,7 +220,6 @@ const FriendDetails = () => {
                 </div>
             </Card>
 
-            {/* Transactions */}
             <h3 className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-widest mb-3 ml-1">
                 Transaction History ({transactions.length})
             </h3>
@@ -264,9 +248,7 @@ const FriendDetails = () => {
                                             {isPayer ? <FiArrowUpRight size={16} /> : <FiArrowDownLeft size={16} />}
                                         </div>
 
-                                        {/* Details — flex rows layout */}
                                         <div className="flex-1 min-w-0 flex flex-col justify-center">
-                                            {/* Top Row: Description & Amount */}
                                             <div className="flex items-start justify-between gap-2">
                                                 <p className="text-sm font-semibold text-[var(--color-text)] truncate">
                                                     {t.description}
@@ -276,7 +258,6 @@ const FriendDetails = () => {
                                                 </span>
                                             </div>
 
-                                            {/* Bottom Row: Date & Status Badge */}
                                             <div className="flex items-center justify-between gap-2 mt-0.5">
                                                 <div className="flex items-center gap-1.5 text-xs text-[var(--color-text-muted)] truncate">
                                                     <span>{formatDate(t.date)}</span>

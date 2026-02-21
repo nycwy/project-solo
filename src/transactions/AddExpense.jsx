@@ -139,7 +139,6 @@ const AddExpense = () => {
                     batch.delete(doc(db, 'transactions', id));
                 }
 
-                // Clean up old auto-journal entry for this batch
                 const jq = query(
                     collection(db, 'journal'),
                     where('uid', '==', user.uid),
@@ -149,7 +148,6 @@ const AddExpense = () => {
                 oldJournal.forEach((d) => batch.delete(d.ref));
             }
 
-            // Payer's own share for journal
             const payerShare = participants.includes(user.uid)
                 ? parseFloat(splitAmount.toFixed(2))
                 : 0;
@@ -169,7 +167,6 @@ const AddExpense = () => {
                     settleStatus: null,
                 });
 
-                // Self expense → record full amount to journal
                 const journalRef = doc(collection(db, 'journal'));
                 batch.set(journalRef, {
                     uid: user.uid,
@@ -198,7 +195,6 @@ const AddExpense = () => {
                     });
                 });
 
-                // Record payer's own share to journal
                 if (payerShare > 0) {
                     const journalRef = doc(collection(db, 'journal'));
                     batch.set(journalRef, {
@@ -215,7 +211,6 @@ const AddExpense = () => {
 
             await batch.commit();
 
-            // Redirect to the split page when done
             navigate('/split');
         } catch (error) {
             console.error('Error saving expense:', error);
@@ -253,7 +248,6 @@ const AddExpense = () => {
                         className="text-lg font-bold"
                     />
 
-                    {/* Friend Selector */}
                     <div>
                         <label className="block text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider mb-1.5 ml-1">
                             Split with
@@ -298,7 +292,6 @@ const AddExpense = () => {
                                     </div>
                                 </div>
                                 <div className="p-2 max-h-56 overflow-y-auto space-y-1 relative">
-                                    {/* You */}
                                     {(!searchTerm || 'you (payer)'.includes(searchTerm.toLowerCase())) && (
                                         <div className="flex items-center justify-between p-3 bg-[var(--color-surface-alt)] rounded-xl opacity-60">
                                             <div className="flex items-center gap-3">
@@ -347,7 +340,6 @@ const AddExpense = () => {
                         )}
                     </div>
 
-                    {/* Summary */}
                     {amount && participants.length > 0 && (
                         <Card className="bg-[var(--color-surface-alt)] border-[var(--color-border)]" padding="sm">
                             <p className="text-xs text-[var(--color-text-muted)] uppercase font-bold tracking-widest mb-2 text-center">Summary</p>

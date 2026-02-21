@@ -126,7 +126,6 @@ const Statement = () => {
             pdfDoc.setTextColor(primaryColor);
             pdfDoc.text('Journal Entries', 15, 57);
 
-            // --- LEDGER TABLE ---
             autoTable(pdfDoc, {
                 startY: 62,
                 margin: { left: 15, right: 15 },
@@ -162,7 +161,6 @@ const Statement = () => {
                     3: { halign: 'right', cellWidth: 40 },
                 },
                 didParseCell: function (data) {
-                    // Colorize amount column
                     if (data.section === 'body' && data.column.index === 3) {
                         const val = data.cell.raw;
                         if (val.startsWith('+')) {
@@ -174,7 +172,6 @@ const Statement = () => {
                 }
             });
 
-            // --- FOOTER (Summary) ---
             const dividerY = pdfDoc.lastAutoTable.finalY + 10;
             pdfDoc.setDrawColor(lineGray);
             pdfDoc.setLineWidth(0.2);
@@ -210,7 +207,7 @@ const Statement = () => {
             pdfDoc.setFont('helvetica', 'bold');
             pdfDoc.setFontSize(16);
             pdfDoc.setTextColor(savings >= 0 ? greenColor : redColor);
-            pdfDoc.text(savings >= 0 ? savings.toFixed(2) : savings.toFixed(2), 115, finalY + 6); // savings already has negative sign if < 0
+            pdfDoc.text(savings >= 0 ? savings.toFixed(2) : savings.toFixed(2), 115, finalY + 6);
 
             pdfDoc.save(`Journal_Statement_${startStr.split(' ').join('_')}_to_${endStr.split(' ').join('_')}.pdf`);
         } catch (error) {
@@ -287,9 +284,9 @@ const Statement = () => {
                     new Date(t.date.seconds * 1000).toLocaleDateString('en-GB'),
                     t.description || '-',
                     partyName,
-                    type, // This will be used to determine if it's lent or borrowed for the amount column
+                    type,
                     statusText,
-                    amountStr, // This will be the raw amount string for processing in autoTable body
+                    amountStr,
                 ];
             });
 
@@ -299,14 +296,12 @@ const Statement = () => {
                 format: 'a4'
             });
 
-            // --- Styling Constants ---
             const primaryColor = '#1A1A1A';
             const secondaryColor = '#6B7280';
-            const lineGray = 220; // #dcdcdc
+            const lineGray = 220;
             const greenColor = '#22C55E';
             const redColor = '#EF4444';
 
-            // --- HEADER ---
             pdfDoc.setFont('helvetica', 'bold');
             pdfDoc.setFontSize(24);
             pdfDoc.setTextColor(primaryColor);
@@ -325,7 +320,6 @@ const Statement = () => {
             pdfDoc.setTextColor(primaryColor);
             pdfDoc.text('Split Entries', 15, 57);
 
-            // --- LEDGER TABLE ---
             autoTable(pdfDoc, {
                 startY: 62,
                 margin: { left: 15, right: 15 },
@@ -337,13 +331,13 @@ const Statement = () => {
                     { content: 'Amount', styles: { halign: 'right' } }
                 ]],
                 body: rows.map(r => {
-                    const isLent = r[3] === 'YOU PAID'; // r[3] is the 'type' from the map function
-                    const rawAmt = Number(r[5].replace(/[^0-9.]/g, '')).toFixed(2); // r[5] is the amountStr
+                    const isLent = r[3] === 'YOU PAID';
+                    const rawAmt = Number(r[5].replace(/[^0-9.]/g, '')).toFixed(2);
                     return [
-                        r[0], // Date
-                        r[1] || '-', // Desc
-                        r[2], // Party
-                        r[4], // Status
+                        r[0],
+                        r[1] || '-',
+                        r[2],
+                        r[4],
                         isLent ? `+ ${rawAmt}` : `- ${rawAmt}`
                     ];
                 }),
@@ -373,7 +367,6 @@ const Statement = () => {
                     4: { halign: 'right', cellWidth: 35 },
                 },
                 didParseCell: function (data) {
-                    // Colorize amount column
                     if (data.section === 'body' && data.column.index === 4) {
                         const val = data.cell.raw;
                         if (val.startsWith('+')) {
@@ -385,7 +378,6 @@ const Statement = () => {
                 }
             });
 
-            // --- FOOTER (Summary) ---
             const FOOTER_LABELS = {
                 owedToUser: "TOTAL TO RECEIVE",
                 owedByUser: "TOTAL TO PAY",
@@ -470,7 +462,6 @@ const Statement = () => {
             />
 
             <Card padding="lg" className="max-w-2xl mx-auto">
-                {/* Tab Selector */}
                 <div className="flex p-1 bg-[var(--color-surface-alt)] rounded-xl mb-6">
                     <button
                         onClick={() => setActiveTab('journal')}
@@ -493,7 +484,6 @@ const Statement = () => {
                 </div>
 
                 <div className="space-y-5 animate-fade-in-up">
-                    {/* Date Range */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <Input
                             label="From Date"
@@ -511,7 +501,6 @@ const Statement = () => {
                         />
                     </div>
 
-                    {/* Info Card */}
                     <div className={`p-4 rounded-xl border flex items-start gap-3 ${activeTab === 'journal'
                         ? 'bg-[var(--color-primary-light)] border-[var(--color-primary-subtle)] text-[var(--color-primary)]'
                         : 'bg-[var(--color-warning-light)] border-[var(--color-warning)]/20 text-[var(--color-warning)]'
@@ -529,7 +518,6 @@ const Statement = () => {
                         </div>
                     </div>
 
-                    {/* Download Button */}
                     <Button
                         text={loading ? 'Generating...' : 'Download Statement'}
                         onClick={handleDownload}

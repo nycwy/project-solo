@@ -89,7 +89,6 @@ const Friends = () => {
                     let toName = data.toName;
                     let toEmail = data.toEmail;
 
-                    // Fetch missing data for older requests
                     if (!toName && data.toId) {
                         try {
                             const userDoc = await getDoc(doc(db, 'users', data.toId));
@@ -259,7 +258,6 @@ const Friends = () => {
                 }
             />
 
-            {/* Add Friend Section */}
             {showAddFriend && (
                 <Card className="mb-4 animate-fade-in-up">
                     <div className="flex gap-2">
@@ -282,7 +280,6 @@ const Friends = () => {
                 </Card>
             )}
 
-            {/* Incoming Requests */}
             {requests.length > 0 && (
                 <div className="mb-6">
                     <h3 className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-widest mb-3 ml-1">
@@ -320,7 +317,6 @@ const Friends = () => {
                 </div>
             )}
 
-            {/* Sent Requests */}
             {sentRequests.length > 0 && (
                 <div className="mb-6">
                     <h3 className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-widest mb-3 ml-1">
@@ -342,7 +338,6 @@ const Friends = () => {
                 </div>
             )}
 
-            {/* Search */}
             {friends.length > 0 && (
                 <div className="mb-4">
                     <Input
@@ -355,7 +350,6 @@ const Friends = () => {
                 </div>
             )}
 
-            {/* Friends List */}
             {filteredFriends.length === 0 && friends.length === 0 ? (
                 <EmptyState
                     icon={FiUsers}

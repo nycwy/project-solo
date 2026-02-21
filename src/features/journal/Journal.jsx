@@ -245,12 +245,9 @@ const Journal = () => {
                 }
             />
 
-            {/* Summary Card */}
             <div className="mb-6">
                 <div className="rounded-2xl p-5 bg-[var(--color-surface)] border border-[var(--color-border-light)] shadow-[0_1px_4px_var(--color-shadow)]">
-                    {/* Income & Expense */}
                     <div className="grid grid-cols-2 divide-x divide-[var(--color-border-light)]">
-                        {/* Income */}
                         <div className="pr-4 cursor-pointer group" onClick={() => openAddModal('income')}>
                             <div className="flex items-center gap-1.5 mb-1.5">
                                 <div className="w-2 h-2 rounded-full bg-emerald-500" />
@@ -260,7 +257,6 @@ const Journal = () => {
                             <span className="text-[10px] text-emerald-500/70 font-medium mt-1 inline-flex items-center gap-0.5 group-active:scale-95 transition-transform">Add Income</span>
                         </div>
 
-                        {/* Expense */}
                         <div className="pl-4 cursor-pointer group" onClick={() => openAddModal('expense')}>
                             <div className="flex items-center gap-1.5 mb-1.5">
                                 <div className="w-2 h-2 rounded-full bg-rose-500" />
@@ -271,7 +267,6 @@ const Journal = () => {
                         </div>
                     </div>
 
-                    {/* Net Savings */}
                     <div className="border-t border-[var(--color-border-light)] mt-4 pt-3 flex items-center justify-between">
                         <span className="text-xs text-[var(--color-text-muted)] font-medium">Net Savings</span>
                         <span className={`text-base font-bold ${(totalIncome - totalExpense) >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
@@ -281,7 +276,6 @@ const Journal = () => {
                 </div>
             </div>
 
-            {/* Grouped Monthly Entries */}
             <h3 className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-widest mb-3 ml-1">
                 All Entries ({entries.length})
             </h3>
@@ -295,7 +289,6 @@ const Journal = () => {
                 <div className="space-y-4">
                     {grouped.map((group) => (
                         <div key={group.key}>
-                            {/* Month Header */}
                             <button
                                 onClick={() => setExpandedMonth(expandedMonth === group.key ? null : group.key)}
                                 className="w-full flex items-center justify-between p-3 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border-light)] hover:border-[var(--color-primary)]/30 transition-all mb-2"
@@ -307,17 +300,14 @@ const Journal = () => {
                                 <div className="flex items-center gap-3">
                                     {group.key !== currentMonthKey && (
                                         <div className="flex items-center gap-2 sm:gap-3 mr-1 sm:mr-2">
-                                            {/* Income */}
                                             <div className="flex flex-col items-start min-w-[50px]">
                                                 <span className="text-[9px] sm:text-[10px] text-[var(--color-text-muted)] font-bold uppercase tracking-wider">Income</span>
                                                 <span className="text-[10px] sm:text-xs font-bold text-emerald-500">Rs. {group.monthIncome.toFixed(0)}</span>
                                             </div>
-                                            {/* Expense */}
                                             <div className="flex flex-col items-start min-w-[50px]">
                                                 <span className="text-[9px] sm:text-[10px] text-[var(--color-text-muted)] font-bold uppercase tracking-wider">Expense</span>
                                                 <span className="text-[10px] sm:text-xs font-bold text-rose-500">Rs. {group.monthExpense.toFixed(0)}</span>
                                             </div>
-                                            {/* Net */}
                                             <div className="flex flex-col items-start border-l border-[var(--color-border)] pl-2 sm:pl-3 min-w-[50px]">
                                                 <span className="text-[9px] sm:text-[10px] text-[var(--color-text-muted)] font-bold uppercase tracking-wider">
                                                     {(group.monthIncome - group.monthExpense) >= 0 ? 'Savings' : 'Loss'}
@@ -336,7 +326,6 @@ const Journal = () => {
                                 </div>
                             </button>
 
-                            {/* Entries */}
                             {expandedMonth === group.key && (
                                 <div className="space-y-1.5 animate-fade-in-up">
                                     {group.items.map((entry) => (
@@ -349,14 +338,11 @@ const Journal = () => {
                                         >
                                             <Card padding="sm" className="transition-transform active:scale-[0.98]">
                                                 <div className="flex items-center gap-3">
-                                                    {/* Icon */}
                                                     <div className={`w-9 h-9 rounded-xl shrink-0 flex items-center justify-center ${entry.type === 'income' ? 'bg-[var(--color-success-light)] text-[var(--color-success)]' : 'bg-[var(--color-danger-light)] text-[var(--color-danger)]'}`}>
                                                         {entry.type === 'income' ? <FiTrendingUp size={15} /> : <FiTrendingDown size={15} />}
                                                     </div>
 
-                                                    {/* Details — flex rows layout */}
                                                     <div className="flex-1 min-w-0 flex flex-col justify-center">
-                                                        {/* Top Row */}
                                                         <div className="flex items-start justify-between gap-2">
                                                             <p className="text-sm font-semibold text-[var(--color-text)] truncate">{entry.description || entry.type}</p>
                                                             <span className={`text-sm font-semibold shrink-0 ${entry.type === 'income' ? 'text-[var(--color-text)]' : 'text-[var(--color-text-secondary)]'}`}>
@@ -364,7 +350,6 @@ const Journal = () => {
                                                             </span>
                                                         </div>
 
-                                                        {/* Bottom Row */}
                                                         <div className="flex items-center justify-between gap-2 mt-0.5">
                                                             <div className="flex items-center gap-1.5 text-xs text-[var(--color-text-muted)] truncate">
                                                                 <span>{formatDate(entry.date)}</span>
@@ -384,7 +369,6 @@ const Journal = () => {
                 </div>
             )}
 
-            {/* Add Entry Modal */}
             <Modal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
@@ -427,7 +411,6 @@ const Journal = () => {
                         icon={FiCalendar}
                     />
 
-                    {/* Type Toggle (for editing) */}
                     {editingId && (
                         <div className="flex gap-2">
                             <button
@@ -445,7 +428,6 @@ const Journal = () => {
                         </div>
                     )}
 
-                    {/* Add Another (only for new entries) */}
                     {!editingId && (
                         <Button
                             text="Add Another to List"
@@ -456,7 +438,6 @@ const Journal = () => {
                         />
                     )}
 
-                    {/* Drafts List */}
                     {drafts.length > 0 && (
                         <div className="space-y-2 pt-2 border-t border-[var(--color-border-light)]">
                             <p className="text-xs font-bold text-[var(--color-text-muted)] uppercase">Draft List ({drafts.length})</p>

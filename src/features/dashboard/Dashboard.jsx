@@ -99,28 +99,22 @@ const Dashboard = () => {
         return friendsMap[uid] || 'Unknown';
     };
 
-    // 1. Calculate the net balance with EACH friend first
     const friendBalances = {};
 
-    // Transactions where you are the payer (they owe you)
     payerTransactions.forEach((t) => {
         if (t.debtorId !== 'SELF' && t.status === 'confirmed' && t.settleStatus !== 'settled') {
             const amount = Number(t.amount) || 0;
-            // Only count if the other user has confirmed the debt
             friendBalances[t.debtorId] = (friendBalances[t.debtorId] || 0) + amount;
         }
     });
 
-    // Transactions where you are the debtor (you owe them)
     debtorTransactions.forEach((t) => {
         if (t.status === 'confirmed' && t.settleStatus !== 'settled') {
             const amount = Number(t.amount) || 0;
-            // Only count if you have confirmed the debt
             friendBalances[t.payerId] = (friendBalances[t.payerId] || 0) - amount;
         }
     });
 
-    // 2. Separate the net balances into totalOwed (positive) and totalDebt (negative)
     let totalOwed = 0;
     let totalDebt = 0;
 
@@ -150,17 +144,6 @@ const Dashboard = () => {
             const otherNamePayerView = getName(txData.debtorId);
             const otherNameDebtorView = getName(txData.payerId);
 
-            // The Payer (who paid the initial bill) gets this recorded as an Expense in their journal.
-            // Actually, in Splitter, when you split a bill, you Paid the full amount, 
-            // so they owe you. But wait, in the AddExpense flow, the payer's share is usually logged
-            // at the time of creation. 
-            // Let's just log this specific split portion for clarity.
-            // Payer requested money. They lent it. That's an "Expense" conceptually (cash out) at time of split,
-            // or maybe it's already recorded.
-            // If we want it to show up on the Debtor's journal so they know they owe/spent it:
-
-            // Record Expense for the Debtor only upon settlement, not just acceptance
-            // Update status to confirmed
             await updateDoc(txRef, { status: 'confirmed' });
         } catch (error) {
             console.error('Error accepting transaction:', error);
@@ -180,21 +163,16 @@ const Dashboard = () => {
 
     const handleConfirmSettle = async (id) => {
         try {
-            // First get the transaction details
             const txRef = doc(db, 'transactions', id);
             const txSnap = await getDoc(txRef);
 
             if (!txSnap.exists()) return;
             const txData = txSnap.data();
 
-            // The original payer is now receiving the settlement money (so it's Income)
-            // The original debtor is paying the settlement money (so it's Expense)
             const amount = Number(txData.amount) || 0;
             const otherNamePayerView = getName(txData.debtorId);
             const otherNameDebtorView = getName(txData.payerId);
 
-            // User requested to strictly log the Expense to Person B's journal upon settlement completion
-            // No prefix, just the raw description
             await addDoc(collection(db, 'journal'), {
                 uid: txData.debtorId,
                 type: 'expense',
@@ -206,7 +184,6 @@ const Dashboard = () => {
                 autoSplit: true
             });
 
-            // Finally, update the transaction status
             await updateDoc(txRef, {
                 settleStatus: 'settled',
                 status: 'confirmed',
@@ -267,12 +244,9 @@ const Dashboard = () => {
                 }
             />
 
-            {/* Summary Card */}
             <div className="mb-6">
                 <div className="rounded-2xl p-5 bg-[var(--color-surface)] border border-[var(--color-border-light)] shadow-[0_1px_4px_var(--color-shadow)]">
-                    {/* You Get / You Pay */}
                     <div className="grid grid-cols-2 divide-x divide-[var(--color-border-light)]">
-                        {/* You Get Back */}
                         <div className="pr-4">
                             <div className="flex items-center gap-1.5 mb-1.5">
                                 <div className="w-2 h-2 rounded-full bg-emerald-500" />
@@ -281,7 +255,6 @@ const Dashboard = () => {
                             <p className="text-xl font-bold text-[var(--color-text)] tracking-tight">Rs. {totalOwed.toFixed(0)}</p>
                         </div>
 
-                        {/* You Need to Pay */}
                         <div className="pl-4">
                             <div className="flex items-center gap-1.5 mb-1.5">
                                 <div className="w-2 h-2 rounded-full bg-rose-500" />
@@ -291,7 +264,6 @@ const Dashboard = () => {
                         </div>
                     </div>
 
-                    {/* Total */}
                     <div className="border-t border-[var(--color-border-light)] mt-4 pt-3 flex items-center justify-between">
                         <span className="text-xs text-[var(--color-text-muted)] font-medium">Total</span>
                         <span className={`text-base font-bold ${netBalance >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
@@ -301,7 +273,6 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            {/* Transactions */}
             <div className="pb-20 lg:pb-0">
                 <h3 className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-widest mb-3 ml-1">
                     All Activity ({allTransactions.length})
@@ -331,10 +302,7 @@ const Dashboard = () => {
                                         <div className="flex items-center gap-3">
                                             <Avatar name={otherName} size="sm" />
 
-                                            {/* Details — flex left/right layout */}
-                                            {/* Details — flex rows layout */}
                                             <div className="flex-1 min-w-0 flex flex-col justify-center">
-                                                {/* Top Row: Description & Amount */}
                                                 <div className="flex items-start justify-between gap-2">
                                                     <p className="text-sm font-semibold text-[var(--color-text)] truncate">
                                                         {t.description}
@@ -344,7 +312,6 @@ const Dashboard = () => {
                                                     </span>
                                                 </div>
 
-                                                {/* Bottom Row: Date/Info & Status Badge */}
                                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mt-1">
                                                     <div className="flex items-center gap-1.5 text-xs text-[var(--color-text-muted)] w-full sm:w-auto overflow-hidden">
                                                         <span className="truncate">{isPayer ? `To ${otherName}` : `From ${otherName}`}</span>
@@ -384,7 +351,6 @@ const Dashboard = () => {
                 )}
             </div>
 
-            {/* Mobile FAB */}
             <button
                 onClick={() => navigate('/add-expense')}
                 className="lg:hidden fixed bottom-24 right-5 z-40 w-14 h-14 rounded-full bg-[var(--color-primary)] text-white shadow-lg shadow-[var(--color-primary)]/30 flex items-center justify-center hover:opacity-90 active:scale-90 transition-all"
