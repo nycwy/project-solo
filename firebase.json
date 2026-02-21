@@ -1,0 +1,10 @@
+{
+  "auth": {
+    "providers": {
+      "googleSignIn": {
+        "oAuthBrandDisplayName": "Splitter",
+        "supportEmail": "losh11o08o2001@gmail.com"
+      }
+    }
+  }
+}

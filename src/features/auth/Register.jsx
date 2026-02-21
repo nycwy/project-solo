@@ -1,10 +1,12 @@
 import { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
-import { auth, db } from '../../services/firebase';
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { auth, db, googleProvider } from '../../services/firebase';
+import { createUserWithEmailAndPassword, updateProfile, signInWithPopup, getAdditionalUserInfo } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { FiUser, FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
+
+import GoogleButton from '../../components/GoogleButton';
 
 import Button from '../../components/Button';
 import Input from '../../components/Input';
@@ -65,19 +67,43 @@ const Register = () => {
         setLoading(false);
     };
 
-    return (
-        <div className="min-h-[100dvh] w-full bg-[var(--color-bg)] flex flex-col items-center pt-[15dvh] sm:justify-center sm:pt-0 p-4 relative overflow-hidden">
-            {/* Decorative gradient blobs */}
-            <div className="absolute top-[-20%] right-[-10%] w-[120vw] h-[120vw] max-w-[500px] max-h-[500px] bg-[var(--color-primary)] opacity-[0.07] rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute bottom-[-20%] left-[-10%] w-[100vw] h-[100vw] max-w-[400px] max-h-[400px] bg-[var(--color-primary)] opacity-[0.05] rounded-full blur-3xl pointer-events-none" />
+    const handleGoogleSignIn = async () => {
+        setLoading(true);
+        setError('');
+        try {
+            const result = await signInWithPopup(auth, googleProvider);
+            const user = result.user;
+            const additionalInfo = getAdditionalUserInfo(result);
 
-            <div className="w-full max-w-md relative z-10">
+            if (additionalInfo?.isNewUser) {
+                await setDoc(doc(db, 'users', user.uid), {
+                    username: user.displayName || 'Google User',
+                    email: user.email,
+                    createdAt: serverTimestamp(),
+                    friendsList: [],
+                });
+            }
+            navigate('/journal');
+        } catch (err) {
+            console.error('Google Sign-Up Error:', err);
+            setError(err.code === 'auth/popup-closed-by-user' ? 'Sign-up cancelled' : 'Google Sign-Up failed.');
+        }
+        setLoading(false);
+    };
+
+    return (
+        <div className="min-h-[100dvh] w-full bg-[var(--color-bg)] flex flex-col relative overflow-x-hidden overflow-y-auto">
+            {/* Decorative gradient blobs (fixed to prevent scrolling issues) */}
+            <div className="fixed top-[-20%] right-[-10%] w-[120vw] h-[120vw] max-w-[500px] max-h-[500px] bg-[var(--color-primary)] opacity-[0.07] rounded-full blur-3xl pointer-events-none" />
+            <div className="fixed bottom-[-20%] left-[-10%] w-[100vw] h-[100vw] max-w-[400px] max-h-[400px] bg-[var(--color-primary)] opacity-[0.05] rounded-full blur-3xl pointer-events-none" />
+
+            <div className="w-full max-w-md mx-auto py-8 px-4 sm:px-6 relative z-10 flex flex-col my-auto justify-center">
                 {/* Header */}
                 <div className="text-center mb-6">
                     <Heading headingText="Create Account" text="Sign up to get started" />
                 </div>
 
-                <Card padding="md" className="shadow-[0_8px_32px_var(--color-shadow-lg)] border-[var(--color-border-light)]">
+                <Card padding="md" className="shadow-[0_8px_32px_var(--color-shadow-lg)] border-[var(--color-border-light)] z-20">
                     <form onSubmit={handleRegister} className="space-y-4">
                         {error && (
                             <div className="p-3 bg-[var(--color-danger-light)] border border-[var(--color-danger)]/20 rounded-xl text-sm text-[var(--color-danger)] font-medium">
@@ -126,19 +152,24 @@ const Register = () => {
                             text="Create Account"
                             loading={loading}
                             fullWidth
-                            size="lg"
                         />
                     </form>
+
+                    <GoogleButton
+                        text="Sign up with Google"
+                        onClick={handleGoogleSignIn}
+                        loading={loading}
+                    />
                 </Card>
 
                 <Already
                     text="Already have an account?"
                     link="/login"
                     linkText="Sign In"
-                    className="mt-4"
+                    className="mt-6"
                 />
 
-                <div className="mt-8">
+                <div className="mt-6">
                     <Footer />
                 </div>
             </div>
