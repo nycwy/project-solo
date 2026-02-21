@@ -59,6 +59,7 @@ const Input = ({
                         error && 'border-[var(--color-danger)] focus:border-[var(--color-danger)] focus:ring-[var(--color-danger-light)]',
                         className
                     )}
+                    onWheel={(e) => type === 'number' && e.target.blur()}
                     {...props}
                 />
             </div>
