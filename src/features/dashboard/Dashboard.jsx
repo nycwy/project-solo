@@ -171,7 +171,7 @@ const Dashboard = () => {
         <div className="p-4 md:p-6 pb-24 lg:pb-6">
             <PageHeader
                 title="Splitter"
-                subtitle={<>Manage shared expenses <span className="lg:hidden">· Tap + to split</span></>}
+                subtitle={<>Manage shared expenses</>}
                 icon={FiDollarSign}
                 rightContent={
                     <span className="hidden lg:inline-flex">
@@ -221,19 +221,15 @@ const Dashboard = () => {
 
             {/* Transactions */}
             <div className="pb-20 lg:pb-0">
-                <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-sm font-bold text-[var(--color-text-muted)] uppercase tracking-wider">
-                        All Activity ({allTransactions.length})
-                    </h2>
-                </div>
+                <h3 className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-widest mb-3 ml-1">
+                    All Activity ({allTransactions.length})
+                </h3>
 
                 {allTransactions.length === 0 ? (
                     <EmptyState
                         icon={FiDollarSign}
                         title="No expenses yet"
-                        subtitle="Add your first shared expense to get started"
-                        actionText="Add Expense"
-                        onAction={() => navigate('/add-expense')}
+                        subtitle="Tap + to split the bills"
                     />
                 ) : (
                     <div className="space-y-2">
@@ -267,13 +263,13 @@ const Dashboard = () => {
                                                 </div>
 
                                                 {/* Bottom Row: Date/Info & Status Badge */}
-                                                <div className="flex items-center justify-between gap-2 mt-0.5">
-                                                    <div className="flex items-center gap-1.5 text-xs text-[var(--color-text-muted)] truncate">
-                                                        <span>{isPayer ? `To ${otherName}` : `From ${otherName}`}</span>
-                                                        <span className="text-[10px]">•</span>
-                                                        <span>{formatDate(t.date)}</span>
+                                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mt-1">
+                                                    <div className="flex items-center gap-1.5 text-xs text-[var(--color-text-muted)] w-full sm:w-auto overflow-hidden">
+                                                        <span className="truncate">{isPayer ? `To ${otherName}` : `From ${otherName}`}</span>
+                                                        <span className="text-[10px] shrink-0">•</span>
+                                                        <span className="shrink-0 text-[11px] font-medium">{formatDate(t.date)}</span>
                                                     </div>
-                                                    <div className="flex items-center gap-1 justify-end shrink-0">
+                                                    <div className="flex items-center gap-1.5 justify-start sm:justify-end shrink-0 flex-wrap">
                                                         {!isPayer && t.status === 'pending' && (
                                                             <>
                                                                 <button onClick={() => handleAccept(t.id)} className="p-1 rounded-md bg-[var(--color-success-light)] text-[var(--color-success)] hover:opacity-80 transition-all" title="Accept">

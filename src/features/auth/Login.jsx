@@ -13,6 +13,7 @@ import Input from '../../components/Input';
 import Heading from '../../components/Heading';
 import Already from '../../components/Already';
 import Card from '../../components/Card';
+import Footer from '../../components/Footer';
 
 const Login = () => {
     const navigate = useNavigate();
@@ -131,6 +132,10 @@ const Login = () => {
                     linkText="Sign Up"
                     className="mt-4"
                 />
+
+                <div className="mt-8">
+                    <Footer />
+                </div>
             </div>
         </div>
     );

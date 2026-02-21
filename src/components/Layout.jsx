@@ -4,6 +4,7 @@ import { AuthContext } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
 import BottomNav from './BottomNav';
 import Avatar from './Avatar';
+import Footer from './Footer';
 import {
     FiLayout,
     FiPieChart,
@@ -158,7 +159,7 @@ const Layout = () => {
             </aside>
 
             {/* Main Content Area */}
-            <div className={`flex-1 ${mainMargin} transition-all duration-300`}>
+            <div className={`flex flex-col min-h-screen flex-1 ${mainMargin} transition-all duration-300`}>
                 {/* Mobile Header */}
                 <header className="lg:hidden sticky top-0 z-20 bg-[var(--color-nav-bg)] backdrop-blur-xl border-b border-[var(--color-border-light)] shadow-[0_1px_3px_var(--color-shadow)]">
                     <div className="flex items-center justify-between px-4 py-3">
@@ -188,9 +189,13 @@ const Layout = () => {
                     </div>
                 </header>
 
-                <main className="max-w-5xl mx-auto w-full">
+                <main className="max-w-5xl mx-auto w-full flex-1">
                     <Outlet />
                 </main>
+
+                <div className="hidden lg:block mt-auto pb-4 px-4 lg:px-6">
+                    <Footer />
+                </div>
             </div>
 
             {/* Mobile Bottom Nav */}

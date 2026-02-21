@@ -244,7 +244,7 @@ const Journal = () => {
                                 <span className="text-xs text-[var(--color-text-muted)] font-semibold uppercase tracking-widest">Income</span>
                             </div>
                             <p className="text-xl font-bold text-[var(--color-text)] tracking-tight">Rs. {totalIncome.toFixed(0)}</p>
-                            <span className="text-[10px] text-emerald-500/70 font-medium mt-1 inline-flex items-center gap-0.5 group-active:scale-95 transition-transform">+ Add Income</span>
+                            <span className="text-[10px] text-emerald-500/70 font-medium mt-1 inline-flex items-center gap-0.5 group-active:scale-95 transition-transform">Add Income</span>
                         </div>
 
                         {/* Expense */}
@@ -254,7 +254,7 @@ const Journal = () => {
                                 <span className="text-xs text-[var(--color-text-muted)] font-semibold uppercase tracking-widest">Expense</span>
                             </div>
                             <p className="text-xl font-bold text-[var(--color-text)] tracking-tight">Rs. {totalExpense.toFixed(0)}</p>
-                            <span className="text-[10px] text-rose-500/70 font-medium mt-1 inline-flex items-center gap-0.5 group-active:scale-95 transition-transform">+ Add Expense</span>
+                            <span className="text-[10px] text-rose-500/70 font-medium mt-1 inline-flex items-center gap-0.5 group-active:scale-95 transition-transform">Add Expense</span>
                         </div>
                     </div>
 
@@ -269,13 +269,14 @@ const Journal = () => {
             </div>
 
             {/* Grouped Monthly Entries */}
+            <h3 className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-widest mb-3 ml-1">
+                All Entries ({entries.length})
+            </h3>
             {grouped.length === 0 ? (
                 <EmptyState
                     icon={FiLayout}
                     title="No journal entries yet"
-                    subtitle="Start tracking your income and expenses"
-                    actionText="Add Entry"
-                    onAction={() => openAddModal('expense')}
+                    subtitle="Tap 'Add Income' or 'Add Expense' above to get started."
                 />
             ) : (
                 <div className="space-y-4">

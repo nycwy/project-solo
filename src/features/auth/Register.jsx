@@ -11,6 +11,7 @@ import Input from '../../components/Input';
 import Heading from '../../components/Heading';
 import Already from '../../components/Already';
 import Card from '../../components/Card';
+import Footer from '../../components/Footer';
 
 const Register = () => {
     const navigate = useNavigate();
@@ -136,6 +137,10 @@ const Register = () => {
                     linkText="Sign In"
                     className="mt-4"
                 />
+
+                <div className="mt-8">
+                    <Footer />
+                </div>
             </div>
         </div>
     );

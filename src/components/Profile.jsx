@@ -103,7 +103,7 @@ const Profile = () => {
         <div className="p-4 md:p-6 pb-24 lg:pb-6">
             <PageHeader title="Profile" subtitle="Manage your account" icon={FiUser} />
 
-            <div className="max-w-md mx-auto space-y-4">
+            <div className="max-w-md w-full mx-auto space-y-4">
                 {/* Avatar + Name Card */}
                 <Card padding="lg" className="text-center">
                     <div className="flex flex-col items-center">
@@ -118,7 +118,7 @@ const Profile = () => {
                                     placeholder="Enter new name"
                                     autoFocus
                                 />
-                                <div className="flex gap-2">
+                                <div className="flex flex-col sm:flex-row gap-2.5">
                                     <Button
                                         text="Save"
                                         icon={FiSave}
