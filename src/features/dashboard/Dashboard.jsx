@@ -246,7 +246,7 @@ const Dashboard = () => {
                                     key={t.id}
                                     canEdit={isPayer && !t.settleStatus && t.status !== 'confirmed'}
                                     onEdit={() => navigate(`/edit-expense/${t.id}`)}
-                                    canDelete={true}
+                                    canDelete={isPayer}
                                     onDelete={() => handleDelete(t.id)}
                                 >
                                     <Card padding="sm" className="animate-fade-in-up transition-transform active:scale-[0.98]">
