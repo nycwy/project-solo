@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { twMerge } from 'tailwind-merge';
+import { FiEdit2, FiTrash2 } from 'react-icons/fi';
 
 const SwipeableCard = ({ children, onEdit, canEdit = true, onDelete, canDelete = true, className }) => {
     const [swiping, setSwiping] = useState(false);
@@ -30,6 +31,7 @@ const SwipeableCard = ({ children, onEdit, canEdit = true, onDelete, canDelete =
     }, []);
 
     const handleStart = (clientX, clientY) => {
+        if (window.innerWidth >= 768) return; // Disable swipe on desktop
         if (!canEdit && (!canDelete || !onDelete)) return;
         startX.current = clientX;
         startY.current = clientY;
@@ -169,7 +171,7 @@ const SwipeableCard = ({ children, onEdit, canEdit = true, onDelete, canDelete =
             <div
                 ref={cardRef}
                 className={twMerge(
-                    "relative w-full touch-pan-y z-10 transition-transform rounded-2xl overflow-hidden bg-[var(--color-surface)]",
+                    "relative w-full touch-pan-y z-10 transition-transform rounded-2xl overflow-hidden bg-[var(--color-surface)] md:flex md:items-stretch group/card",
                     !swiping && "duration-300"
                 )}
                 style={{
@@ -206,14 +208,34 @@ const SwipeableCard = ({ children, onEdit, canEdit = true, onDelete, canDelete =
                 }}
             >
                 {/* Prevent child clicks if swiped open */}
-                <div className={twMerge("pb-4 [&>*]:border-0 [&>*]:shadow-none [&>*]:rounded-none", swipedOpen ? "pointer-events-none" : "")}>
+                <div className={twMerge("flex-1 min-w-0 pb-4 md:pb-0 [&>*]:border-0 [&>*]:shadow-none [&>*]:rounded-none", swipedOpen ? "pointer-events-none" : "")}>
                     {children}
                 </div>
 
-                {/* Swipe hint overlay — toggle on tap */}
+                {/* Desktop Action Icons (hidden on mobile, visible on desktop right side) */}
+                <div className="hidden md:flex items-center justify-center gap-2 px-5 bg-[var(--color-surface-alt)] border-l border-[var(--color-border-light)] shrink-0">
+                    <button
+                        onClick={(e) => { e.stopPropagation(); if (canEdit && onEdit) onEdit(); }}
+                        disabled={!canEdit}
+                        className={`p-2.5 rounded-xl transition-all focus:outline-none ${canEdit ? 'text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] hover:bg-[var(--color-primary-light)]' : 'text-[var(--color-text-muted)] opacity-30 cursor-not-allowed'}`}
+                        title={canEdit ? "Edit" : "Editing not allowed"}
+                    >
+                        <FiEdit2 size={18} />
+                    </button>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); if (canDelete && onDelete) onDelete(); }}
+                        disabled={!canDelete || !onDelete}
+                        className={`p-2.5 rounded-xl transition-all focus:outline-none ${canDelete && onDelete ? 'text-[var(--color-text-secondary)] hover:text-[var(--color-danger)] hover:bg-[var(--color-danger-light)]' : 'text-[var(--color-text-muted)] opacity-30 cursor-not-allowed'}`}
+                        title={canDelete ? "Delete" : "Deleting not allowed"}
+                    >
+                        <FiTrash2 size={18} />
+                    </button>
+                </div>
+
+                {/* Swipe hint overlay — toggle on tap (mobile only now due to class hidden on md) */}
                 {showHint && offset === 0 && !swiping && (canEdit || (canDelete && onDelete)) && (
                     <div
-                        className="absolute bottom-2 left-3 right-3 flex items-center justify-between pointer-events-none select-none animate-fade-in z-20"
+                        className="md:hidden absolute bottom-2 left-3 right-3 flex items-center justify-between pointer-events-none select-none animate-fade-in z-20"
                     >
                         {canEdit ? (
                             <span className="text-[10px] text-[var(--color-primary)] opacity-80 tracking-wide font-medium">
