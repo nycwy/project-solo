@@ -158,7 +158,6 @@ const FriendDetails = () => {
                 title={friendName}
                 subtitle={friendInfo?.email}
                 icon={FiUser}
-                onBack={true}
             />
 
             {/* Balance Card */}

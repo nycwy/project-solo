@@ -59,21 +59,18 @@ const Login = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[var(--color-bg)] flex items-center justify-center p-4 relative overflow-hidden">
+        <div className="min-h-[100dvh] w-full bg-[var(--color-bg)] flex flex-col items-center pt-[15dvh] sm:justify-center sm:pt-0 p-4 relative overflow-hidden">
             {/* Decorative gradient blobs */}
             <div className="absolute top-[-20%] left-[-10%] w-[120vw] h-[120vw] max-w-[500px] max-h-[500px] bg-[var(--color-primary)] opacity-[0.07] rounded-full blur-3xl pointer-events-none" />
             <div className="absolute bottom-[-20%] right-[-10%] w-[100vw] h-[100vw] max-w-[400px] max-h-[400px] bg-[var(--color-primary)] opacity-[0.05] rounded-full blur-3xl pointer-events-none" />
 
             <div className="w-full max-w-md relative z-10">
-                {/* Logo */}
-                <div className="text-center mb-8">
-                    <div className="w-16 h-16 rounded-2xl bg-[var(--color-primary)] flex items-center justify-center text-white font-extrabold text-2xl mx-auto mb-5 shadow-lg shadow-indigo-500/30">
-                        K
-                    </div>
+                {/* Header */}
+                <div className="text-center mb-6">
                     <Heading headingText="Welcome Back" text="Sign in to your account" />
                 </div>
 
-                <Card padding="lg" className="shadow-[0_8px_32px_var(--color-shadow-lg)] border-[var(--color-border-light)]">
+                <Card padding="md" className="shadow-[0_8px_32px_var(--color-shadow-lg)] border-[var(--color-border-light)]">
                     <form onSubmit={handleLogin} className="space-y-4">
                         {error && (
                             <div className="p-3 bg-[var(--color-danger-light)] border border-[var(--color-danger)]/20 rounded-xl text-sm text-[var(--color-danger)] font-medium">
@@ -132,7 +129,7 @@ const Login = () => {
                     text="Don't have an account?"
                     link="/register"
                     linkText="Sign Up"
-                    className="mt-6"
+                    className="mt-4"
                 />
             </div>
         </div>

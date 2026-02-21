@@ -7,6 +7,7 @@ import {
     where,
     onSnapshot,
     addDoc,
+    updateDoc,
     deleteDoc,
     doc,
     serverTimestamp,
@@ -27,6 +28,7 @@ import Input from '../../components/Input';
 import Modal from '../../components/Modal';
 import PageHeader from '../../components/PageHeader';
 import EmptyState from '../../components/EmptyState';
+import SwipeableCard from '../../components/SwipeableCard';
 
 const Remember = () => {
     const { user } = useContext(AuthContext);
@@ -37,6 +39,10 @@ const Remember = () => {
 
     const [purchasingItem, setPurchasingItem] = useState(null);
     const [actualPrice, setActualPrice] = useState('');
+
+    const [editingItem, setEditingItem] = useState(null);
+    const [editItemName, setEditItemName] = useState('');
+    const [editEstAmount, setEditEstAmount] = useState('');
 
     useEffect(() => {
         if (!user?.uid) return;
@@ -76,6 +82,30 @@ const Remember = () => {
         if (window.confirm('Remove this item from list?')) {
             await deleteDoc(doc(db, 'shopping_list', id));
         }
+    };
+
+    const openEditModal = (item) => {
+        setEditingItem(item);
+        setEditItemName(item.item);
+        setEditEstAmount(item.estimatedAmount?.toString() || '');
+    };
+
+    const handleEditSave = async (e) => {
+        e.preventDefault();
+        if (!editItemName.trim()) return alert('Item name cannot be empty');
+
+        setLoading(true);
+        try {
+            await updateDoc(doc(db, 'shopping_list', editingItem.id), {
+                item: editItemName,
+                estimatedAmount: parseFloat(editEstAmount) || 0,
+            });
+            setEditingItem(null);
+        } catch (error) {
+            console.error(error);
+            alert('Failed to update item');
+        }
+        setLoading(false);
     };
 
     const openPurchaseModal = (item) => {
@@ -120,7 +150,6 @@ const Remember = () => {
                 subtitle="Track items to purchase"
                 icon={FiShoppingBag}
                 iconClassName="bg-[var(--color-warning-light)] text-[var(--color-warning)]"
-                onBack={true}
             />
 
             {/* Add Item Form */}
@@ -164,38 +193,47 @@ const Remember = () => {
             ) : (
                 <div className="space-y-2">
                     {items.map((item) => (
-                        <Card key={item.id} padding="sm" hover>
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-[var(--color-warning-light)] text-[var(--color-warning)] flex items-center justify-center shrink-0">
-                                        <FiShoppingBag size={18} />
+                        <SwipeableCard
+                            key={item.id}
+                            canEdit={true}
+                            onEdit={() => openEditModal(item)}
+                            canDelete={true}
+                            onDelete={() => handleDelete(item.id)}
+                        >
+                            <Card padding="sm" className="transition-transform active:scale-[0.98]">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full bg-[var(--color-warning-light)] text-[var(--color-warning)] flex items-center justify-center shrink-0">
+                                            <FiShoppingBag size={18} />
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-[var(--color-text)] text-sm">{item.item}</p>
+                                            {item.estimatedAmount > 0 && (
+                                                <p className="text-xs text-[var(--color-text-muted)] font-mono mt-0.5">
+                                                    Est: Rs. {item.estimatedAmount}
+                                                </p>
+                                            )}
+                                        </div>
                                     </div>
-                                    <div>
-                                        <p className="font-bold text-[var(--color-text)] text-sm">{item.item}</p>
-                                        {item.estimatedAmount > 0 && (
-                                            <p className="text-xs text-[var(--color-text-muted)] font-mono mt-0.5">
-                                                Est: Rs. {item.estimatedAmount}
-                                            </p>
-                                        )}
+                                    <div className="flex items-center gap-1.5">
+                                        <button
+                                            onClick={() => openPurchaseModal(item)}
+                                            className="p-2 rounded-lg bg-[var(--color-success-light)] text-[var(--color-success)] hover:bg-[var(--color-success)] hover:text-white transition-all"
+                                            title="Bought it!"
+                                        >
+                                            <FiCheck size={16} />
+                                        </button>
+                                        <button
+                                            onClick={() => handleDelete(item.id)}
+                                            className="hidden lg:flex p-2 rounded-lg bg-[var(--color-surface-hover)] text-[var(--color-text-muted)] hover:text-[var(--color-danger)] hover:bg-[var(--color-danger-light)] transition-all"
+                                            title="Delete"
+                                        >
+                                            <FiTrash2 size={14} />
+                                        </button>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-1.5">
-                                    <button
-                                        onClick={() => openPurchaseModal(item)}
-                                        className="p-2 rounded-lg bg-[var(--color-success-light)] text-[var(--color-success)] hover:bg-[var(--color-success)] hover:text-white transition-all"
-                                        title="Bought it!"
-                                    >
-                                        <FiCheck size={16} />
-                                    </button>
-                                    <button
-                                        onClick={() => handleDelete(item.id)}
-                                        className="p-2 rounded-lg bg-[var(--color-surface-hover)] text-[var(--color-text-muted)] hover:text-[var(--color-danger)] hover:bg-[var(--color-danger-light)] transition-all"
-                                    >
-                                        <FiTrash2 size={14} />
-                                    </button>
-                                </div>
-                            </div>
-                        </Card>
+                            </Card>
+                        </SwipeableCard>
                     ))}
                 </div>
             )}
@@ -231,6 +269,41 @@ const Remember = () => {
                             autoFocus
                         />
                     </div>
+                )}
+            </Modal>
+
+            {/* Edit Item Modal */}
+            <Modal
+                isOpen={!!editingItem}
+                onClose={() => setEditingItem(null)}
+                title="Edit Item"
+                footer={
+                    <Button
+                        text={loading ? 'Saving...' : 'Save Changes'}
+                        onClick={handleEditSave}
+                        loading={loading}
+                        variant="primary"
+                        fullWidth
+                    />
+                }
+            >
+                {editingItem && (
+                    <form onSubmit={handleEditSave} className="space-y-4">
+                        <Input
+                            label="Item Name"
+                            type="text"
+                            value={editItemName}
+                            setValue={setEditItemName}
+                            autoFocus
+                        />
+                        <Input
+                            label="Estimated Amount"
+                            type="number"
+                            value={editEstAmount}
+                            setValue={setEditEstAmount}
+                            prefix="Rs."
+                        />
+                    </form>
                 )}
             </Modal>
         </div>
