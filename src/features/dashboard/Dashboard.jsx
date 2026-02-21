@@ -12,6 +12,7 @@ import {
     arrayUnion,
     getDoc,
     serverTimestamp,
+    addDoc,
 } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -138,7 +139,44 @@ const Dashboard = () => {
     );
 
     const handleAccept = async (id) => {
-        await updateDoc(doc(db, 'transactions', id), { status: 'confirmed' });
+        try {
+            const txRef = doc(db, 'transactions', id);
+            const txSnap = await getDoc(txRef);
+
+            if (!txSnap.exists()) return;
+            const txData = txSnap.data();
+
+            const amount = Number(txData.amount) || 0;
+            const otherNamePayerView = getName(txData.debtorId);
+            const otherNameDebtorView = getName(txData.payerId);
+
+            // The Payer (who paid the initial bill) gets this recorded as an Expense in their journal.
+            // Actually, in Splitter, when you split a bill, you Paid the full amount, 
+            // so they owe you. But wait, in the AddExpense flow, the payer's share is usually logged
+            // at the time of creation. 
+            // Let's just log this specific split portion for clarity.
+            // Payer requested money. They lent it. That's an "Expense" conceptually (cash out) at time of split,
+            // or maybe it's already recorded.
+            // If we want it to show up on the Debtor's journal so they know they owe/spent it:
+
+            // Record Expense for the Debtor (they are accepting they owe this money)
+            await addDoc(collection(db, 'journal'), {
+                uid: txData.debtorId,
+                type: 'expense',
+                amount: amount,
+                category: 'Split Bill',
+                description: `[Split from ${otherNameDebtorView}] ${txData.description || ''}`,
+                date: serverTimestamp(),
+                createdAt: serverTimestamp(),
+                autoSplit: true,
+                batchId: txData.batchId || id // link it if possible
+            });
+
+            // Update status to confirmed
+            await updateDoc(txRef, { status: 'confirmed' });
+        } catch (error) {
+            console.error('Error accepting transaction:', error);
+        }
     };
 
     const handleReject = async (id) => {
@@ -153,10 +191,41 @@ const Dashboard = () => {
     };
 
     const handleConfirmSettle = async (id) => {
-        await updateDoc(doc(db, 'transactions', id), {
-            settleStatus: 'settled',
-            status: 'confirmed',
-        });
+        try {
+            // First get the transaction details
+            const txRef = doc(db, 'transactions', id);
+            const txSnap = await getDoc(txRef);
+
+            if (!txSnap.exists()) return;
+            const txData = txSnap.data();
+
+            // The original payer is now receiving the settlement money (so it's Income)
+            // The original debtor is paying the settlement money (so it's Expense)
+            const amount = Number(txData.amount) || 0;
+            const otherNamePayerView = getName(txData.debtorId);
+            const otherNameDebtorView = getName(txData.payerId);
+
+            // User requested to NOT show anything on Person A's journal when Person B settles
+            // So we only record Expense for the original Debtor (Person B paying the settlement)
+            await addDoc(collection(db, 'journal'), {
+                uid: txData.debtorId,
+                type: 'expense',
+                amount: amount,
+                category: 'Settlement',
+                description: `[Settlement to ${otherNameDebtorView}] ${txData.description || ''}`,
+                date: serverTimestamp(),
+                createdAt: serverTimestamp(),
+                autoSplit: true
+            });
+
+            // Finally, update the transaction status
+            await updateDoc(txRef, {
+                settleStatus: 'settled',
+                status: 'confirmed',
+            });
+        } catch (error) {
+            console.error('Error settling transaction:', error);
+        }
     };
 
     const handleDelete = async (id) => {

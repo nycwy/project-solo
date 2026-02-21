@@ -13,6 +13,7 @@ import {
     getDocs,
     serverTimestamp,
     getDoc,
+    addDoc,
 } from 'firebase/firestore';
 import {
     FiUser,
@@ -102,11 +103,81 @@ const FriendDetails = () => {
         });
     };
 
+    const handleAccept = async (id) => {
+        try {
+            const txRef = doc(db, 'transactions', id);
+            const txSnap = await getDoc(txRef);
+
+            if (!txSnap.exists()) return;
+            const txData = txSnap.data();
+
+            const amount = Number(txData.amount) || 0;
+            const friendName = friendInfo?.username || 'Friend';
+            const otherNameDebtorView = txData.payerId === user.uid ? friendName : 'User';
+
+            // Record Expense for the Debtor (they are accepting they owe this money)
+            await addDoc(collection(db, 'journal'), {
+                uid: txData.debtorId,
+                type: 'expense',
+                amount: amount,
+                category: 'Split Bill',
+                description: `[Split from ${otherNameDebtorView}] ${txData.description || ''}`,
+                date: serverTimestamp(),
+                createdAt: serverTimestamp(),
+                autoSplit: true,
+                batchId: txData.batchId || id
+            });
+
+            // Update status to confirmed
+            await updateDoc(txRef, { status: 'confirmed' });
+        } catch (error) {
+            console.error('Error accepting transaction:', error);
+        }
+    };
+
+    const handleReject = async (id) => {
+        await updateDoc(doc(db, 'transactions', id), { status: 'rejected' });
+    };
+
     const handleConfirmSettle = async (id) => {
-        await updateDoc(doc(db, 'transactions', id), {
-            settleStatus: 'settled',
-            status: 'confirmed',
-        });
+        try {
+            // Get the transaction details
+            const txRef = doc(db, 'transactions', id);
+            const txSnap = await getDoc(txRef);
+
+            if (!txSnap.exists()) return;
+            const txData = txSnap.data();
+
+            const amount = Number(txData.amount) || 0;
+            const friendName = friendInfo?.username || 'Friend';
+
+            // Name mapping
+            // If the user confirming is the original payer (they are getting their money back)
+            // txData.payerId is them. txData.debtorId is the friend.
+            const payerViewOtherName = txData.payerId === user.uid ? friendName : 'User';
+            const debtorViewOtherName = txData.debtorId === user.uid ? friendName : 'User';
+
+            // User requested to NOT show anything on Person A's journal when Person B settles
+            // So we only record Expense for the original Debtor (Person B paying the settlement)
+            await addDoc(collection(db, 'journal'), {
+                uid: txData.debtorId,
+                type: 'expense',
+                amount: amount,
+                category: 'Settlement',
+                description: `[Settlement to ${txData.debtorId === user.uid ? friendName : (user.displayName || 'Friend')}] ${txData.description || ''}`,
+                date: serverTimestamp(),
+                createdAt: serverTimestamp(),
+                autoSplit: true
+            });
+
+            // Update transaction status
+            await updateDoc(txRef, {
+                settleStatus: 'settled',
+                status: 'confirmed',
+            });
+        } catch (error) {
+            console.error('Error confirming settlement:', error);
+        }
     };
 
     const handleDelete = async (id) => {
@@ -223,6 +294,16 @@ const FriendDetails = () => {
                                                     <span>{formatDate(t.date)}</span>
                                                 </div>
                                                 <div className="flex items-center gap-1 justify-end shrink-0">
+                                                    {!isPayer && t.status === 'pending' && (
+                                                        <>
+                                                            <button onClick={(e) => { e.stopPropagation(); handleAccept(t.id); }} className="p-1 rounded-md bg-[var(--color-success-light)] text-[var(--color-success)] hover:opacity-80 transition-all" title="Accept">
+                                                                <FiCheck size={12} />
+                                                            </button>
+                                                            <button onClick={(e) => { e.stopPropagation(); handleReject(t.id); }} className="p-1 rounded-md bg-[var(--color-danger-light)] text-[var(--color-danger)] hover:opacity-80 transition-all" title="Reject">
+                                                                <FiX size={12} />
+                                                            </button>
+                                                        </>
+                                                    )}
                                                     {!isPayer && t.status === 'confirmed' && t.settleStatus !== 'settled' && t.settleStatus !== 'settle_pending' && (
                                                         <Button size="xs" variant="outline" text="Settle" onClick={() => handleSettle(t.id)} />
                                                     )}

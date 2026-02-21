@@ -214,7 +214,9 @@ const AddExpense = () => {
             }
 
             await batch.commit();
-            navigate('/');
+
+            // Redirect to the split page when done
+            navigate('/split');
         } catch (error) {
             console.error('Error saving expense:', error);
             alert(error.message || 'Failed to save');
