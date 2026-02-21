@@ -47,6 +47,15 @@ const Layout = () => {
         navigate('/login');
     };
 
+    const getGreeting = () => {
+        const hour = new Date().getHours();
+        if (hour < 12) return 'Good Morning,';
+        if (hour < 18) return 'Good Afternoon,';
+        return 'Good Evening,';
+    };
+
+    const firstName = user?.displayName?.split(' ')[0] || user?.username?.split(' ')[0] || 'User';
+
     const sidebarWidth = sidebarOpen ? 'w-64' : 'w-20';
     const mainMargin = sidebarOpen ? 'lg:ml-64' : 'lg:ml-20';
 
@@ -61,24 +70,18 @@ const Layout = () => {
         <div className="min-h-screen bg-[var(--color-bg)] flex">
             {/* Desktop Sidebar */}
             <aside className={`hidden lg:flex flex-col ${sidebarWidth} bg-[var(--color-surface)] border-r border-[var(--color-border-light)] fixed h-screen z-30 transition-all duration-300`}>
-                {/* Logo + Toggle */}
+                {/* Greeting + Toggle */}
                 <div className={`p-4 pb-3 flex items-center ${sidebarOpen ? 'justify-between' : 'justify-center'}`}>
-                    <div className={`flex items-center gap-2.5 ${sidebarOpen ? '' : 'hidden'}`}>
-                        <div className="w-9 h-9 rounded-xl bg-[var(--color-primary)] flex items-center justify-center text-white font-extrabold text-sm shadow-lg shadow-indigo-500/25">
-                            K
-                        </div>
-                        <span className="font-extrabold text-[var(--color-text)] text-lg tracking-tight">King!</span>
+                    <div className={`flex flex-col ${sidebarOpen ? '' : 'hidden'} overflow-hidden`}>
+                        <span className="text-[10px] font-bold text-[var(--color-text-muted)] tracking-wider uppercase mb-0.5">{getGreeting()}</span>
+                        <span className="font-extrabold text-[var(--color-text)] text-lg tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-secondary)] truncate">
+                            {firstName}!
+                        </span>
                     </div>
-
-                    {!sidebarOpen && (
-                        <div className="w-9 h-9 rounded-xl bg-[var(--color-primary)] flex items-center justify-center text-white font-extrabold text-sm shadow-lg shadow-indigo-500/25">
-                            K
-                        </div>
-                    )}
 
                     <button
                         onClick={() => setSidebarOpen(!sidebarOpen)}
-                        className={`p-1.5 rounded-lg text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-hover)] transition-all ${sidebarOpen ? '' : 'mt-3'}`}
+                        className={`p-1.5 rounded-lg text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-hover)] transition-all`}
                         title={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
                     >
                         {sidebarOpen ? <FiChevronsLeft size={16} /> : <FiChevronsRight size={16} />}
@@ -159,11 +162,20 @@ const Layout = () => {
                 {/* Mobile Header */}
                 <header className="lg:hidden sticky top-0 z-20 bg-[var(--color-nav-bg)] backdrop-blur-xl border-b border-[var(--color-border-light)] shadow-[0_1px_3px_var(--color-shadow)]">
                     <div className="flex items-center justify-between px-4 py-3">
-                        <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-lg bg-[var(--color-primary)] flex items-center justify-center text-white font-extrabold text-xs shadow-lg shadow-indigo-500/25">
-                                K
+                        <div className="flex items-center gap-3 w-full max-w-[70%]">
+                            <NavLink to="/profile" className="flex shrink-0">
+                                <Avatar
+                                    name={user?.displayName || user?.email}
+                                    photoURL={user?.photoURL}
+                                    size="md"
+                                />
+                            </NavLink>
+                            <div className="flex flex-col flex-1 justify-center min-w-0 h-full py-0.5">
+                                <span className="text-[10px] uppercase font-bold text-[var(--color-text-muted)] tracking-wider leading-none mb-1">{getGreeting()}</span>
+                                <span className="font-extrabold text-[var(--color-text)] text-base tracking-tight leading-none bg-clip-text text-transparent bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-secondary)] truncate">
+                                    {firstName}!
+                                </span>
                             </div>
-                            <span className="font-extrabold text-[var(--color-text)] text-base tracking-tight">King!</span>
                         </div>
                         <div className="flex items-center gap-2">
                             <button
@@ -172,13 +184,6 @@ const Layout = () => {
                             >
                                 {theme === 'light' ? <FiMoon size={18} /> : <FiSun size={18} />}
                             </button>
-                            <NavLink to="/profile">
-                                <Avatar
-                                    name={user?.displayName || user?.email}
-                                    photoURL={user?.photoURL}
-                                    size="sm"
-                                />
-                            </NavLink>
                         </div>
                     </div>
                 </header>
