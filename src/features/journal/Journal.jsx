@@ -319,7 +319,9 @@ const Journal = () => {
                                             </div>
                                             {/* Net */}
                                             <div className="flex flex-col items-start border-l border-[var(--color-border)] pl-2 sm:pl-3 min-w-[50px]">
-                                                <span className="text-[9px] sm:text-[10px] text-[var(--color-text-muted)] font-bold uppercase tracking-wider">Net</span>
+                                                <span className="text-[9px] sm:text-[10px] text-[var(--color-text-muted)] font-bold uppercase tracking-wider">
+                                                    {(group.monthIncome - group.monthExpense) >= 0 ? 'Savings' : 'Loss'}
+                                                </span>
                                                 <span className={`text-[10px] sm:text-xs font-bold ${(group.monthIncome - group.monthExpense) >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
                                                     Rs. {(group.monthIncome - group.monthExpense).toFixed(0)}
                                                 </span>
