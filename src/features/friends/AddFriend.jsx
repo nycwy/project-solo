@@ -33,7 +33,7 @@ const AddFriend = () => {
             if (!email) throw new Error("Please enter an email address.");
 
             const targetEmail = email.trim().toLowerCase();
-            if (user && targetEmail === user.email.toLowerCase()) {
+            if (user && targetEmail === (user.email || "").toLowerCase()) {
                 throw new Error("You cannot add yourself.");
             }
 
@@ -50,7 +50,7 @@ const AddFriend = () => {
 
             await addDoc(collection(db, "friend_requests"), {
                 fromId: user.uid,
-                fromEmail: user.email,
+                fromEmail: (user.email || "").toLowerCase(),
                 fromName: user.username || "A Friend",
                 toId: friendDoc.id,
                 status: "pending",

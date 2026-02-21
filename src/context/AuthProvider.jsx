@@ -1,7 +1,7 @@
 import { onAuthStateChanged } from "firebase/auth";
 import React, { useEffect, useState } from "react";
 import { auth, db } from "../services/firebase";
-import { doc, onSnapshot } from "firebase/firestore";
+import { doc, onSnapshot, updateDoc } from "firebase/firestore";
 import { AuthContext } from "./AuthContext";
 
 const AuthProvider = ({ children }) => {
@@ -17,17 +17,28 @@ const AuthProvider = ({ children }) => {
 
                 unsubscribeSnapshot = onSnapshot(
                     userRef,
-                    (docSnap) => {
+                    async (docSnap) => {
                         if (docSnap.exists()) {
+                            const data = docSnap.data();
+
+                            if (data.email && currentUser.email && data.email !== currentUser.email.toLowerCase()) {
+                                try {
+                                    await updateDoc(userRef, { email: currentUser.email.toLowerCase() });
+                                    data.email = currentUser.email.toLowerCase();
+                                } catch (err) {
+                                    console.error("Failed to normalize email case:", err);
+                                }
+                            }
+
                             setUser({
                                 uid: currentUser.uid,
-                                email: currentUser.email,
+                                email: currentUser.email?.toLowerCase(),
                                 displayName: currentUser.displayName,
                                 photoURL: currentUser.photoURL,
-                                ...docSnap.data(),
+                                ...data,
                             });
                         } else {
-                            setUser(currentUser);
+                            setUser({ ...currentUser, email: currentUser.email?.toLowerCase() });
                         }
                         setLoading(false);
                     },

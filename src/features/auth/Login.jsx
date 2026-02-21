@@ -40,7 +40,7 @@ const Login = () => {
         setError('');
 
         try {
-            await signInWithEmailAndPassword(auth, email, password);
+            await signInWithEmailAndPassword(auth, email.toLowerCase(), password);
             navigate('/journal');
         } catch (err) {
             setError(
@@ -57,7 +57,7 @@ const Login = () => {
     const handleReset = async () => {
         if (!email) return alert('Enter your email first');
         try {
-            await sendPasswordResetEmail(auth, email);
+            await sendPasswordResetEmail(auth, email.toLowerCase());
             alert('Password reset email sent!');
         } catch (err) {
             alert('Failed to send reset email');
@@ -75,7 +75,7 @@ const Login = () => {
             if (additionalInfo?.isNewUser) {
                 await setDoc(doc(db, 'users', user.uid), {
                     username: user.displayName || 'Google User',
-                    email: user.email,
+                    email: user.email.toLowerCase(),
                     createdAt: serverTimestamp(),
                     friendsList: [],
                 });

@@ -49,7 +49,7 @@ const Register = () => {
 
             await setDoc(doc(db, 'users', newUser.uid), {
                 username,
-                email,
+                email: email.toLowerCase(),
                 createdAt: serverTimestamp(),
                 friendsList: [],
             });
@@ -78,7 +78,7 @@ const Register = () => {
             if (additionalInfo?.isNewUser) {
                 await setDoc(doc(db, 'users', user.uid), {
                     username: user.displayName || 'Google User',
-                    email: user.email,
+                    email: user.email.toLowerCase(),
                     createdAt: serverTimestamp(),
                     friendsList: [],
                 });

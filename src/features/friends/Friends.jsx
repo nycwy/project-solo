@@ -116,14 +116,14 @@ const Friends = () => {
                 friendsList: arrayUnion({
                     uid: req.fromId,
                     username: req.fromName,
-                    email: req.fromEmail,
+                    email: (req.fromEmail || "").toLowerCase(),
                 }),
             });
             await updateDoc(doc(db, 'users', req.fromId), {
                 friendsList: arrayUnion({
                     uid: user.uid,
                     username: myName,
-                    email: user.email,
+                    email: (user.email || "").toLowerCase(),
                 }),
             });
             await deleteDoc(doc(db, 'friend_requests', req.id));
@@ -165,7 +165,7 @@ const Friends = () => {
             friendsList: arrayRemove({
                 uid: user.uid,
                 username: user.displayName || user.email,
-                email: user.email,
+                email: (user.email || "").toLowerCase(),
             }),
         });
     };
@@ -178,7 +178,7 @@ const Friends = () => {
         try {
             const usersQuery = query(
                 collection(db, 'users'),
-                where('email', '==', friendEmail.trim())
+                where('email', '==', friendEmail.trim().toLowerCase())
             );
             const usersSnap = await getDocs(usersQuery);
             if (usersSnap.empty) {
@@ -213,7 +213,7 @@ const Friends = () => {
             await addDoc(collection(db, 'friend_requests'), {
                 fromId: user.uid,
                 fromName: myName,
-                fromEmail: user.email,
+                fromEmail: (user.email || "").toLowerCase(),
                 toId: friendId,
                 status: 'pending',
                 createdAt: serverTimestamp(),
