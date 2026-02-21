@@ -1,19 +1,19 @@
 import { twMerge } from 'tailwind-merge';
 
 const variantStyles = {
-    primary: 'bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)] shadow-lg shadow-indigo-500/25',
+    primary: 'bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)] shadow-sm ring-1 ring-inset ring-[var(--color-primary)]/20',
     secondary: 'bg-[var(--color-surface-hover)] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]',
-    danger: 'bg-[var(--color-danger)] text-white hover:opacity-90 shadow-lg shadow-rose-500/25',
+    danger: 'bg-[var(--color-danger)] text-white hover:opacity-90 shadow-sm ring-1 ring-inset ring-[var(--color-danger)]/20',
     ghost: 'bg-transparent text-[var(--color-primary)] hover:bg-[var(--color-primary-light)]',
     outline: 'bg-[var(--color-surface)] text-[var(--color-text-secondary)] border border-[var(--color-border)] hover:bg-[var(--color-surface-hover)] hover:border-[var(--color-text-muted)]',
-    success: 'bg-[var(--color-success)] text-white hover:opacity-90 shadow-lg shadow-emerald-500/25',
+    success: 'bg-[var(--color-success)] text-white hover:opacity-90 shadow-sm ring-1 ring-inset ring-[var(--color-success)]/20',
 };
 
 const sizeStyles = {
-    xs: 'px-2.5 py-1.5 text-xs rounded-lg',
-    sm: 'px-3.5 py-2 text-sm rounded-xl',
-    md: 'px-5 py-2.5 rounded-xl',
-    lg: 'px-6 py-3.5 text-base rounded-xl',
+    xs: 'px-2.5 py-1.5 text-xs rounded-md',
+    sm: 'px-3.5 py-2 text-sm rounded-lg',
+    md: 'px-5 py-2.5 rounded-lg',
+    lg: 'px-6 py-3.5 text-base rounded-lg',
 };
 
 const Button = ({

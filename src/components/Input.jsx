@@ -50,8 +50,8 @@ const Input = ({
                     min={min}
                     max={max}
                     className={twMerge(
-                        'w-full px-3.5 py-3 bg-[var(--color-surface-alt)] border border-[var(--color-border)] rounded-xl text-sm font-medium text-[var(--color-text)]',
-                        'outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary-subtle)] focus:bg-[var(--color-surface)] transition-all duration-200',
+                        'w-full px-3.5 py-3 bg-[var(--color-surface)] shadow-sm ring-1 ring-inset ring-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text)]',
+                        'outline-none focus:ring-2 focus:ring-inset focus:ring-[var(--color-primary)] transition-all duration-200',
                         'placeholder:text-[var(--color-text-muted)]',
                         disabled && 'opacity-50 cursor-not-allowed',
                         Icon && 'pl-10',

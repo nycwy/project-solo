@@ -7,15 +7,15 @@ const Modal = ({ isOpen, onClose, title, icon: Icon, headerClassName, children, 
     return (
         <div className="fixed inset-0 z-60 flex items-end md:items-center justify-center">
             <div
-                className="absolute inset-0 bg-[var(--color-overlay)] backdrop-blur-md transition-opacity animate-fade-in"
+                className="absolute inset-0 bg-[var(--color-overlay)] backdrop-blur-sm transition-opacity animate-fade-in"
                 onClick={onClose}
             />
 
-            <div className="bg-[var(--color-surface)] w-full md:max-w-lg rounded-t-3xl md:rounded-3xl shadow-2xl relative z-10 flex flex-col max-h-[85dvh] md:max-h-[80vh] animate-slide-up border border-[var(--color-border-light)]">
+            <div className="bg-[var(--color-surface)] w-full md:max-w-lg rounded-t-xl md:rounded-xl relative z-10 flex flex-col max-h-[85dvh] md:max-h-[80vh] animate-slide-up ring-1 ring-inset ring-[var(--color-border)]">
                 {/* Header */}
                 {title && (
                     <div className={twMerge(
-                        'px-6 py-4 flex justify-between items-center border-b rounded-t-3xl',
+                        'px-6 py-4 flex justify-between items-center border-b rounded-t-xl',
                         headerClassName || 'bg-[var(--color-surface-alt)] border-[var(--color-border-light)]'
                     )}>
                         <div className="flex items-center gap-2.5">

@@ -6,7 +6,6 @@ const SwipeableCard = ({ children, onEdit, canEdit = true, onDelete, canDelete =
     const [swiping, setSwiping] = useState(false);
     const [swipedOpen, setSwipedOpen] = useState(false); // false, 'edit', or 'delete'
     const [offset, setOffset] = useState(0);
-    const [showHint, setShowHint] = useState(false);
     const instanceId = useRef(Math.random().toString(36).slice(2));
 
     // Store starting coordinates
@@ -56,9 +55,6 @@ const SwipeableCard = ({ children, onEdit, canEdit = true, onDelete, canDelete =
 
         // If user is just scrolling down the list, don't swipe the card
         if (!isHorizontalSwipe.current) return;
-
-        // Hide hint once actual swiping starts
-        if (showHint) setShowHint(false);
 
         // Calculate offset
         const baseOffset = swipedOpen === 'edit' ? maxSwipe.current : (swipedOpen === 'delete' ? -maxSwipe.current : 0);
@@ -111,17 +107,6 @@ const SwipeableCard = ({ children, onEdit, canEdit = true, onDelete, canDelete =
             document.removeEventListener('pointerdown', handleClickOutside);
         };
     }, [swipedOpen]);
-
-    // Close this card's hint when another card opens its hint
-    useEffect(() => {
-        const handleOtherHint = (e) => {
-            if (e.detail !== instanceId.current) {
-                setShowHint(false);
-            }
-        };
-        document.addEventListener('swipeable-hint-open', handleOtherHint);
-        return () => document.removeEventListener('swipeable-hint-open', handleOtherHint);
-    }, []);
 
     return (
         <div ref={containerRef} className={twMerge("relative w-full rounded-2xl group", className)}>
@@ -197,13 +182,6 @@ const SwipeableCard = ({ children, onEdit, canEdit = true, onDelete, canDelete =
                         e.preventDefault();
                         setOffset(0);
                         setSwipedOpen(false);
-                    } else if (offset === 0 && !swiping) {
-                        // Simple toggle
-                        const next = !showHint;
-                        setShowHint(next);
-                        if (next) {
-                            document.dispatchEvent(new CustomEvent('swipeable-hint-open', { detail: instanceId.current }));
-                        }
                     }
                 }}
             >
@@ -231,24 +209,6 @@ const SwipeableCard = ({ children, onEdit, canEdit = true, onDelete, canDelete =
                         <FiTrash2 size={18} />
                     </button>
                 </div>
-
-                {/* Swipe hint overlay — toggle on tap (mobile only now due to class hidden on md) */}
-                {showHint && offset === 0 && !swiping && (canEdit || (canDelete && onDelete)) && (
-                    <div
-                        className="md:hidden absolute bottom-2 left-3 right-3 flex items-center justify-between pointer-events-none select-none animate-fade-in z-20"
-                    >
-                        {canEdit ? (
-                            <span className="text-[10px] text-[var(--color-primary)] opacity-80 tracking-wide font-medium">
-                                Swipe right to edit →
-                            </span>
-                        ) : <span />}
-                        {canDelete && onDelete ? (
-                            <span className="text-[10px] text-[var(--color-danger)] opacity-80 tracking-wide font-medium">
-                                ← Swipe left to delete
-                            </span>
-                        ) : <span />}
-                    </div>
-                )}
             </div>
         </div>
     );

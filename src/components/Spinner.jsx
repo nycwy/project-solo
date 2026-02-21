@@ -10,7 +10,7 @@ const Spinner = ({ fullPage = false, size = 'md', className }) => {
     const spinner = (
         <div
             className={twMerge(
-                'animate-spin rounded-full border-[var(--color-primary)] border-t-transparent',
+                'animate-spin rounded-full border-[var(--color-border)] border-t-[var(--color-primary)]',
                 sizes[size] || sizes.md,
                 className
             )}

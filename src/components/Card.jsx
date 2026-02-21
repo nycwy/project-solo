@@ -3,19 +3,19 @@ import { twMerge } from 'tailwind-merge';
 const Card = ({ children, className, hover = false, padding = 'md', onClick, ...props }) => {
     const paddings = {
         none: '',
-        sm: 'p-3 md:p-4',
-        md: 'p-4 md:p-5',
-        lg: 'p-5 md:p-6',
-        xl: 'p-6 md:p-8',
+        sm: 'py-2.5 px-3',
+        md: 'p-4',
+        lg: 'py-4 px-5 md:py-5 md:px-6',
+        xl: 'py-5 px-6 md:py-6 md:px-8',
     };
 
     return (
         <div
             onClick={onClick}
             className={twMerge(
-                'bg-[var(--color-surface)] rounded-2xl border border-[var(--color-border-light)] shadow-[0_1px_3px_var(--color-shadow)]',
+                'bg-[var(--color-surface)] rounded-xl border border-[var(--color-border-light)]/50',
                 paddings[padding] || paddings.md,
-                hover && 'hover:shadow-[0_4px_16px_var(--color-shadow-lg)] hover:border-[var(--color-primary)]/25 transition-all duration-300 cursor-pointer hover:-translate-y-0.5',
+                hover && 'hover:bg-[var(--color-surface-hover)] transition-colors duration-200 cursor-pointer',
                 onClick && 'cursor-pointer',
                 className
             )}

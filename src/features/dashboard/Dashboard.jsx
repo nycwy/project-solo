@@ -244,32 +244,22 @@ const Dashboard = () => {
                 }
             />
 
-            <div className="mb-6">
-                <div className="rounded-2xl p-5 bg-[var(--color-surface)] border border-[var(--color-border-light)] shadow-[0_1px_4px_var(--color-shadow)]">
-                    <div className="grid grid-cols-2 divide-x divide-[var(--color-border-light)]">
-                        <div className="pr-4">
-                            <div className="flex items-center gap-1.5 mb-1.5">
-                                <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                                <span className="text-xs text-[var(--color-text-muted)] font-semibold uppercase tracking-widest">You Get Back</span>
-                            </div>
-                            <p className="text-xl font-bold text-[var(--color-text)] tracking-tight">Rs. {totalOwed.toFixed(0)}</p>
-                        </div>
+            <div className="mb-6 grid grid-cols-2 gap-3">
+                <div className="premium-card p-4">
+                    <span className="text-[10px] text-[var(--color-text-muted)] font-bold uppercase tracking-wider mb-1 block">You Get Back</span>
+                    <p className="text-lg font-number font-semibold text-emerald-600 dark:text-emerald-400">Rs. {totalOwed.toFixed(0)}</p>
+                </div>
 
-                        <div className="pl-4">
-                            <div className="flex items-center gap-1.5 mb-1.5">
-                                <div className="w-2 h-2 rounded-full bg-rose-500" />
-                                <span className="text-xs text-[var(--color-text-muted)] font-semibold uppercase tracking-widest">You Pay</span>
-                            </div>
-                            <p className="text-xl font-bold text-[var(--color-text)] tracking-tight">Rs. {totalDebt.toFixed(0)}</p>
-                        </div>
-                    </div>
+                <div className="premium-card p-4">
+                    <span className="text-[10px] text-[var(--color-text-muted)] font-bold uppercase tracking-wider mb-1 block">You Pay</span>
+                    <p className="text-lg font-number font-semibold text-rose-600 dark:text-rose-400">Rs. {totalDebt.toFixed(0)}</p>
+                </div>
 
-                    <div className="border-t border-[var(--color-border-light)] mt-4 pt-3 flex items-center justify-between">
-                        <span className="text-xs text-[var(--color-text-muted)] font-medium">Total</span>
-                        <span className={`text-base font-bold ${netBalance >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
-                            {netBalance >= 0 ? '+' : '-'} Rs. {Math.abs(netBalance).toFixed(0)}
-                        </span>
-                    </div>
+                <div className="premium-card p-4 col-span-2 flex items-center justify-between">
+                    <span className="text-xs text-[var(--color-text-muted)] font-bold uppercase tracking-wider">Net Balance</span>
+                    <span className={`text-xl font-number font-bold ${netBalance >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                        {netBalance >= 0 ? '+' : '-'} Rs. {Math.abs(netBalance).toFixed(0)}
+                    </span>
                 </div>
             </div>
 
@@ -285,7 +275,7 @@ const Dashboard = () => {
                         subtitle="Tap + to split the bills"
                     />
                 ) : (
-                    <div className="space-y-2">
+                    <div className="w-full max-w-[100vw] overflow-x-hidden space-y-2">
                         {allTransactions.map((t) => {
                             const isPayer = t.payerId === user.uid;
                             const otherName = isPayer ? getName(t.debtorId) : getName(t.payerId);
@@ -298,51 +288,79 @@ const Dashboard = () => {
                                     canDelete={isPayer}
                                     onDelete={() => handleDelete(t.id)}
                                 >
-                                    <Card padding="sm" className="animate-fade-in-up transition-transform active:scale-[0.98]">
-                                        <div className="flex items-center gap-3">
-                                            <Avatar name={otherName} size="sm" />
-
-                                            <div className="flex-1 min-w-0 flex flex-col justify-center">
-                                                <div className="flex items-start justify-between gap-2">
-                                                    <p className="text-sm font-semibold text-[var(--color-text)] truncate">
-                                                        {t.description}
-                                                    </p>
-                                                    <span className={`text-sm font-semibold shrink-0 ${isPayer ? 'text-[var(--color-text)]' : 'text-[var(--color-text-secondary)]'}`}>
-                                                        {isPayer ? '+' : '-'} Rs.{t.amount}
-                                                    </span>
+                                    <Card padding="sm" className="w-full max-w-full overflow-hidden animate-fade-in-up transition-transform active:scale-[0.98]">
+                                        {!isPayer && t.status === 'pending' ? (
+                                            <div className="flex items-center justify-between gap-2 w-full">
+                                                {/* State 1: Pending (Needs Accept/Reject) */}
+                                                <div className="flex items-center gap-2.5 flex-1 min-w-0 pr-2">
+                                                    <Avatar name={otherName} size="xs" className="shrink-0" />
+                                                    <div className="flex-1 min-w-0 flex flex-col items-start">
+                                                        <span className="w-full text-[13.5px] font-semibold text-[var(--color-text)] truncate leading-tight">
+                                                            {t.description}
+                                                        </span>
+                                                        <span className="w-full text-[11px] font-medium text-[var(--color-text-muted)] truncate">
+                                                            {formatDate(t.date)} <span className="text-[9px] text-[var(--color-border)] mx-0.5">•</span> {isPayer ? `To ${otherName}` : `From ${otherName}`}
+                                                        </span>
+                                                        <span className="text-sm font-number font-bold text-white mt-1">
+                                                            {isPayer ? '+' : '-'} Rs.{t.amount}
+                                                        </span>
+                                                    </div>
                                                 </div>
 
-                                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mt-1">
-                                                    <div className="flex items-center gap-1.5 text-xs text-[var(--color-text-muted)] w-full sm:w-auto overflow-hidden">
-                                                        <span className="truncate">{isPayer ? `To ${otherName}` : `From ${otherName}`}</span>
-                                                        <span className="text-[10px] shrink-0">•</span>
-                                                        <span className="shrink-0 text-[11px] font-medium">{formatDate(t.date)}</span>
-                                                    </div>
-                                                    <div className="flex items-center gap-1.5 justify-start sm:justify-end shrink-0 flex-wrap">
-                                                        {!isPayer && t.status === 'pending' && (
-                                                            <>
-                                                                <button onClick={() => handleAccept(t.id)} className="p-1 rounded-md bg-[var(--color-success-light)] text-[var(--color-success)] hover:opacity-80 transition-all" title="Accept">
-                                                                    <FiCheck size={12} />
-                                                                </button>
-                                                                <button onClick={() => handleReject(t.id)} className="p-1 rounded-md bg-[var(--color-danger-light)] text-[var(--color-danger)] hover:opacity-80 transition-all" title="Reject">
-                                                                    <FiX size={12} />
-                                                                </button>
-                                                            </>
-                                                        )}
-
-                                                        {!isPayer && t.status === 'confirmed' && t.settleStatus !== 'settled' && t.settleStatus !== 'settle_pending' && (
-                                                            <Button size="xs" variant="outline" text="Settle" onClick={() => handleSettle(t.id)} />
-                                                        )}
-
-                                                        {isPayer && t.settleStatus === 'settle_pending' && (
-                                                            <Button size="xs" variant="success" text="Confirm" onClick={() => handleConfirmSettle(t.id)} />
-                                                        )}
-
-                                                        {getStatusBadge(t)}
-                                                    </div>
+                                                <div className="shrink-0 flex items-center gap-2">
+                                                    <button onClick={() => handleAccept(t.id)} className="h-7 px-3 flex items-center justify-center rounded-full text-[11px] font-semibold tracking-wide uppercase text-white bg-emerald-600 hover:bg-emerald-500 transition-colors select-none" title="Accept">
+                                                        Accept
+                                                    </button>
+                                                    <button onClick={() => handleReject(t.id)} className="h-7 px-3 flex items-center justify-center rounded-full text-[11px] font-semibold tracking-wide uppercase text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 transition-colors select-none" title="Reject">
+                                                        Reject
+                                                    </button>
                                                 </div>
                                             </div>
-                                        </div>
+                                        ) : (
+                                            <div className="flex items-center justify-between gap-2 w-full">
+                                                {/* State 2: Default (Accepted/Settled) */}
+                                                <div className="flex items-center gap-2.5 flex-1 min-w-0 pr-2">
+                                                    <Avatar name={otherName} size="xs" className="shrink-0" />
+                                                    <div className="flex-1 min-w-0 flex flex-col gap-0.5 mt-0.5">
+                                                        <span className="w-full text-[13.5px] font-semibold text-[var(--color-text)] truncate leading-tight">
+                                                            {t.description}
+                                                        </span>
+                                                        <span className="w-full text-[11px] font-medium text-[var(--color-text-muted)] truncate">
+                                                            {formatDate(t.date)} <span className="text-[9px] text-[var(--color-border)] mx-0.5">•</span> {isPayer ? `To ${otherName}` : `From ${otherName}`}
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                <div className="shrink-0 flex flex-col items-end gap-1">
+                                                    <div className="flex flex-col items-end justify-center gap-0.5">
+                                                        {t.status !== 'pending' && (!isPayer || t.settleStatus !== 'settle_pending') && (
+                                                            <div className="transform origin-right scale-[0.80]">
+                                                                {getStatusBadge(t)}
+                                                            </div>
+                                                        )}
+                                                        <span className={`text-[13px] font-number font-bold leading-none ${isPayer ? 'text-[var(--color-text)]' : 'text-[var(--color-text-secondary)]'}`}>
+                                                            {isPayer ? '+' : '-'} Rs.{t.amount}
+                                                        </span>
+                                                    </div>
+
+                                                    {((!isPayer && t.status === 'confirmed' && t.settleStatus !== 'settled' && t.settleStatus !== 'settle_pending') || (isPayer && t.settleStatus === 'settle_pending')) && (
+                                                        <div className="flex items-center gap-1.5 shrink-0">
+                                                            {!isPayer && t.status === 'confirmed' && t.settleStatus !== 'settled' && t.settleStatus !== 'settle_pending' && (
+                                                                <button onClick={() => handleSettle(t.id)} className="h-7 px-3 flex items-center justify-center rounded-full text-[11px] font-semibold tracking-wide uppercase text-slate-200 bg-slate-700/50 border border-slate-600 hover:bg-slate-700 transition-colors select-none">
+                                                                    Settle
+                                                                </button>
+                                                            )}
+
+                                                            {isPayer && t.settleStatus === 'settle_pending' && (
+                                                                <button onClick={() => handleConfirmSettle(t.id)} className="h-7 px-3 flex items-center justify-center rounded-full text-[11px] font-semibold tracking-wide uppercase text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors select-none">
+                                                                    Confirm
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
                                     </Card>
                                 </SwipeableCard>
                             );

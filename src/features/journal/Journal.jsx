@@ -245,34 +245,22 @@ const Journal = () => {
                 }
             />
 
-            <div className="mb-6">
-                <div className="rounded-2xl p-5 bg-[var(--color-surface)] border border-[var(--color-border-light)] shadow-[0_1px_4px_var(--color-shadow)]">
-                    <div className="grid grid-cols-2 divide-x divide-[var(--color-border-light)]">
-                        <div className="pr-4 cursor-pointer group" onClick={() => openAddModal('income')}>
-                            <div className="flex items-center gap-1.5 mb-1.5">
-                                <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                                <span className="text-xs text-[var(--color-text-muted)] font-semibold uppercase tracking-widest">Income</span>
-                            </div>
-                            <p className="text-xl font-bold text-[var(--color-text)] tracking-tight">Rs. {totalIncome.toFixed(0)}</p>
-                            <span className="text-[10px] text-emerald-500/70 font-medium mt-1 inline-flex items-center gap-0.5 group-active:scale-95 transition-transform">Add Income</span>
-                        </div>
+            <div className="mb-6 grid grid-cols-2 gap-3">
+                <div className="premium-card p-4 cursor-pointer hover:bg-[var(--color-surface-hover)] transition-colors" onClick={() => openAddModal('income')}>
+                    <span className="text-[10px] text-[var(--color-text-muted)] font-bold uppercase tracking-wider mb-1 block">Income <span className="text-emerald-500/70 text-[9px] font-medium ml-1">+ Add</span></span>
+                    <p className="text-lg font-number font-semibold text-emerald-600 dark:text-emerald-400">Rs. {totalIncome.toFixed(0)}</p>
+                </div>
 
-                        <div className="pl-4 cursor-pointer group" onClick={() => openAddModal('expense')}>
-                            <div className="flex items-center gap-1.5 mb-1.5">
-                                <div className="w-2 h-2 rounded-full bg-rose-500" />
-                                <span className="text-xs text-[var(--color-text-muted)] font-semibold uppercase tracking-widest">Expense</span>
-                            </div>
-                            <p className="text-xl font-bold text-[var(--color-text)] tracking-tight">Rs. {totalExpense.toFixed(0)}</p>
-                            <span className="text-[10px] text-rose-500/70 font-medium mt-1 inline-flex items-center gap-0.5 group-active:scale-95 transition-transform">Add Expense</span>
-                        </div>
-                    </div>
+                <div className="premium-card p-4 cursor-pointer hover:bg-[var(--color-surface-hover)] transition-colors" onClick={() => openAddModal('expense')}>
+                    <span className="text-[10px] text-[var(--color-text-muted)] font-bold uppercase tracking-wider mb-1 block">Expense <span className="text-rose-500/70 text-[9px] font-medium ml-1">+ Add</span></span>
+                    <p className="text-lg font-number font-semibold text-rose-600 dark:text-rose-400">Rs. {totalExpense.toFixed(0)}</p>
+                </div>
 
-                    <div className="border-t border-[var(--color-border-light)] mt-4 pt-3 flex items-center justify-between">
-                        <span className="text-xs text-[var(--color-text-muted)] font-medium">Net Savings</span>
-                        <span className={`text-base font-bold ${(totalIncome - totalExpense) >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
-                            Rs. {(totalIncome - totalExpense).toFixed(0)}
-                        </span>
-                    </div>
+                <div className="premium-card p-4 col-span-2 flex items-center justify-between">
+                    <span className="text-xs text-[var(--color-text-muted)] font-bold uppercase tracking-wider">Net Savings</span>
+                    <span className={`text-xl font-number font-bold ${(totalIncome - totalExpense) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                        Rs. {(totalIncome - totalExpense).toFixed(0)}
+                    </span>
                 </div>
             </div>
 
@@ -337,26 +325,27 @@ const Journal = () => {
                                             onDelete={() => handleDeleteEntry(entry.id)}
                                         >
                                             <Card padding="sm" className="transition-transform active:scale-[0.98]">
-                                                <div className="flex items-center gap-3">
-                                                    <div className={`w-9 h-9 rounded-xl shrink-0 flex items-center justify-center ${entry.type === 'income' ? 'bg-[var(--color-success-light)] text-[var(--color-success)]' : 'bg-[var(--color-danger-light)] text-[var(--color-danger)]'}`}>
-                                                        {entry.type === 'income' ? <FiTrendingUp size={15} /> : <FiTrendingDown size={15} />}
-                                                    </div>
-
-                                                    <div className="flex-1 min-w-0 flex flex-col justify-center">
-                                                        <div className="flex items-start justify-between gap-2">
-                                                            <p className="text-sm font-semibold text-[var(--color-text)] truncate">{entry.description || entry.type}</p>
-                                                            <span className={`text-sm font-semibold shrink-0 ${entry.type === 'income' ? 'text-[var(--color-text)]' : 'text-[var(--color-text-secondary)]'}`}>
-                                                                {entry.type === 'income' ? '' : '-'} Rs.{entry.amount}
+                                                <div className="flex flex-col gap-3 w-full">
+                                                    {/* Top Row: Info */}
+                                                    <div className="flex items-center justify-between gap-3">
+                                                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                                                            <div className={`w-8 h-8 rounded-lg shrink-0 flex items-center justify-center ${entry.type === 'income' ? 'bg-[var(--color-success-light)] text-[var(--color-success)]' : 'bg-[var(--color-danger-light)] text-[var(--color-danger)]'}`}>
+                                                                {entry.type === 'income' ? <FiTrendingUp size={14} /> : <FiTrendingDown size={14} />}
+                                                            </div>
+                                                            <span className="text-[14px] font-semibold text-[var(--color-text)] truncate leading-tight">
+                                                                {entry.description || entry.type}
                                                             </span>
                                                         </div>
+                                                        <span className={`text-[14px] font-number font-bold shrink-0 ${entry.type === 'income' ? 'text-[var(--color-text)]' : 'text-[var(--color-text-secondary)]'}`}>
+                                                            {entry.type === 'income' ? '' : '-'} Rs.{entry.amount}
+                                                        </span>
+                                                    </div>
 
-                                                        <div className="flex items-center justify-between gap-2 mt-0.5">
-                                                            <div className="flex items-center gap-1.5 text-xs text-[var(--color-text-muted)] truncate">
-                                                                <span>{formatDate(entry.date)}</span>
-                                                            </div>
-                                                            <div className="flex items-center gap-1 justify-end shrink-0">
-                                                            </div>
-                                                        </div>
+                                                    {/* Bottom Row: Meta */}
+                                                    <div className="flex items-end justify-between gap-3 mt-0.5">
+                                                        <span className="text-xs font-medium text-[var(--color-text-muted)] truncate pb-1">
+                                                            {formatDate(entry.date)}
+                                                        </span>
                                                     </div>
                                                 </div>
                                             </Card>
