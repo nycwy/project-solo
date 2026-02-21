@@ -89,6 +89,7 @@ const FriendDetails = () => {
 
     const balance = transactions.reduce((sum, t) => {
         if (t.settleStatus === 'settled') return sum;
+        // Include pending and confirmed transactions, but ignore rejected ones
         if (t.role === 'payer' && t.status !== 'rejected') return sum + (Number(t.amount) || 0);
         if (t.role === 'debtor' && t.status !== 'rejected') return sum - (Number(t.amount) || 0);
         return sum;

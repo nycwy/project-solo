@@ -98,13 +98,40 @@ const Dashboard = () => {
         return friendsMap[uid] || 'Unknown';
     };
 
-    const totalOwed = payerTransactions
-        .filter((t) => t.debtorId !== 'SELF' && t.status !== 'confirmed')
-        .reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+    // 1. Calculate the net balance with EACH friend first
+    const friendBalances = {};
 
-    const totalDebt = debtorTransactions
-        .filter((t) => t.status !== 'confirmed')
-        .reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+    // Transactions where you are the payer (they owe you)
+    payerTransactions.forEach((t) => {
+        if (t.debtorId !== 'SELF' && t.settleStatus !== 'settled') {
+            const amount = Number(t.amount) || 0;
+            // 'confirmed' status conceptually means the other person accepted the debt exists,
+            // or 'pending' means it's still proposed by you. Both count towards the balance.
+            friendBalances[t.debtorId] = (friendBalances[t.debtorId] || 0) + amount;
+        }
+    });
+
+    // Transactions where you are the debtor (you owe them)
+    debtorTransactions.forEach((t) => {
+        if (t.settleStatus !== 'settled') {
+            const amount = Number(t.amount) || 0;
+            // Even if they haven't explicitly 'confirmed' yet, or if it's pending,
+            // we factor it into the balance.
+            friendBalances[t.payerId] = (friendBalances[t.payerId] || 0) - amount;
+        }
+    });
+
+    // 2. Separate the net balances into totalOwed (positive) and totalDebt (negative)
+    let totalOwed = 0;
+    let totalDebt = 0;
+
+    Object.values(friendBalances).forEach((balance) => {
+        if (balance > 0) {
+            totalOwed += balance;
+        } else if (balance < 0) {
+            totalDebt += Math.abs(balance);
+        }
+    });
 
     const netBalance = totalOwed - totalDebt;
 
