@@ -243,63 +243,43 @@ const FriendDetails = () => {
                                 onDelete={() => handleDelete(t.id)}
                             >
                                 <Card className="p-2.5 animate-fade-in-up transition-transform active:scale-[0.98]">
-                                    <div className="flex items-center gap-3 w-full">
+                                    <div className="flex items-center gap-3">
                                         <div className={`p-1.5 rounded-lg shrink-0 ${isPayer ? 'bg-[var(--color-success-light)] text-[var(--color-success)]' : 'bg-[var(--color-danger-light)] text-[var(--color-danger)]'}`}>
                                             {isPayer ? <FiArrowUpRight size={14} /> : <FiArrowDownLeft size={14} />}
                                         </div>
 
-                                        {/* The Layout Wrapper: Strict 2x2 Flex Grid */}
-                                        <div className="flex-1 min-w-0 flex flex-col justify-center gap-1">
-
-                                            {/* Top Row (Always fixed): Description (Left) - Status/Amount (Right) */}
-                                            <div className="flex justify-between items-start w-full gap-2">
-                                                <span className="text-sm font-semibold text-[var(--color-text)] truncate leading-tight">
+                                        <div className="flex-1 min-w-0 flex flex-col justify-center">
+                                            <div className="flex items-start justify-between gap-2">
+                                                <p className="text-sm font-semibold text-[var(--color-text)] truncate leading-tight">
                                                     {t.description}
+                                                </p>
+                                                <span className={`text-sm font-semibold shrink-0 ${isPayer ? 'text-[var(--color-text)]' : 'text-[var(--color-text-secondary)]'}`}>
+                                                    {isPayer ? '+' : '-'} Rs.{t.amount}
                                                 </span>
-                                                <div className="flex flex-col items-end justify-start gap-0.5 shrink-0 pl-2">
-                                                    <span className={`text-[13px] font-number font-bold leading-none ${isPayer ? 'text-[var(--color-text)]' : 'text-[var(--color-text-secondary)]'}`}>
-                                                        {isPayer ? '+' : '-'} Rs.{t.amount}
-                                                    </span>
-                                                </div>
                                             </div>
 
-                                            {/* Bottom Row (Dynamic Slot): Meta (Left) - Actions/Badges (Right) */}
-                                            <div className="flex justify-between items-center w-full gap-2 mt-0.5">
-                                                <span className="flex-1 min-w-0 text-[11px] font-medium text-[var(--color-text-muted)] truncate">
-                                                    {formatDate(t.date)}
-                                                </span>
-
-                                                <div className="shrink-0 flex items-center gap-1.5 justify-end h-6">
-                                                    {/* Dynamic Logic for Bottom Right */}
+                                            <div className="flex items-center justify-between gap-2">
+                                                <div className="flex items-center gap-1.5 text-[11px] font-medium text-[var(--color-text-muted)] truncate mt-0.5">
+                                                    <span>{formatDate(t.date)}</span>
+                                                </div>
+                                                <div className="flex items-center gap-1 justify-end shrink-0">
                                                     {!isPayer && t.status === 'pending' && (
                                                         <>
-                                                            <button onClick={(e) => { e.stopPropagation(); handleAccept(t.id); }} className="h-6 px-2.5 flex items-center justify-center rounded-md text-[10px] font-semibold tracking-wide uppercase text-white bg-emerald-600 hover:bg-emerald-500 transition-colors select-none" title="Accept">
-                                                                Accept
+                                                            <button onClick={(e) => { e.stopPropagation(); handleAccept(t.id); }} className="p-1 rounded-md bg-[var(--color-success-light)] text-[var(--color-success)] hover:opacity-80 transition-all" title="Accept">
+                                                                <FiCheck size={12} />
                                                             </button>
-                                                            <button onClick={(e) => { e.stopPropagation(); handleReject(t.id); }} className="h-6 px-2.5 flex items-center justify-center rounded-md text-[10px] font-semibold tracking-wide uppercase text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 transition-colors select-none" title="Reject">
-                                                                Reject
+                                                            <button onClick={(e) => { e.stopPropagation(); handleReject(t.id); }} className="p-1 rounded-md bg-[var(--color-danger-light)] text-[var(--color-danger)] hover:opacity-80 transition-all" title="Reject">
+                                                                <FiX size={12} />
                                                             </button>
                                                         </>
                                                     )}
-
-                                                    {((!isPayer && t.status === 'confirmed' && t.settleStatus !== 'settled' && t.settleStatus !== 'settle_pending') || (isPayer && t.settleStatus === 'settle_pending')) && (
-                                                        <>
-                                                            {!isPayer && t.status === 'confirmed' && t.settleStatus !== 'settled' && t.settleStatus !== 'settle_pending' && (
-                                                                <button onClick={(e) => { e.stopPropagation(); handleSettle(t.id); }} className="h-6 px-2.5 flex items-center justify-center rounded-md text-[10px] font-semibold tracking-wide uppercase text-slate-200 bg-slate-700/50 border border-slate-600 hover:bg-slate-700 transition-colors select-none">
-                                                                    Settle
-                                                                </button>
-                                                            )}
-                                                            {isPayer && t.settleStatus === 'settle_pending' && (
-                                                                <button onClick={(e) => { e.stopPropagation(); handleConfirmSettle(t.id); }} className="h-6 px-2.5 flex items-center justify-center rounded-md text-[10px] font-semibold tracking-wide uppercase text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors select-none">
-                                                                    Confirm
-                                                                </button>
-                                                            )}
-                                                        </>
+                                                    {!isPayer && t.status === 'confirmed' && t.settleStatus !== 'settled' && t.settleStatus !== 'settle_pending' && (
+                                                        <Button size="xs" variant="outline" text="Settle" onClick={() => handleSettle(t.id)} />
                                                     )}
-
-                                                    <div className="transform origin-right scale-[0.80] -mr-1">
-                                                        {getStatusBadge(t)}
-                                                    </div>
+                                                    {isPayer && t.settleStatus === 'settle_pending' && (
+                                                        <Button size="xs" variant="success" icon={FiCheck} onClick={() => handleConfirmSettle(t.id)} />
+                                                    )}
+                                                    {getStatusBadge(t)}
                                                 </div>
                                             </div>
                                         </div>
