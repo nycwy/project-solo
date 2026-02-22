@@ -52,7 +52,7 @@
 }
 
 /* ─── Dark Theme ─── */
-[data-theme="dark"] {
+.dark {
   --color-bg: #020617;
   /* Slate 950 */
   --color-surface: #0f172a;
