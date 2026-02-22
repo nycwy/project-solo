@@ -286,26 +286,24 @@ const Journal = () => {
                                     <span className="text-xs font-semibold text-[var(--color-text-muted)]">{group.items.length} entries</span>
                                 </div>
                                 <div className="flex items-center gap-3">
-                                    {group.key !== currentMonthKey && (
-                                        <div className="flex items-center gap-2 sm:gap-3 mr-1 sm:mr-2">
-                                            <div className="flex flex-col items-start min-w-[50px]">
-                                                <span className="text-[9px] sm:text-[10px] text-[var(--color-text-muted)] font-bold uppercase tracking-wider">Income</span>
-                                                <span className="text-[10px] sm:text-xs font-bold text-emerald-500">Rs. {group.monthIncome.toFixed(0)}</span>
-                                            </div>
-                                            <div className="flex flex-col items-start min-w-[50px]">
-                                                <span className="text-[9px] sm:text-[10px] text-[var(--color-text-muted)] font-bold uppercase tracking-wider">Expense</span>
-                                                <span className="text-[10px] sm:text-xs font-bold text-rose-500">Rs. {group.monthExpense.toFixed(0)}</span>
-                                            </div>
-                                            <div className="flex flex-col items-start border-l border-[var(--color-border)] pl-2 sm:pl-3 min-w-[50px]">
-                                                <span className="text-[9px] sm:text-[10px] text-[var(--color-text-muted)] font-bold uppercase tracking-wider">
-                                                    {(group.monthIncome - group.monthExpense) >= 0 ? 'Savings' : 'Loss'}
-                                                </span>
-                                                <span className={`text-[10px] sm:text-xs font-bold ${(group.monthIncome - group.monthExpense) >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
-                                                    Rs. {(group.monthIncome - group.monthExpense).toFixed(0)}
-                                                </span>
-                                            </div>
+                                    <div className="flex items-center gap-2 sm:gap-3 mr-1 sm:mr-2">
+                                        <div className="flex flex-col items-start min-w-[50px]">
+                                            <span className="text-[9px] sm:text-[10px] text-[var(--color-text-muted)] font-bold uppercase tracking-wider">Income</span>
+                                            <span className="text-[10px] sm:text-xs font-bold text-emerald-500">Rs. {group.monthIncome.toFixed(0)}</span>
                                         </div>
-                                    )}
+                                        <div className="flex flex-col items-start min-w-[50px]">
+                                            <span className="text-[9px] sm:text-[10px] text-[var(--color-text-muted)] font-bold uppercase tracking-wider">Expense</span>
+                                            <span className="text-[10px] sm:text-xs font-bold text-rose-500">Rs. {group.monthExpense.toFixed(0)}</span>
+                                        </div>
+                                        <div className="flex flex-col items-start border-l border-[var(--color-border)] pl-2 sm:pl-3 min-w-[50px]">
+                                            <span className="text-[9px] sm:text-[10px] text-[var(--color-text-muted)] font-bold uppercase tracking-wider">
+                                                {(group.monthIncome - group.monthExpense) >= 0 ? 'Savings' : 'Loss'}
+                                            </span>
+                                            <span className={`text-[10px] sm:text-xs font-bold ${(group.monthIncome - group.monthExpense) >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                                                Rs. {(group.monthIncome - group.monthExpense).toFixed(0)}
+                                            </span>
+                                        </div>
+                                    </div>
 
                                     <FiChevronDown
                                         size={14}
@@ -324,28 +322,27 @@ const Journal = () => {
                                             canDelete={true}
                                             onDelete={() => handleDeleteEntry(entry.id)}
                                         >
-                                            <Card padding="sm" className="transition-transform active:scale-[0.98]">
-                                                <div className="flex flex-col gap-3 w-full">
-                                                    {/* Top Row: Info */}
-                                                    <div className="flex items-center justify-between gap-3">
-                                                        <div className="flex items-center gap-3 min-w-0 flex-1">
-                                                            <div className={`w-8 h-8 rounded-lg shrink-0 flex items-center justify-center ${entry.type === 'income' ? 'bg-[var(--color-success-light)] text-[var(--color-success)]' : 'bg-[var(--color-danger-light)] text-[var(--color-danger)]'}`}>
-                                                                {entry.type === 'income' ? <FiTrendingUp size={14} /> : <FiTrendingDown size={14} />}
-                                                            </div>
-                                                            <span className="text-[14px] font-semibold text-[var(--color-text)] truncate leading-tight">
-                                                                {entry.description || entry.type}
-                                                            </span>
-                                                        </div>
-                                                        <span className={`text-[14px] font-number font-bold shrink-0 ${entry.type === 'income' ? 'text-[var(--color-text)]' : 'text-[var(--color-text-secondary)]'}`}>
-                                                            {entry.type === 'income' ? '' : '-'} Rs.{entry.amount}
-                                                        </span>
+                                            <Card className="p-2.5 transition-transform active:scale-[0.98]">
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`p-1.5 rounded-lg shrink-0 ${entry.type === 'income' ? 'bg-[var(--color-success-light)] text-[var(--color-success)]' : 'bg-[var(--color-danger-light)] text-[var(--color-danger)]'}`}>
+                                                        {entry.type === 'income' ? <FiTrendingUp size={14} /> : <FiTrendingDown size={14} />}
                                                     </div>
 
-                                                    {/* Bottom Row: Meta */}
-                                                    <div className="flex items-end justify-between gap-3 mt-0.5">
-                                                        <span className="text-xs font-medium text-[var(--color-text-muted)] truncate pb-1">
-                                                            {formatDate(entry.date)}
-                                                        </span>
+                                                    <div className="flex-1 min-w-0 flex flex-col justify-center">
+                                                        <div className="flex items-start justify-between gap-2">
+                                                            <p className="text-sm font-semibold text-[var(--color-text)] truncate leading-tight">
+                                                                {entry.description || entry.type}
+                                                            </p>
+                                                            <span className={`text-sm font-semibold shrink-0 ${entry.type === 'income' ? 'text-[var(--color-text)]' : 'text-[var(--color-text-secondary)]'}`}>
+                                                                {entry.type === 'income' ? '' : '-'} Rs.{entry.amount}
+                                                            </span>
+                                                        </div>
+
+                                                        <div className="flex items-center justify-between gap-2">
+                                                            <div className="flex items-center gap-1.5 text-[11px] font-medium text-[var(--color-text-muted)] truncate mt-0.5">
+                                                                <span>{formatDate(entry.date)}</span>
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </Card>

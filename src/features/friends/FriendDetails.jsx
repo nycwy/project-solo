@@ -242,15 +242,15 @@ const FriendDetails = () => {
                                 canDelete={isPayer}
                                 onDelete={() => handleDelete(t.id)}
                             >
-                                <Card padding="sm" className="animate-fade-in-up transition-transform active:scale-[0.98]">
+                                <Card className="p-2.5 animate-fade-in-up transition-transform active:scale-[0.98]">
                                     <div className="flex items-center gap-3">
-                                        <div className={`p-2 rounded-xl shrink-0 ${isPayer ? 'bg-[var(--color-success-light)] text-[var(--color-success)]' : 'bg-[var(--color-danger-light)] text-[var(--color-danger)]'}`}>
-                                            {isPayer ? <FiArrowUpRight size={16} /> : <FiArrowDownLeft size={16} />}
+                                        <div className={`p-1.5 rounded-lg shrink-0 ${isPayer ? 'bg-[var(--color-success-light)] text-[var(--color-success)]' : 'bg-[var(--color-danger-light)] text-[var(--color-danger)]'}`}>
+                                            {isPayer ? <FiArrowUpRight size={14} /> : <FiArrowDownLeft size={14} />}
                                         </div>
 
                                         <div className="flex-1 min-w-0 flex flex-col justify-center">
                                             <div className="flex items-start justify-between gap-2">
-                                                <p className="text-sm font-semibold text-[var(--color-text)] truncate">
+                                                <p className="text-sm font-semibold text-[var(--color-text)] truncate leading-tight">
                                                     {t.description}
                                                 </p>
                                                 <span className={`text-sm font-semibold shrink-0 ${isPayer ? 'text-[var(--color-text)]' : 'text-[var(--color-text-secondary)]'}`}>
@@ -258,8 +258,8 @@ const FriendDetails = () => {
                                                 </span>
                                             </div>
 
-                                            <div className="flex items-center justify-between gap-2 mt-0.5">
-                                                <div className="flex items-center gap-1.5 text-xs text-[var(--color-text-muted)] truncate">
+                                            <div className="flex items-center justify-between gap-2">
+                                                <div className="flex items-center gap-1.5 text-[11px] font-medium text-[var(--color-text-muted)] truncate mt-0.5">
                                                     <span>{formatDate(t.date)}</span>
                                                 </div>
                                                 <div className="flex items-center gap-1 justify-end shrink-0">
