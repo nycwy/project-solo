@@ -36,7 +36,7 @@ const Navbar = () => {
                             K
                         </div>
                         <h1 className="text-xl font-bold text-gray-800 tracking-tight hidden sm:block">
-                            King!
+                            Kati?
                         </h1>
                     </div>
 
@@ -102,7 +102,7 @@ const Navbar = () => {
                     </div>
                 </div>
             </div>
-        </nav>
+        </nav >
     );
 };
 
