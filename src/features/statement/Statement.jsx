@@ -527,8 +527,8 @@ const Statement = () => {
                         icon={FiDownload}
                         fullWidth
                         size="lg"
-                        variant="primary"
-                        className={activeTab === 'splitter' ? 'bg-[var(--color-warning)] hover:opacity-90 shadow-lg shadow-amber-500/25' : ''}
+                        variant={activeTab === 'splitter' ? 'warning' : 'primary'}
+                        className={activeTab === 'splitter' ? 'shadow-lg shadow-amber-500/25' : ''}
                     />
                 </div>
             </Card>

@@ -35,6 +35,8 @@
 
   --color-warning: #d97706;
   /* Amber 600 */
+  --color-warning-hover: #b45309;
+  /* Amber 700 */
   --color-warning-light: #fef3c7;
 
   --color-shadow: transparent;
@@ -89,6 +91,8 @@
 
   --color-warning: #fbbf24;
   /* Amber 400 */
+  --color-warning-hover: #fcd34d;
+  /* Amber 300 */
   --color-warning-light: rgba(217, 119, 6, 0.15);
 
   --color-shadow: transparent;

@@ -7,6 +7,7 @@ const variantStyles = {
     ghost: 'bg-transparent text-[var(--color-primary)] hover:bg-[var(--color-primary-light)]',
     outline: 'bg-[var(--color-surface)] text-[var(--color-text-secondary)] border border-[var(--color-border)] hover:bg-[var(--color-surface-hover)] hover:border-[var(--color-text-muted)]',
     success: 'bg-[var(--color-success)] text-white hover:opacity-90 shadow-sm ring-1 ring-inset ring-[var(--color-success)]/20',
+    warning: 'bg-[var(--color-warning)] text-white hover:bg-[var(--color-warning-hover)] shadow-sm ring-1 ring-inset ring-[var(--color-warning)]/20',
 };
 
 const sizeStyles = {
