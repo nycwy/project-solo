@@ -23,9 +23,11 @@ import Card from '../../components/Card';
 import Button from '../../components/Button';
 import Input from '../../components/Input';
 import PageHeader from '../../components/PageHeader';
+import useAlert from '../../hooks/useAlert';
 
 const Statement = () => {
     const { user } = useContext(AuthContext);
+    const { showAlert } = useAlert();
     const [activeTab, setActiveTab] = useState('journal');
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
@@ -54,7 +56,7 @@ const Statement = () => {
     };
 
     const generateJournalPDF = async () => {
-        if (!startDate || !endDate) return alert('Please select both start and end dates.');
+        if (!startDate || !endDate) return showAlert({ title: "Dates Required", message: "Please select both start and end dates.", type: "warning" });
         setLoading(true);
 
         try {
@@ -75,7 +77,7 @@ const Statement = () => {
 
             if (data.length === 0) {
                 setLoading(false);
-                return alert('No journal entries found for this period.');
+                return showAlert({ title: "No Entries", message: "No journal entries found for the selected period.", type: "info" });
             }
 
             let totalIncome = 0;
@@ -218,7 +220,7 @@ const Statement = () => {
     };
 
     const generateSplitterPDF = async () => {
-        if (!startDate || !endDate) return alert('Please select both start and end dates.');
+        if (!startDate || !endDate) return showAlert({ title: "Dates Required", message: "Please select both start and end dates.", type: "warning" });
         setLoading(true);
 
         try {
@@ -248,7 +250,7 @@ const Statement = () => {
 
             if (allTxns.length === 0) {
                 setLoading(false);
-                return alert('No transactions found for this period.');
+                return showAlert({ title: "No Transactions", message: "No transactions found for the selected period.", type: "info" });
             }
 
             let totalLent = 0;

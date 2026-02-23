@@ -26,9 +26,11 @@ import Button from '../components/Button';
 import Input from '../components/Input';
 import Avatar from '../components/Avatar';
 import PageHeader from '../components/PageHeader';
+import useAlert from '../hooks/useAlert';
 
 const AddExpense = () => {
     const { user } = useContext(AuthContext);
+    const { showAlert } = useAlert();
     const navigate = useNavigate();
     const { id } = useParams();
 
@@ -65,14 +67,14 @@ const AddExpense = () => {
             try {
                 const mainDoc = await getDoc(doc(db, 'transactions', id));
                 if (!mainDoc.exists()) {
-                    alert('Expense not found');
+                    showAlert({ title: "Not Found", message: "Expense not found", type: "warning" });
                     navigate('/');
                     return;
                 }
 
                 const data = mainDoc.data();
                 if (data.payerId !== user.uid) {
-                    alert('You can only edit expenses you created.');
+                    showAlert({ title: "Access Denied", message: "You can only edit expenses you created.", type: "danger" });
                     navigate('/');
                     return;
                 }
@@ -123,8 +125,16 @@ const AddExpense = () => {
 
         try {
             const numericAmount = parseFloat(amount);
-            if (isNaN(numericAmount) || numericAmount <= 0) throw new Error('Invalid amount');
-            if (participants.length === 0) throw new Error('Select at least one person.');
+            if (isNaN(numericAmount) || numericAmount <= 0) {
+                showAlert({ title: "Invalid Amount", message: "Please enter a valid amount greater than 0", type: "warning" });
+                setLoading(false);
+                return;
+            }
+            if (participants.length === 0) {
+                showAlert({ title: "No Selection", message: "Please select at least one person to split with.", type: "warning" });
+                setLoading(false);
+                return;
+            }
 
             const splitAmount = numericAmount / participants.length;
             const newBatchId = existingBatchId || Date.now().toString();
@@ -214,7 +224,7 @@ const AddExpense = () => {
             navigate('/split');
         } catch (error) {
             console.error('Error saving expense:', error);
-            alert(error.message || 'Failed to save');
+            showAlert({ title: "Error", message: error.message || "Failed to save expense. Please try again.", type: "danger" });
         }
         setLoading(false);
     };

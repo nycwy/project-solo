@@ -31,10 +31,12 @@ import PageHeader from '../../components/PageHeader';
 import EmptyState from '../../components/EmptyState';
 import Spinner from '../../components/Spinner';
 import SwipeableCard from '../../components/SwipeableCard';
+import useAlert from '../../hooks/useAlert';
 
 const FriendDetails = () => {
     const { user } = useContext(AuthContext);
     const { id: friendId } = useParams();
+    const { showAlert, showConfirm } = useAlert();
     const navigate = useNavigate();
     const [friendInfo, setFriendInfo] = useState(null);
     const [transactions, setTransactions] = useState([]);
@@ -153,23 +155,28 @@ const FriendDetails = () => {
         }
     };
 
-    const handleDelete = async (id) => {
-        if (window.confirm('Delete this transaction permanently?')) {
-            const txSnap = await getDoc(doc(db, 'transactions', id));
-            const txData = txSnap.exists() ? txSnap.data() : null;
+    const handleDelete = (id) => {
+        showConfirm({
+            title: "Delete Transaction",
+            message: "Are you sure you want to delete this transaction permanently?",
+            confirmText: "Delete",
+            onConfirm: async () => {
+                const txSnap = await getDoc(doc(db, 'transactions', id));
+                const txData = txSnap.exists() ? txSnap.data() : null;
 
-            await deleteDoc(doc(db, 'transactions', id));
+                await deleteDoc(doc(db, 'transactions', id));
 
-            if (txData?.batchId) {
-                const jq = query(
-                    collection(db, 'journal'),
-                    where('uid', '==', user.uid),
-                    where('batchId', '==', txData.batchId)
-                );
-                const jSnap = await getDocs(jq);
-                jSnap.forEach(async (d) => await deleteDoc(d.ref));
+                if (txData?.batchId) {
+                    const jq = query(
+                        collection(db, 'journal'),
+                        where('uid', '==', user.uid),
+                        where('batchId', '==', txData.batchId)
+                    );
+                    const jSnap = await getDocs(jq);
+                    jSnap.forEach(async (d) => await deleteDoc(d.ref));
+                }
             }
-        }
+        });
     };
 
     const formatDate = (ts) => {

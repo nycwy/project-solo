@@ -1,7 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { useContext, useState, useEffect } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import { ThemeContext } from '../context/ThemeContext';
+import { ThemeContext } from '../context/ThemeProvider';
 import BottomNav from './BottomNav';
 import Avatar from './Avatar';
 import Footer from './Footer';

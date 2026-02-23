@@ -5,7 +5,8 @@ import { createBrowserRouter, Navigate, RouterProvider } from "react-router-dom"
 
 import AuthProvider from "./context/AuthProvider";
 import { NotificationProvider } from "./context/NotificationContext";
-import ThemeProvider from "./context/ThemeContext";
+import { ModalProvider } from "./context/ModalContext";
+import ThemeProvider from "./context/ThemeProvider";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import PublicRoute from "./routes/PublicRoute";
@@ -108,9 +109,11 @@ createRoot(document.getElementById("root")).render(
     <StrictMode>
         <ThemeProvider>
             <AuthProvider>
-                <NotificationProvider>
-                    <RouterProvider router={router} />
-                </NotificationProvider>
+                <ModalProvider>
+                    <NotificationProvider>
+                        <RouterProvider router={router} />
+                    </NotificationProvider>
+                </ModalProvider>
             </AuthProvider>
         </ThemeProvider>
     </StrictMode>,

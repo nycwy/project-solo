@@ -29,9 +29,11 @@ import Modal from '../../components/Modal';
 import PageHeader from '../../components/PageHeader';
 import EmptyState from '../../components/EmptyState';
 import SwipeableCard from '../../components/SwipeableCard';
+import useAlert from '../../hooks/useAlert';
 
 const Remember = () => {
     const { user } = useContext(AuthContext);
+    const { showAlert, showConfirm } = useAlert();
     const [items, setItems] = useState([]);
     const [itemName, setItemName] = useState('');
     const [estAmount, setEstAmount] = useState('');
@@ -60,7 +62,7 @@ const Remember = () => {
 
     const handleAddItem = async (e) => {
         e.preventDefault();
-        if (!itemName.trim()) return alert('What do you need to buy?');
+        if (!itemName.trim()) return showAlert({ title: "Incomplete", message: "What do you need to buy?", type: "warning" });
 
         setLoading(true);
         try {
@@ -78,10 +80,13 @@ const Remember = () => {
         setLoading(false);
     };
 
-    const handleDelete = async (id) => {
-        if (window.confirm('Remove this item from list?')) {
-            await deleteDoc(doc(db, 'shopping_list', id));
-        }
+    const handleDelete = (id) => {
+        showConfirm({
+            title: "Remove Item",
+            message: "Remove this item from your shopping list?",
+            confirmText: "Remove",
+            onConfirm: () => deleteDoc(doc(db, 'shopping_list', id))
+        });
     };
 
     const openEditModal = (item) => {
@@ -92,7 +97,7 @@ const Remember = () => {
 
     const handleEditSave = async (e) => {
         e.preventDefault();
-        if (!editItemName.trim()) return alert('Item name cannot be empty');
+        if (!editItemName.trim()) return showAlert({ title: "Item Required", message: "Item name cannot be empty", type: "warning" });
 
         setLoading(true);
         try {
@@ -103,7 +108,7 @@ const Remember = () => {
             setEditingItem(null);
         } catch (error) {
             console.error(error);
-            alert('Failed to update item');
+            showAlert({ title: "Update Failed", message: "Failed to update item", type: "danger" });
         }
         setLoading(false);
     };
@@ -138,7 +143,7 @@ const Remember = () => {
             setPurchasingItem(null);
         } catch (error) {
             console.error('Error moving item:', error);
-            alert('Failed to update.');
+            showAlert({ title: "Failed", message: "Failed to update expense status", type: "danger" });
         }
         setLoading(false);
     };

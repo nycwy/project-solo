@@ -25,9 +25,11 @@ import Input from './Input';
 import Avatar from './Avatar';
 import PageHeader from './PageHeader';
 import Spinner from './Spinner';
+import useAlert from '../hooks/useAlert';
 
 const Profile = () => {
     const { user } = useContext(AuthContext);
+    const { showAlert, showConfirm } = useAlert();
     const navigate = useNavigate();
     const [userData, setUserData] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -48,7 +50,7 @@ const Profile = () => {
     }, [user]);
 
     const handleUpdateProfile = async () => {
-        if (!newName.trim()) return alert('Name cannot be empty');
+        if (!newName.trim()) return showAlert({ title: "Incomplete", message: "Name cannot be empty", type: "warning" });
         setSaving(true);
 
         try {
@@ -79,14 +81,21 @@ const Profile = () => {
             setEditing(false);
         } catch (error) {
             console.error('Error updating profile:', error);
-            alert('Failed to update profile');
+            showAlert({ title: "Update Failed", message: "Failed to update profile", type: "danger" });
         }
         setSaving(false);
     };
 
-    const handleLogout = async () => {
-        await signOut(auth);
-        navigate('/login');
+    const handleLogout = () => {
+        showConfirm({
+            title: "Log Out",
+            message: "Are you sure you want to log out?",
+            confirmText: "Log Out",
+            onConfirm: async () => {
+                await signOut(auth);
+                navigate('/login');
+            }
+        });
     };
 
     if (loading) {

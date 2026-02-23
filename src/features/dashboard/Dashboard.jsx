@@ -36,10 +36,12 @@ import EmptyState from '../../components/EmptyState';
 import Avatar from '../../components/Avatar';
 import Spinner from '../../components/Spinner';
 import SwipeableCard from '../../components/SwipeableCard';
+import useAlert from '../../hooks/useAlert';
 
 
 const Dashboard = () => {
     const { user } = useContext(AuthContext);
+    const { showAlert, showConfirm } = useAlert();
     const navigate = useNavigate();
     const [payerTransactions, setPayerTransactions] = useState([]);
     const [debtorTransactions, setDebtorTransactions] = useState([]);
@@ -154,10 +156,16 @@ const Dashboard = () => {
         await updateDoc(doc(db, 'transactions', id), { status: 'rejected' });
     };
 
-    const handleSettle = async (id) => {
-        await updateDoc(doc(db, 'transactions', id), {
-            settleStatus: 'settle_pending',
-            settleRequestedAt: serverTimestamp(),
+    const handleSettle = (id) => {
+        showConfirm({
+            title: "Settle Transaction",
+            message: "Request to settle this transaction?",
+            confirmText: "Request Settle",
+            type: "info",
+            onConfirm: () => updateDoc(doc(db, 'transactions', id), {
+                settleStatus: 'settle_pending',
+                settleRequestedAt: serverTimestamp(),
+            })
         });
     };
 
@@ -193,10 +201,14 @@ const Dashboard = () => {
         }
     };
 
-    const handleDelete = async (id) => {
-        if (!window.confirm('Remove from your view?')) return;
-        await updateDoc(doc(db, 'transactions', id), {
-            hiddenBy: arrayUnion(user.uid),
+    const handleDelete = (id) => {
+        showConfirm({
+            title: "Remove View",
+            message: "Hide this transaction from your dashboard? You can still see it in friend details.",
+            confirmText: "Hide",
+            onConfirm: () => updateDoc(doc(db, 'transactions', id), {
+                hiddenBy: arrayUnion(user.uid),
+            })
         });
     };
 

@@ -19,10 +19,12 @@ import Heading from '../../components/Heading';
 import Already from '../../components/Already';
 import Card from '../../components/Card';
 import Footer from '../../components/Footer';
+import useAlert from '../../hooks/useAlert';
 
 const Login = () => {
     const navigate = useNavigate();
     const { user } = useContext(AuthContext);
+    const { showAlert } = useAlert();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -55,12 +57,12 @@ const Login = () => {
     };
 
     const handleReset = async () => {
-        if (!email) return alert('Enter your email first');
+        if (!email) return showAlert({ title: "Email Required", message: "Please enter your email address first so we can send a reset link.", type: "warning" });
         try {
             await sendPasswordResetEmail(auth, email.toLowerCase());
-            alert('Password reset email sent!');
+            showAlert({ title: "Email Sent", message: "Password reset email sent! Please check your inbox.", type: "success" });
         } catch (err) {
-            alert('Failed to send reset email');
+            showAlert({ title: "Error", message: "Failed to send reset email. Please ensure the email is correct.", type: "danger" });
         }
     };
 

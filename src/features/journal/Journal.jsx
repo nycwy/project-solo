@@ -36,12 +36,13 @@ import PageHeader from '../../components/PageHeader';
 import EmptyState from '../../components/EmptyState';
 import Badge from '../../components/Badge';
 import SwipeableCard from '../../components/SwipeableCard';
-
 import Spinner from '../../components/Spinner';
+import useAlert from '../../hooks/useAlert';
 
 const Journal = () => {
     const { user } = useContext(AuthContext);
     const navigate = useNavigate();
+    const { showAlert, showConfirm } = useAlert();
     const [entries, setEntries] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -136,7 +137,7 @@ const Journal = () => {
     };
 
     const addToDraft = () => {
-        if (!amount || parseFloat(amount) <= 0) return alert('Enter a valid amount');
+        if (!amount || parseFloat(amount) <= 0) return showAlert({ title: "Invalid Amount", message: "Please enter a valid amount greater than 0", type: "warning" });
         setDrafts((prev) => [
             ...prev,
             {
@@ -157,7 +158,7 @@ const Journal = () => {
     const handleSave = async () => {
         if (editingId) {
             const numAmount = parseFloat(amount);
-            if (!numAmount || numAmount <= 0) return alert('Enter a valid amount');
+            if (!numAmount || numAmount <= 0) return showAlert({ title: "Invalid Amount", message: "Please enter a valid amount greater than 0", type: "warning" });
 
             const dateObj = dateValue ? new Date(dateValue) : new Date();
             dateObj.setHours(12, 0, 0, 0);
@@ -179,7 +180,7 @@ const Journal = () => {
                 });
             }
 
-            if (finalDrafts.length === 0) return alert('Add at least one entry');
+            if (finalDrafts.length === 0) return showAlert({ title: "Empty List", message: "Please add at least one entry before saving", type: "warning" });
 
             const batch = writeBatch(db);
             finalDrafts.forEach((draft) => {
@@ -201,10 +202,13 @@ const Journal = () => {
         setIsModalOpen(false);
     };
 
-    const handleDeleteEntry = async (id) => {
-        if (window.confirm('Delete this entry?')) {
-            await deleteDoc(doc(db, 'journal', id));
-        }
+    const handleDeleteEntry = (id) => {
+        showConfirm({
+            title: "Delete Entry",
+            message: "Are you sure you want to delete this journal entry? This action cannot be undone.",
+            confirmText: "Delete",
+            onConfirm: () => deleteDoc(doc(db, 'journal', id))
+        });
     };
 
     const formatDate = (timestamp) => {

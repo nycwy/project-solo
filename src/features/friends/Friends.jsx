@@ -37,9 +37,40 @@ import Badge from '../../components/Badge';
 import PageHeader from '../../components/PageHeader';
 import EmptyState from '../../components/EmptyState';
 import Spinner from '../../components/Spinner';
+import useAlert from '../../hooks/useAlert';
+import useLongPress from '../../hooks/useLongPress';
+
+const FriendItem = ({ friend, onLongPress, onClick }) => {
+    const longPressProps = useLongPress(
+        (e) => {
+            e.preventDefault();
+            onLongPress(friend);
+        },
+        () => onClick(friend.uid)
+    );
+
+    return (
+        <Card padding="sm" hover {...longPressProps} className="select-none active:scale-[0.98] transition-transform">
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <Avatar name={friend.username} size="md" />
+                    <div>
+                        <p className="text-sm font-bold text-[var(--color-text)]">{friend.username}</p>
+                        <p className="text-xs text-[var(--color-text-muted)]">{friend.email}</p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-2">
+                    <FiChevronRight size={16} className="text-[var(--color-text-muted)]" />
+                </div>
+            </div>
+        </Card>
+    );
+};
+
 
 const Friends = () => {
     const { user } = useContext(AuthContext);
+    const { showAlert, showConfirm } = useAlert();
     const navigate = useNavigate();
     const [friends, setFriends] = useState([]);
     const [requests, setRequests] = useState([]);
@@ -50,6 +81,7 @@ const Friends = () => {
     const [showAddFriend, setShowAddFriend] = useState(false);
     const [friendEmail, setFriendEmail] = useState('');
     const [addLoading, setAddLoading] = useState('');
+    const [isUnfriending, setIsUnfriending] = useState(false);
 
     useEffect(() => {
         if (!user?.uid) return;
@@ -136,43 +168,68 @@ const Friends = () => {
         await deleteDoc(doc(db, 'friend_requests', req.id));
     };
 
-    const handleUnfriend = async (friend) => {
-        if (!window.confirm(`Remove ${friend.username} from friends?`)) return;
+    const handleUnfriendAction = async (friend) => {
+        setIsUnfriending(true);
+        try {
 
-        const q1 = query(
-            collection(db, 'transactions'),
-            where('payerId', '==', user.uid),
-            where('debtorId', '==', friend.uid)
-        );
-        const q2 = query(
-            collection(db, 'transactions'),
-            where('payerId', '==', friend.uid),
-            where('debtorId', '==', user.uid)
-        );
-        const [snap1, snap2] = await Promise.all([getDocs(q1), getDocs(q2)]);
-        const allTxns = [...snap1.docs.map((d) => d.data()), ...snap2.docs.map((d) => d.data())];
-        const hasUnsettled = allTxns.some((t) => t.settleStatus !== 'settled');
+            const q1 = query(
+                collection(db, 'transactions'),
+                where('payerId', '==', user.uid),
+                where('debtorId', '==', friend.uid)
+            );
+            const q2 = query(
+                collection(db, 'transactions'),
+                where('payerId', '==', friend.uid),
+                where('debtorId', '==', user.uid)
+            );
+            const [snap1, snap2] = await Promise.all([getDocs(q1), getDocs(q2)]);
+            const allTxns = [...snap1.docs.map((d) => d.data()), ...snap2.docs.map((d) => d.data())];
+            const hasUnsettled = allTxns.some((t) => t.settleStatus !== 'settled');
 
-        if (hasUnsettled) {
-            alert(`Cannot remove ${friend.username}. There are outstanding debts.`);
-            return;
+            if (hasUnsettled) {
+                showAlert({
+                    title: "Cannot Remove Friend",
+                    message: `You cannot remove ${friend.username} because there are outstanding debts between you.`,
+                    type: "warning"
+                });
+                return;
+            }
+
+            await updateDoc(doc(db, 'users', user.uid), {
+                friendsList: arrayRemove(friend),
+            });
+            await updateDoc(doc(db, 'users', friend.uid), {
+                friendsList: arrayRemove({
+                    uid: user.uid,
+                    username: user.displayName || user.email,
+                    email: (user.email || "").toLowerCase(),
+                }),
+            });
+        } catch (error) {
+            console.error('Error unfriending:', error);
+            showAlert({
+                title: "Error",
+                message: "Failed to remove friend. Please try again.",
+                type: "danger"
+            });
+        } finally {
+            setIsUnfriending(false);
         }
+    };
 
-        await updateDoc(doc(db, 'users', user.uid), {
-            friendsList: arrayRemove(friend),
-        });
-        await updateDoc(doc(db, 'users', friend.uid), {
-            friendsList: arrayRemove({
-                uid: user.uid,
-                username: user.displayName || user.email,
-                email: (user.email || "").toLowerCase(),
-            }),
+    const handleUnfriend = (friend) => {
+        showConfirm({
+            title: "Remove Friend",
+            message: `Are you sure you want to remove ${friend.username}? Any outstanding debts must be settled first.`,
+            confirmText: "Unfriend",
+            avatarName: friend.username,
+            onConfirm: () => handleUnfriendAction(friend)
         });
     };
 
     const handleSendRequest = async () => {
-        if (!friendEmail.trim()) return alert('Enter an email address');
-        if (friendEmail.trim() === user.email) return alert("That's your own email!");
+        if (!friendEmail.trim()) return showAlert({ title: "Email Required", message: "Please enter an email address", type: "warning" });
+        if (friendEmail.trim() === user.email) return showAlert({ title: "Invalid Email", message: "You can't add yourself as a friend!", type: "warning" });
 
         setAddLoading(true);
         try {
@@ -182,7 +239,7 @@ const Friends = () => {
             );
             const usersSnap = await getDocs(usersQuery);
             if (usersSnap.empty) {
-                alert('No user found with this email');
+                showAlert({ title: "User Not Found", message: "No user found with this email", type: "warning" });
                 setAddLoading(false);
                 return;
             }
@@ -191,7 +248,7 @@ const Friends = () => {
             const friendId = friendDoc.id;
 
             if (friends.some((f) => f.uid === friendId)) {
-                alert('Already friends!');
+                showAlert({ title: "Already Friends", message: "You are already friends with this user", type: "info" });
                 setAddLoading(false);
                 return;
             }
@@ -204,7 +261,7 @@ const Friends = () => {
             );
             const reqSnap = await getDocs(reqQuery);
             if (!reqSnap.empty) {
-                alert('Request already sent!');
+                showAlert({ title: "Request Pending", message: "A friend request is already pending for this user", type: "info" });
                 setAddLoading(false);
                 return;
             }
@@ -221,10 +278,14 @@ const Friends = () => {
 
             setFriendEmail('');
             setShowAddFriend(false);
-            alert(`Request sent to ${friendDoc.data().username || friendEmail}!`);
+            showAlert({
+                title: "Success",
+                message: `Request sent to ${friendDoc.data().username || friendEmail}!`,
+                type: "success"
+            });
         } catch (error) {
             console.error('Error sending request:', error);
-            alert('Failed to send request');
+            showAlert({ title: "Error", message: "Failed to send request. Please try again.", type: "danger" });
         }
         setAddLoading(false);
     };
@@ -367,29 +428,12 @@ const Friends = () => {
             ) : (
                 <div className="space-y-2">
                     {filteredFriends.map((friend) => (
-                        <Card key={friend.uid} padding="sm" hover onClick={() => navigate(`/friend/${friend.uid}`)}>
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <Avatar name={friend.username} size="md" />
-                                    <div>
-                                        <p className="text-sm font-bold text-[var(--color-text)]">{friend.username}</p>
-                                        <p className="text-xs text-[var(--color-text-muted)]">{friend.email}</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleUnfriend(friend);
-                                        }}
-                                        className="p-1.5 rounded-lg text-[var(--color-text-muted)] hover:text-[var(--color-danger)] hover:bg-[var(--color-danger-light)] transition-all"
-                                    >
-                                        <FiUserX size={14} />
-                                    </button>
-                                    <FiChevronRight size={16} className="text-[var(--color-text-muted)]" />
-                                </div>
-                            </div>
-                        </Card>
+                        <FriendItem
+                            key={friend.uid}
+                            friend={friend}
+                            onLongPress={handleUnfriend}
+                            onClick={(id) => navigate(`/friend/${id}`)}
+                        />
                     ))}
                 </div>
             )}
