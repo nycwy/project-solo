@@ -28,20 +28,37 @@ export const NotificationProvider = ({ children }) => {
             setFriendRequestsCount(snapshot.docs.length);
         });
 
-        // Listen for split requests (pending transactions where user is debtor)
-        const splitQ = query(
+        // 2. Transactions I need to accept (as debtor)
+        const acceptQ = query(
             collection(db, "transactions"),
             where("debtorId", "==", user.uid),
             where("status", "==", "pending")
         );
 
-        const unsubSplit = onSnapshot(splitQ, (snapshot) => {
-            setSplitRequestsCount(snapshot.docs.length);
+        // 3. Settlements I need to confirm (as payer)
+        const settleQ = query(
+            collection(db, "transactions"),
+            where("payerId", "==", user.uid),
+            where("settleStatus", "==", "settle_pending")
+        );
+
+        let acceptCount = 0;
+        let settleCount = 0;
+
+        const unsubAccept = onSnapshot(acceptQ, (snap) => {
+            acceptCount = snap.docs.length;
+            setSplitRequestsCount(acceptCount + settleCount);
+        });
+
+        const unsubSettle = onSnapshot(settleQ, (snap) => {
+            settleCount = snap.docs.length;
+            setSplitRequestsCount(acceptCount + settleCount);
         });
 
         return () => {
             unsubFriend();
-            unsubSplit();
+            unsubAccept();
+            unsubSettle();
         };
     }, [user]);
 

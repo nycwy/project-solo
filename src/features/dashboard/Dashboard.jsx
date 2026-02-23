@@ -141,12 +141,15 @@ const Dashboard = () => {
 
             if (!txSnap.exists()) return;
             const txData = txSnap.data();
-
             const amount = Number(txData.amount) || 0;
-            const otherNamePayerView = getName(txData.debtorId);
-            const otherNameDebtorView = getName(txData.payerId);
 
-            await updateDoc(txRef, { status: 'confirmed' });
+            showConfirm({
+                title: "Accept Transaction",
+                message: `Accept this transaction for Rs. ${amount}?`,
+                confirmText: "Accept",
+                type: "success",
+                onConfirm: () => updateDoc(txRef, { status: 'confirmed' })
+            });
         } catch (error) {
             console.error('Error accepting transaction:', error);
         }
@@ -176,25 +179,30 @@ const Dashboard = () => {
 
             if (!txSnap.exists()) return;
             const txData = txSnap.data();
-
             const amount = Number(txData.amount) || 0;
-            const otherNamePayerView = getName(txData.debtorId);
-            const otherNameDebtorView = getName(txData.payerId);
 
-            await addDoc(collection(db, 'journal'), {
-                uid: txData.debtorId,
-                type: 'expense',
-                amount: amount,
-                category: 'Split Bill',
-                description: txData.description || 'Split Expense',
-                date: serverTimestamp(),
-                createdAt: serverTimestamp(),
-                autoSplit: true
-            });
+            showConfirm({
+                title: "Confirm Settlement",
+                message: `Confirm that Rs. ${amount} has been settled? This will record an expense in your journal.`,
+                confirmText: "Confirm",
+                type: "success",
+                onConfirm: async () => {
+                    await addDoc(collection(db, 'journal'), {
+                        uid: txData.debtorId,
+                        type: 'expense',
+                        amount: amount,
+                        category: 'Split Bill',
+                        description: txData.description || 'Split Expense',
+                        date: serverTimestamp(),
+                        createdAt: serverTimestamp(),
+                        autoSplit: true
+                    });
 
-            await updateDoc(txRef, {
-                settleStatus: 'settled',
-                status: 'confirmed',
+                    await updateDoc(txRef, {
+                        settleStatus: 'settled',
+                        status: 'confirmed',
+                    });
+                }
             });
         } catch (error) {
             console.error('Error settling transaction:', error);

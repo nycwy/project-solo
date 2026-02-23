@@ -114,29 +114,8 @@ const Friends = () => {
             where('fromId', '==', user.uid),
             where('status', '==', 'pending')
         );
-        const unsub = onSnapshot(q, async (snap) => {
-            const requestsData = await Promise.all(
-                snap.docs.map(async (d) => {
-                    const data = d.data();
-                    let toName = data.toName;
-                    let toEmail = data.toEmail;
-
-                    if (!toName && data.toId) {
-                        try {
-                            const userDoc = await getDoc(doc(db, 'users', data.toId));
-                            if (userDoc.exists()) {
-                                toName = userDoc.data().username || userDoc.data().email;
-                                toEmail = userDoc.data().email;
-                            }
-                        } catch (err) {
-                            console.error("Error fetching user detail:", err);
-                        }
-                    }
-
-                    return { id: d.id, ...data, toName, toEmail };
-                })
-            );
-            setSentRequests(requestsData);
+        const unsub = onSnapshot(q, (snap) => {
+            setSentRequests(snap.docs.map(d => ({ id: d.id, ...d.data() })));
         });
         return () => unsub();
     }, [user]);
@@ -171,7 +150,38 @@ const Friends = () => {
     const handleUnfriendAction = async (friend) => {
         setIsUnfriending(true);
         try {
+            // My side: Get current list and filter
+            const myRef = doc(db, 'users', user.uid);
+            const mySnap = await getDoc(myRef);
+            if (mySnap.exists()) {
+                const myList = mySnap.data().friendsList || [];
+                const updatedMyList = myList.filter(f => f.uid !== friend.uid);
+                await updateDoc(myRef, { friendsList: updatedMyList });
+            }
 
+            // Friend's side: Get current list and filter
+            const friendRef = doc(db, 'users', friend.uid);
+            const friendSnap = await getDoc(friendRef);
+            if (friendSnap.exists()) {
+                const friendList = friendSnap.data().friendsList || [];
+                const updatedFriendList = friendList.filter(f => f.uid !== user.uid);
+                await updateDoc(friendRef, { friendsList: updatedFriendList });
+            }
+        } catch (error) {
+            console.error('Error unfriending:', error);
+            showAlert({
+                title: "Error",
+                message: "Failed to remove friend. Please try again.",
+                type: "danger"
+            });
+        } finally {
+            setIsUnfriending(false);
+        }
+    };
+
+    const handleUnfriend = async (friend) => {
+        setIsUnfriending(true); // Show loading while checking
+        try {
             const q1 = query(
                 collection(db, 'transactions'),
                 where('payerId', '==', user.uid),
@@ -187,44 +197,27 @@ const Friends = () => {
             const hasUnsettled = allTxns.some((t) => t.settleStatus !== 'settled');
 
             if (hasUnsettled) {
-                showAlert({
-                    title: "Cannot Remove Friend",
-                    message: `You cannot remove ${friend.username} because there are outstanding debts between you.`,
+                return showAlert({
+                    title: "Cannot Unfriend",
+                    message: "Cannot unfriend because you have some transaction to be settled.",
+                    confirmText: "Okay",
                     type: "warning"
                 });
-                return;
             }
 
-            await updateDoc(doc(db, 'users', user.uid), {
-                friendsList: arrayRemove(friend),
-            });
-            await updateDoc(doc(db, 'users', friend.uid), {
-                friendsList: arrayRemove({
-                    uid: user.uid,
-                    username: user.displayName || user.email,
-                    email: (user.email || "").toLowerCase(),
-                }),
+            // If settled, show confirmation
+            showConfirm({
+                title: "Remove Friend",
+                message: `Are you sure you want to remove ${friend.username}?`,
+                confirmText: "Unfriend",
+                avatarName: friend.username,
+                onConfirm: () => handleUnfriendAction(friend)
             });
         } catch (error) {
-            console.error('Error unfriending:', error);
-            showAlert({
-                title: "Error",
-                message: "Failed to remove friend. Please try again.",
-                type: "danger"
-            });
+            console.error("Unfriend Validation Error:", error);
         } finally {
             setIsUnfriending(false);
         }
-    };
-
-    const handleUnfriend = (friend) => {
-        showConfirm({
-            title: "Remove Friend",
-            message: `Are you sure you want to remove ${friend.username}? Any outstanding debts must be settled first.`,
-            confirmText: "Unfriend",
-            avatarName: friend.username,
-            onConfirm: () => handleUnfriendAction(friend)
-        });
     };
 
     const handleSendRequest = async () => {
@@ -272,6 +265,8 @@ const Friends = () => {
                 fromName: myName,
                 fromEmail: (user.email || "").toLowerCase(),
                 toId: friendId,
+                toName: friendDoc.data().username || friendDoc.data().email,
+                toEmail: (friendDoc.data().email || "").toLowerCase(),
                 status: 'pending',
                 createdAt: serverTimestamp(),
             });
