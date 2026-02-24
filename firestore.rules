@@ -1,0 +1,87 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── GLOBAL: Deny all by default ───
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // ─── USERS ───
+    // • Any authenticated user can READ (needed for friend search by email)
+    // • Owner can create their own document
+    // • Any authenticated user can UPDATE (needed for friend accept/unfriend
+    //   flows where user A updates user B's friendsList)
+    //   NOTE: Only the friendsList field is modified cross-user.
+    //   For tighter security, you could move friendsList to a sub-collection,
+    //   but this matches the current app architecture.
+    // • No deletes
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow update: if request.auth != null;
+      allow delete: if false;
+    }
+
+    // ─── TRANSACTIONS ───
+    // • Read/write only if user is the payerId OR debtorId
+    match /transactions/{transactionId} {
+      allow read: if request.auth != null &&
+        (resource.data.payerId == request.auth.uid ||
+         resource.data.debtorId == request.auth.uid);
+
+      allow create: if request.auth != null &&
+        (request.resource.data.payerId == request.auth.uid ||
+         request.resource.data.debtorId == request.auth.uid);
+
+      allow update: if request.auth != null &&
+        (resource.data.payerId == request.auth.uid ||
+         resource.data.debtorId == request.auth.uid);
+
+      allow delete: if request.auth != null &&
+        (resource.data.payerId == request.auth.uid ||
+         resource.data.debtorId == request.auth.uid);
+    }
+
+    // ─── JOURNAL ───
+    // • Only the owner (uid field) can read, create, update, delete
+    match /journal/{journalId} {
+      allow read, update, delete: if request.auth != null &&
+        resource.data.uid == request.auth.uid;
+
+      allow create: if request.auth != null &&
+        request.resource.data.uid == request.auth.uid;
+    }
+
+    // ─── FRIEND REQUESTS ───
+    // • Sender (fromId) can create and read their own requests
+    // • Receiver (toId) can read and update (accept/decline)
+    // • Either party can delete
+    match /friend_requests/{requestId} {
+      allow read: if request.auth != null &&
+        (resource.data.fromId == request.auth.uid ||
+         resource.data.toId == request.auth.uid);
+
+      allow create: if request.auth != null &&
+        request.resource.data.fromId == request.auth.uid;
+
+      allow update: if request.auth != null &&
+        resource.data.toId == request.auth.uid;
+
+      allow delete: if request.auth != null &&
+        (resource.data.fromId == request.auth.uid ||
+         resource.data.toId == request.auth.uid);
+    }
+
+    // ─── SHOPPING LIST ───
+    // • Only the owner (uid field) can read, create, update, delete
+    match /shopping_list/{itemId} {
+      allow read, update, delete: if request.auth != null &&
+        resource.data.uid == request.auth.uid;
+
+      allow create: if request.auth != null &&
+        request.resource.data.uid == request.auth.uid;
+    }
+  }
+}
