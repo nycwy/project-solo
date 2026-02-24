@@ -22,7 +22,8 @@ const Register = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
-    const [loading, setLoading] = useState(false);
+    const [emailLoading, setEmailLoading] = useState(false);
+    const [googleLoading, setGoogleLoading] = useState(false);
     const [error, setError] = useState('');
 
     if (user) {
@@ -32,12 +33,12 @@ const Register = () => {
 
     const handleRegister = async (e) => {
         e.preventDefault();
-        setLoading(true);
+        setEmailLoading(true);
         setError('');
 
         if (!username.trim()) {
             setError('Please enter your name');
-            setLoading(false);
+            setEmailLoading(false);
             return;
         }
 
@@ -64,11 +65,11 @@ const Register = () => {
                         : 'Registration failed. Please try again.'
             );
         }
-        setLoading(false);
+        setEmailLoading(false);
     };
 
     const handleGoogleSignIn = async () => {
-        setLoading(true);
+        setGoogleLoading(true);
         setError('');
         try {
             const result = await signInWithPopup(auth, googleProvider);
@@ -88,7 +89,7 @@ const Register = () => {
             console.error('Google Sign-Up Error:', err);
             setError(err.code === 'auth/popup-closed-by-user' ? 'Sign-up cancelled' : 'Google Sign-Up failed.');
         }
-        setLoading(false);
+        setGoogleLoading(false);
     };
 
     return (
@@ -150,7 +151,8 @@ const Register = () => {
                         <Button
                             type="submit"
                             text="Create Account"
-                            loading={loading}
+                            loading={emailLoading}
+                            disabled={googleLoading}
                             fullWidth
                         />
                     </form>
@@ -158,7 +160,8 @@ const Register = () => {
                     <GoogleButton
                         text="Sign up with Google"
                         onClick={handleGoogleSignIn}
-                        loading={loading}
+                        loading={googleLoading}
+                        disabled={emailLoading}
                     />
                 </Card>
 

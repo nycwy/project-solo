@@ -28,7 +28,8 @@ const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
-    const [loading, setLoading] = useState(false);
+    const [emailLoading, setEmailLoading] = useState(false);
+    const [googleLoading, setGoogleLoading] = useState(false);
     const [error, setError] = useState('');
 
     if (user) {
@@ -38,7 +39,7 @@ const Login = () => {
 
     const handleLogin = async (e) => {
         e.preventDefault();
-        setLoading(true);
+        setEmailLoading(true);
         setError('');
 
         try {
@@ -53,7 +54,7 @@ const Login = () => {
                         : 'Login failed. Please try again.'
             );
         }
-        setLoading(false);
+        setEmailLoading(false);
     };
 
     const handleReset = async () => {
@@ -67,7 +68,7 @@ const Login = () => {
     };
 
     const handleGoogleSignIn = async () => {
-        setLoading(true);
+        setGoogleLoading(true);
         setError('');
         try {
             const result = await signInWithPopup(auth, googleProvider);
@@ -87,7 +88,7 @@ const Login = () => {
             console.error('Google Sign-In Error:', err);
             setError(err.code === 'auth/popup-closed-by-user' ? 'Sign-in cancelled' : 'Google Sign-In failed.');
         }
-        setLoading(false);
+        setGoogleLoading(false);
     };
 
     return (
@@ -150,7 +151,8 @@ const Login = () => {
                         <Button
                             type="submit"
                             text="Sign In"
-                            loading={loading}
+                            loading={emailLoading}
+                            disabled={googleLoading}
                             fullWidth
                         />
                     </form>
@@ -158,7 +160,8 @@ const Login = () => {
                     <GoogleButton
                         text="Sign in with Google"
                         onClick={handleGoogleSignIn}
-                        loading={loading}
+                        loading={googleLoading}
+                        disabled={emailLoading}
                     />
                 </Card>
 
