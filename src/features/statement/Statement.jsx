@@ -24,10 +24,12 @@ import Button from '../../components/Button';
 import Input from '../../components/Input';
 import PageHeader from '../../components/PageHeader';
 import useAlert from '../../hooks/useAlert';
+import useNetwork from '../../hooks/useNetwork';
 
 const Statement = () => {
     const { user } = useContext(AuthContext);
     const { showAlert } = useAlert();
+    const isOffline = useNetwork();
     const [activeTab, setActiveTab] = useState('journal');
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
@@ -123,6 +125,13 @@ const Statement = () => {
             pdfDoc.text(`PERIOD: ${startStr} — ${endStr}`, 15, 40);
             pdfDoc.text(`ACCOUNT: ${user.email}`, 15, 46);
 
+            if (isOffline) {
+                pdfDoc.setFont('helvetica', 'bold');
+                pdfDoc.setTextColor(redColor);
+                pdfDoc.setFontSize(9);
+                pdfDoc.text('Generated in Offline Mode. Recent transactions may be pending synchronization with the server.', 15, 52);
+            }
+
             pdfDoc.setFont('helvetica', 'bold');
             pdfDoc.setFontSize(14);
             pdfDoc.setTextColor(primaryColor);
@@ -183,7 +192,7 @@ const Statement = () => {
 
             pdfDoc.setFontSize(10);
             pdfDoc.setTextColor(secondaryColor);
-            pdfDoc.text('TOTAL INCOME', 15, finalY);
+            pdfDoc.text(`TOTAL INCOME ${isOffline ? '(Pending Sync)' : ''}`, 15, finalY);
 
             pdfDoc.setFont('helvetica', 'bold');
             pdfDoc.setTextColor(primaryColor);
@@ -193,23 +202,23 @@ const Statement = () => {
             pdfDoc.setFont('helvetica', 'normal');
             pdfDoc.setTextColor(secondaryColor);
             pdfDoc.setFontSize(10);
-            pdfDoc.text('TOTAL EXPENSE', 65, finalY);
+            pdfDoc.text(`TOTAL EXPENSE ${isOffline ? '(Pending Sync)' : ''}`, 105, finalY, { align: 'center' });
 
             pdfDoc.setFont('helvetica', 'bold');
             pdfDoc.setTextColor(primaryColor);
             pdfDoc.setFontSize(14);
-            pdfDoc.text(totalExpense.toFixed(2), 65, finalY + 6);
+            pdfDoc.text(totalExpense.toFixed(2), 105, finalY + 6, { align: 'center' });
 
             const savings = totalIncome - totalExpense;
             pdfDoc.setFont('helvetica', 'normal');
             pdfDoc.setTextColor(secondaryColor);
             pdfDoc.setFontSize(10);
-            pdfDoc.text('NET CLOSING BALANCE', 115, finalY);
+            pdfDoc.text(`NET CLOSING ${isOffline ? '(Pending Sync)' : ''}`, 195, finalY, { align: 'right' });
 
             pdfDoc.setFont('helvetica', 'bold');
             pdfDoc.setFontSize(16);
             pdfDoc.setTextColor(savings >= 0 ? greenColor : redColor);
-            pdfDoc.text(savings >= 0 ? savings.toFixed(2) : savings.toFixed(2), 115, finalY + 6);
+            pdfDoc.text(savings >= 0 ? savings.toFixed(2) : savings.toFixed(2), 195, finalY + 6, { align: 'right' });
 
             pdfDoc.save(`Journal_Statement_${startStr.split(' ').join('_')}_to_${endStr.split(' ').join('_')}.pdf`);
         } catch (error) {
@@ -317,6 +326,13 @@ const Statement = () => {
             pdfDoc.text(`PERIOD: ${startStr} — ${endStr}`, 15, 40);
             pdfDoc.text(`ACCOUNT: ${user.email}`, 15, 46);
 
+            if (isOffline) {
+                pdfDoc.setFont('helvetica', 'bold');
+                pdfDoc.setTextColor(redColor);
+                pdfDoc.setFontSize(9);
+                pdfDoc.text('Generated in Offline Mode. Recent transactions may be pending synchronization with the server.', 15, 52);
+            }
+
             pdfDoc.setFont('helvetica', 'bold');
             pdfDoc.setFontSize(14);
             pdfDoc.setTextColor(primaryColor);
@@ -386,7 +402,7 @@ const Statement = () => {
                 netNeutral: "NET BALANCE (SETTLED)",
                 netOwe: "NET BALANCE (TO PAY)",
                 netReceive: "NET BALANCE (TO RECEIVE)",
-                pendingText: (amount) => `(Includes ${amount} Pending)`
+                pendingText: (amount) => `(Includes ${amount} Pending Sync)`
             };
 
             const dividerY = pdfDoc.lastAutoTable.finalY + 10;
@@ -398,7 +414,7 @@ const Statement = () => {
 
             pdfDoc.setFontSize(10);
             pdfDoc.setTextColor(secondaryColor);
-            pdfDoc.text(FOOTER_LABELS.owedToUser, 15, finalY);
+            pdfDoc.text(`${FOOTER_LABELS.owedToUser} ${isOffline ? '(Pending Sync)' : ''}`, 15, finalY);
 
             pdfDoc.setFont('helvetica', 'bold');
             pdfDoc.setTextColor(primaryColor);
@@ -414,18 +430,18 @@ const Statement = () => {
 
             pdfDoc.setFontSize(10);
             pdfDoc.setTextColor(secondaryColor);
-            pdfDoc.text(FOOTER_LABELS.owedByUser, 65, finalY);
+            pdfDoc.text(`${FOOTER_LABELS.owedByUser} ${isOffline ? '(Pending Sync)' : ''}`, 105, finalY, { align: 'center' });
 
             pdfDoc.setFont('helvetica', 'bold');
             pdfDoc.setTextColor(primaryColor);
             pdfDoc.setFontSize(14);
-            pdfDoc.text(totalBorrowed.toFixed(2), 65, finalY + 6);
+            pdfDoc.text(totalBorrowed.toFixed(2), 105, finalY + 6, { align: 'center' });
 
             if (pendingBorrowed > 0) {
                 pdfDoc.setFont('helvetica', 'normal');
                 pdfDoc.setTextColor(secondaryColor);
                 pdfDoc.setFontSize(9);
-                pdfDoc.text(FOOTER_LABELS.pendingText(pendingBorrowed.toFixed(2)), 65, finalY + 11);
+                pdfDoc.text(FOOTER_LABELS.pendingText(pendingBorrowed.toFixed(2)), 105, finalY + 11, { align: 'center' });
             }
 
             const netBalance = totalLent - totalBorrowed;
@@ -434,12 +450,12 @@ const Statement = () => {
             pdfDoc.setFont('helvetica', 'normal');
             pdfDoc.setTextColor(secondaryColor);
             pdfDoc.setFontSize(10);
-            pdfDoc.text(netLabel, 125, finalY);
+            pdfDoc.text(`${netLabel} ${isOffline ? '(Pending Sync)' : ''}`, 195, finalY, { align: 'right' });
 
             pdfDoc.setFont('helvetica', 'bold');
             pdfDoc.setFontSize(16);
             pdfDoc.setTextColor(netBalance >= 0 ? greenColor : redColor);
-            pdfDoc.text(Math.abs(netBalance).toFixed(2), 125, finalY + 6);
+            pdfDoc.text(Math.abs(netBalance).toFixed(2), 195, finalY + 6, { align: 'right' });
 
             pdfDoc.save(`Split_Statement_${startStr.split(' ').join('_')}_to_${endStr.split(' ').join('_')}.pdf`);
         } catch (error) {
