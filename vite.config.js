@@ -15,7 +15,7 @@ export default defineConfig({
                 name: 'Kati? - Expense Tracker',
                 short_name: 'Kati?',
                 description: 'Track expenses, split bills, and manage your journal.',
-                theme_color: '#3b82f6',
+                theme_color: '#ffffff',
                 icons: [
                     {
                         src: 'king.jpg',
@@ -30,7 +30,8 @@ export default defineConfig({
                 ]
             },
             workbox: {
-                globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg}']
+                globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg}'],
+                navigateFallback: '/index.html'
             }
         })
     ],
