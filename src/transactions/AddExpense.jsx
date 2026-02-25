@@ -124,16 +124,36 @@ const AddExpense = () => {
         setLoading(true);
 
         try {
+            // 1. Validate Amount
             const numericAmount = parseFloat(amount);
             if (isNaN(numericAmount) || numericAmount <= 0) {
-                showAlert({ title: "Invalid Amount", message: "Please enter a valid amount greater than 0", type: "warning" });
                 setLoading(false);
-                return;
+                return showAlert({
+                    title: "Invalid Amount",
+                    message: "The bill amount must be a positive number greater than zero.",
+                    type: "warning"
+                });
             }
-            if (participants.length === 0) {
-                showAlert({ title: "No Selection", message: "Please select at least one person to split with.", type: "warning" });
+
+            // 2. Validate Description
+            const sanitizedDescription = description.trim().replace(/[<>]/g, ""); // Basic XSS prevention
+            if (!sanitizedDescription) {
                 setLoading(false);
-                return;
+                return showAlert({
+                    title: "Description Required",
+                    message: "Please enter what this expense is for.",
+                    type: "warning"
+                });
+            }
+
+            // 3. Validate Participants
+            if (participants.length === 0) {
+                setLoading(false);
+                return showAlert({
+                    title: "No Selection",
+                    message: "Please select at least one person to split with.",
+                    type: "warning"
+                });
             }
 
             const splitAmount = numericAmount / participants.length;
@@ -165,7 +185,7 @@ const AddExpense = () => {
             if (participants.length === 1 && participants.includes(user.uid)) {
                 const newRef = doc(collection(db, 'transactions'));
                 batch.set(newRef, {
-                    description,
+                    description: sanitizedDescription,
                     originalAmount: numericAmount,
                     amount: numericAmount,
                     payerId: user.uid,
@@ -181,7 +201,7 @@ const AddExpense = () => {
                 batch.set(journalRef, {
                     uid: user.uid,
                     amount: numericAmount,
-                    description,
+                    description: sanitizedDescription,
                     type: 'expense',
                     date: serverTimestamp(),
                     source: 'splitter',
@@ -192,7 +212,7 @@ const AddExpense = () => {
                     if (pId === user.uid) return;
                     const newRef = doc(collection(db, 'transactions'));
                     batch.set(newRef, {
-                        description,
+                        description: sanitizedDescription,
                         originalAmount: numericAmount,
                         amount: parseFloat(splitAmount.toFixed(2)),
                         payerId: user.uid,
@@ -210,7 +230,7 @@ const AddExpense = () => {
                     batch.set(journalRef, {
                         uid: user.uid,
                         amount: payerShare,
-                        description,
+                        description: sanitizedDescription,
                         type: 'expense',
                         date: serverTimestamp(),
                         source: 'splitter',
@@ -220,11 +240,20 @@ const AddExpense = () => {
             }
 
             await batch.commit();
-
             navigate('/split');
         } catch (error) {
             console.error('Error saving expense:', error);
-            showAlert({ title: "Error", message: error.message || "Failed to save expense. Please try again.", type: "danger" });
+            let errorMessage = "Failed to save expense. Please check your connection and try again.";
+
+            if (error.code === 'permission-denied') {
+                errorMessage = "You don't have permission to perform this action.";
+            }
+
+            showAlert({
+                title: "Error",
+                message: errorMessage,
+                type: "danger"
+            });
         }
         setLoading(false);
     };

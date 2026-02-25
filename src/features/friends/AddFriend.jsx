@@ -15,26 +15,49 @@ import Card from "../../components/Card";
 import PageHeader from "../../components/PageHeader";
 import { useNavigate } from "react-router-dom";
 import { FiUserPlus, FiMail, FiSend } from "react-icons/fi";
+import useAlert from "../../hooks/useAlert";
 
 const AddFriend = () => {
     const { user } = useContext(AuthContext);
+    const { showAlert } = useAlert();
     const [email, setEmail] = useState("");
-    const [error, setError] = useState("");
-    const [message, setMessage] = useState("");
     const [loading, setLoading] = useState(false);
+
     const navigate = useNavigate();
 
     const handleAddFriend = async () => {
-        setError("");
-        setMessage("");
         setLoading(true);
 
         try {
-            if (!email) throw new Error("Please enter an email address.");
-
             const targetEmail = email.trim().toLowerCase();
+
+            if (!targetEmail) {
+                setLoading(false);
+                return showAlert({
+                    title: "Email Required",
+                    message: "Please enter an email address.",
+                    type: "warning"
+                });
+            }
+
+            // Robust Email Regex
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(targetEmail)) {
+                setLoading(false);
+                return showAlert({
+                    title: "Invalid Email",
+                    message: "Please enter a valid email address.",
+                    type: "warning"
+                });
+            }
+
             if (user && targetEmail === (user.email || "").toLowerCase()) {
-                throw new Error("You cannot add yourself.");
+                setLoading(false);
+                return showAlert({
+                    title: "Invalid Action",
+                    message: "You cannot add yourself as a friend.",
+                    type: "warning"
+                });
             }
 
             const usersRef = collection(db, "users");
@@ -42,7 +65,12 @@ const AddFriend = () => {
             const querySnapshot = await getDocs(q);
 
             if (querySnapshot.empty) {
-                throw new Error("User not found. Ask them to register first!");
+                setLoading(false);
+                return showAlert({
+                    title: "User Not Found",
+                    message: "No user found with this email. Ask them to register first!",
+                    type: "info"
+                });
             }
 
             const friendDoc = querySnapshot.docs[0];
@@ -51,22 +79,32 @@ const AddFriend = () => {
             await addDoc(collection(db, "friend_requests"), {
                 fromId: user.uid,
                 fromEmail: (user.email || "").toLowerCase(),
-                fromName: user.username || "A Friend",
+                fromName: user.username || user.displayName || "A Friend",
                 toId: friendDoc.id,
                 status: "pending",
                 timestamp: serverTimestamp(),
             });
 
-            setMessage(`Request sent to ${friendData.username || targetEmail}!`);
-            setEmail("");
+            showAlert({
+                title: "Request Sent",
+                message: `Friend request sent to ${friendData.username || targetEmail}!`,
+                type: "success"
+            });
 
-            setTimeout(() => navigate("/friends"), 2000);
+            setEmail("");
+            navigate("/friends");
         } catch (err) {
-            setError(err.message);
+            console.error("Add Friend Error:", err);
+            showAlert({
+                title: "Error",
+                message: "Failed to send friend request. Please try again later.",
+                type: "danger"
+            });
         } finally {
             setLoading(false);
         }
     };
+
 
     return (
         <div className="p-4 md:p-6 pb-24 lg:pb-6">
@@ -79,16 +117,6 @@ const AddFriend = () => {
 
             <Card padding="lg" className="max-w-md mx-auto">
                 <div className="space-y-6">
-                    {error && (
-                        <div className="p-3 bg-[var(--color-danger-light)] text-[var(--color-danger)] rounded-xl text-sm border border-[var(--color-border)] font-medium text-center">
-                            {error}
-                        </div>
-                    )}
-                    {message && (
-                        <div className="p-3 bg-[var(--color-success-light)] text-[var(--color-success)] rounded-xl text-sm border border-[var(--color-border)] font-medium text-center">
-                            {message}
-                        </div>
-                    )}
 
                     <Input
                         label="Friend's Email"
