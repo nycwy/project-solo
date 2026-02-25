@@ -11,23 +11,24 @@ const NetBalanceCard = ({ totalOwed, totalDebt }) => {
             </h3>
 
             <div className="text-4xl font-bold my-2">
-                {isPositive ? "+" : "-"}${Math.abs(netBalance).toFixed(2)}
+                {isPositive ? "+" : "-"}Rs. {Math.abs(netBalance).toFixed(2)}
             </div>
 
             <div className="flex justify-between mt-6 pt-4 border-t border-blue-500/30">
                 <div>
                     <p className="text-blue-200 text-xs mb-1">You are owed</p>
                     <p className="text-green-300 font-semibold text-lg">
-                        +${totalOwed.toFixed(2)}
+                        +Rs. {totalOwed.toFixed(2)}
                     </p>
                 </div>
                 <div className="text-right">
                     <p className="text-blue-200 text-xs mb-1">You owe</p>
                     <p className="text-red-300 font-semibold text-lg">
-                        -${totalDebt.toFixed(2)}
+                        -Rs. {totalDebt.toFixed(2)}
                     </p>
                 </div>
             </div>
+
         </div>
     );
 };

@@ -1,4 +1,4 @@
-import { useState, useContext, useEffect } from 'react';
+import { useState, useContext, useEffect, useMemo } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import { db } from '../../services/firebase';
 import {
@@ -50,16 +50,22 @@ const Dashboard = () => {
 
     useEffect(() => {
         if (!user?.uid) return;
+        let isMounted = true;
         const fetchFriends = async () => {
-            const docSnap = await getDoc(doc(db, 'users', user.uid));
-            if (docSnap.exists()) {
-                const list = docSnap.data().friendsList || [];
-                const map = {};
-                list.forEach((f) => (map[f.uid] = f.username));
-                setFriendsMap(map);
+            try {
+                const docSnap = await getDoc(doc(db, 'users', user.uid));
+                if (isMounted && docSnap.exists()) {
+                    const list = docSnap.data().friendsList || [];
+                    const map = {};
+                    list.forEach((f) => (map[f.uid] = f.username));
+                    setFriendsMap(map);
+                }
+            } catch (err) {
+                console.error("Error fetching friends:", err);
             }
         };
         fetchFriends();
+        return () => { isMounted = false; };
     }, [user]);
 
     useEffect(() => {
@@ -101,38 +107,49 @@ const Dashboard = () => {
         return friendsMap[uid] || 'Unknown';
     };
 
-    const friendBalances = {};
+    const balances = useMemo(() => {
+        const friendBalances = {};
 
-    payerTransactions.forEach((t) => {
-        if (t.debtorId !== 'SELF' && t.status === 'confirmed' && t.settleStatus !== 'settled') {
-            const amount = Number(t.amount) || 0;
-            friendBalances[t.debtorId] = (friendBalances[t.debtorId] || 0) + amount;
-        }
-    });
+        payerTransactions.forEach((t) => {
+            if (t.debtorId !== 'SELF' && t.status === 'confirmed' && t.settleStatus !== 'settled') {
+                const amount = Number(t.amount) || 0;
+                friendBalances[t.debtorId] = (friendBalances[t.debtorId] || 0) + amount;
+            }
+        });
 
-    debtorTransactions.forEach((t) => {
-        if (t.status === 'confirmed' && t.settleStatus !== 'settled') {
-            const amount = Number(t.amount) || 0;
-            friendBalances[t.payerId] = (friendBalances[t.payerId] || 0) - amount;
-        }
-    });
+        debtorTransactions.forEach((t) => {
+            if (t.status === 'confirmed' && t.settleStatus !== 'settled') {
+                const amount = Number(t.amount) || 0;
+                friendBalances[t.payerId] = (friendBalances[t.payerId] || 0) - amount;
+            }
+        });
 
-    let totalOwed = 0;
-    let totalDebt = 0;
+        let totalOwed = 0;
+        let totalDebt = 0;
 
-    Object.values(friendBalances).forEach((balance) => {
-        if (balance > 0) {
-            totalOwed += balance;
-        } else if (balance < 0) {
-            totalDebt += Math.abs(balance);
-        }
-    });
+        Object.values(friendBalances).forEach((balance) => {
+            if (balance > 0) {
+                totalOwed += balance;
+            } else if (balance < 0) {
+                totalDebt += Math.abs(balance);
+            }
+        });
 
-    const netBalance = totalOwed - totalDebt;
+        return {
+            totalOwed,
+            totalDebt,
+            netBalance: totalOwed - totalDebt
+        };
+    }, [payerTransactions, debtorTransactions]);
 
-    const allTransactions = [...payerTransactions, ...debtorTransactions].sort(
-        (a, b) => (b.date?.seconds || 0) - (a.date?.seconds || 0)
-    );
+    const { totalOwed, totalDebt, netBalance } = balances;
+
+    const allTransactions = useMemo(() => {
+        return [...payerTransactions, ...debtorTransactions].sort(
+            (a, b) => (b.date?.seconds || 0) - (a.date?.seconds || 0)
+        );
+    }, [payerTransactions, debtorTransactions]);
+
 
     const handleAccept = async (id) => {
         try {
