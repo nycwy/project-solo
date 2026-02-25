@@ -192,17 +192,17 @@ const Statement = () => {
 
             pdfDoc.setFontSize(10);
             pdfDoc.setTextColor(secondaryColor);
-            pdfDoc.text(`TOTAL INCOME ${isOffline ? '(Pending Sync)' : ''}`, 15, finalY);
+            pdfDoc.text('TOTAL INCOME', 45, finalY, { align: 'center' });
 
             pdfDoc.setFont('helvetica', 'bold');
             pdfDoc.setTextColor(primaryColor);
             pdfDoc.setFontSize(14);
-            pdfDoc.text(totalIncome.toFixed(2), 15, finalY + 6);
+            pdfDoc.text(totalIncome.toFixed(2), 45, finalY + 6, { align: 'center' });
 
             pdfDoc.setFont('helvetica', 'normal');
             pdfDoc.setTextColor(secondaryColor);
             pdfDoc.setFontSize(10);
-            pdfDoc.text(`TOTAL EXPENSE ${isOffline ? '(Pending Sync)' : ''}`, 105, finalY, { align: 'center' });
+            pdfDoc.text('TOTAL EXPENSE', 105, finalY, { align: 'center' });
 
             pdfDoc.setFont('helvetica', 'bold');
             pdfDoc.setTextColor(primaryColor);
@@ -213,12 +213,12 @@ const Statement = () => {
             pdfDoc.setFont('helvetica', 'normal');
             pdfDoc.setTextColor(secondaryColor);
             pdfDoc.setFontSize(10);
-            pdfDoc.text(`NET CLOSING ${isOffline ? '(Pending Sync)' : ''}`, 195, finalY, { align: 'right' });
+            pdfDoc.text(`NET CLOSING ${isOffline ? '(Pending Sync)' : ''}`, 165, finalY, { align: 'center' });
 
             pdfDoc.setFont('helvetica', 'bold');
             pdfDoc.setFontSize(16);
             pdfDoc.setTextColor(savings >= 0 ? greenColor : redColor);
-            pdfDoc.text(savings >= 0 ? savings.toFixed(2) : savings.toFixed(2), 195, finalY + 6, { align: 'right' });
+            pdfDoc.text(savings >= 0 ? savings.toFixed(2) : savings.toFixed(2), 165, finalY + 6, { align: 'center' });
 
             pdfDoc.save(`Journal_Statement_${startStr.split(' ').join('_')}_to_${endStr.split(' ').join('_')}.pdf`);
         } catch (error) {
@@ -414,23 +414,23 @@ const Statement = () => {
 
             pdfDoc.setFontSize(10);
             pdfDoc.setTextColor(secondaryColor);
-            pdfDoc.text(`${FOOTER_LABELS.owedToUser} ${isOffline ? '(Pending Sync)' : ''}`, 15, finalY);
+            pdfDoc.text(FOOTER_LABELS.owedToUser, 45, finalY, { align: 'center' });
 
             pdfDoc.setFont('helvetica', 'bold');
             pdfDoc.setTextColor(primaryColor);
             pdfDoc.setFontSize(14);
-            pdfDoc.text(totalLent.toFixed(2), 15, finalY + 6);
+            pdfDoc.text(totalLent.toFixed(2), 45, finalY + 6, { align: 'center' });
 
             if (pendingLent > 0) {
                 pdfDoc.setFont('helvetica', 'normal');
                 pdfDoc.setTextColor(secondaryColor);
                 pdfDoc.setFontSize(9);
-                pdfDoc.text(FOOTER_LABELS.pendingText(pendingLent.toFixed(2)), 15, finalY + 11);
+                pdfDoc.text(FOOTER_LABELS.pendingText(pendingLent.toFixed(2)), 45, finalY + 11, { align: 'center' });
             }
 
             pdfDoc.setFontSize(10);
             pdfDoc.setTextColor(secondaryColor);
-            pdfDoc.text(`${FOOTER_LABELS.owedByUser} ${isOffline ? '(Pending Sync)' : ''}`, 105, finalY, { align: 'center' });
+            pdfDoc.text(FOOTER_LABELS.owedByUser, 105, finalY, { align: 'center' });
 
             pdfDoc.setFont('helvetica', 'bold');
             pdfDoc.setTextColor(primaryColor);
@@ -450,12 +450,12 @@ const Statement = () => {
             pdfDoc.setFont('helvetica', 'normal');
             pdfDoc.setTextColor(secondaryColor);
             pdfDoc.setFontSize(10);
-            pdfDoc.text(`${netLabel} ${isOffline ? '(Pending Sync)' : ''}`, 195, finalY, { align: 'right' });
+            pdfDoc.text(`${netLabel} ${isOffline ? '(Pending Sync)' : ''}`, 165, finalY, { align: 'center' });
 
             pdfDoc.setFont('helvetica', 'bold');
             pdfDoc.setFontSize(16);
             pdfDoc.setTextColor(netBalance >= 0 ? greenColor : redColor);
-            pdfDoc.text(Math.abs(netBalance).toFixed(2), 195, finalY + 6, { align: 'right' });
+            pdfDoc.text(Math.abs(netBalance).toFixed(2), 165, finalY + 6, { align: 'center' });
 
             pdfDoc.save(`Split_Statement_${startStr.split(' ').join('_')}_to_${endStr.split(' ').join('_')}.pdf`);
         } catch (error) {
