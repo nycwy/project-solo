@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { useContext, useState, useEffect } from 'react';
-import { AuthContext } from '../context/AuthContext';
+import useAuth from '../hooks/useAuth';
+
 import { ThemeContext } from '../context/ThemeProvider';
 import BottomNav from './BottomNav';
 import Avatar from './Avatar';
@@ -30,7 +31,7 @@ const navItems = [
 ];
 
 const Layout = () => {
-    const { user } = useContext(AuthContext);
+    const { user } = useAuth();
     const { theme, toggleTheme } = useContext(ThemeContext);
     const navigate = useNavigate();
 

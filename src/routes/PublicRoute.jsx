@@ -1,15 +1,20 @@
-import React, { useContext } from 'react'
-import { AuthContext } from '../context/AuthContext'
+import React from 'react';
 import { Navigate } from 'react-router-dom';
+import useAuth from '../hooks/useAuth';
+import Spinner from '../components/Spinner';
 
 const PublicRoute = ({ children }) => {
-    const { user } = useContext(AuthContext);
+    const { user, loading } = useAuth();
 
-    return (
-        <div>
-            {user ? <Navigate to='/journal' /> : children}
-        </div>
-    )
-}
+    if (loading) {
+        return (
+            <div className="h-screen flex items-center justify-center bg-[var(--color-bg)]">
+                <Spinner size="lg" />
+            </div>
+        );
+    }
 
-export default PublicRoute
+    return user ? <Navigate to="/journal" /> : children;
+};
+
+export default PublicRoute;
