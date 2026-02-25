@@ -99,13 +99,13 @@ const Remember = () => {
         e.preventDefault();
         if (!editItemName.trim()) return showAlert({ title: "Item Required", message: "Item name cannot be empty", type: "warning" });
 
+        setEditingItem(null); // Immediate Close
         setLoading(true);
         try {
             await updateDoc(doc(db, 'shopping_list', editingItem.id), {
                 item: editItemName,
                 estimatedAmount: parseFloat(editEstAmount) || 0,
             });
-            setEditingItem(null);
         } catch (error) {
             console.error(error);
             showAlert({ title: "Update Failed", message: "Failed to update item", type: "danger" });
@@ -120,6 +120,11 @@ const Remember = () => {
 
     const handleConfirmPurchase = async () => {
         if (!purchasingItem) return;
+
+        const currentItem = purchasingItem;
+        const price = parseFloat(actualPrice) || 0;
+
+        setPurchasingItem(null); // Immediate Close
         setLoading(true);
 
         try {
@@ -131,22 +136,22 @@ const Remember = () => {
             batch.set(journalRef, {
                 uid: user.uid,
                 type: 'expense',
-                amount: parseFloat(actualPrice) || 0,
-                description: purchasingItem.item,
+                amount: price,
+                description: currentItem.item,
                 date: Timestamp.fromDate(today),
                 createdAt: serverTimestamp(),
                 source: 'remember_list',
             });
 
-            batch.delete(doc(db, 'shopping_list', purchasingItem.id));
+            batch.delete(doc(db, 'shopping_list', currentItem.id));
             await batch.commit();
-            setPurchasingItem(null);
         } catch (error) {
             console.error('Error moving item:', error);
             showAlert({ title: "Failed", message: "Failed to update expense status", type: "danger" });
         }
         setLoading(false);
     };
+
 
     return (
         <div className="p-4 md:p-6 pb-24 lg:pb-6">

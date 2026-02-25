@@ -33,8 +33,8 @@ export const ModalProvider = ({ children }) => {
                         <Avatar name={avatarName} size="xl" className="mx-auto mb-4" />
                     ) : (
                         <div className={`w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center ${type === 'danger' ? 'bg-[var(--color-danger-light)] text-[var(--color-danger)]' :
-                                type === 'success' ? 'bg-[var(--color-success-light)] text-[var(--color-success)]' :
-                                    'bg-[var(--color-primary-light)] text-[var(--color-primary)]'
+                            type === 'success' ? 'bg-[var(--color-success-light)] text-[var(--color-success)]' :
+                                'bg-[var(--color-primary-light)] text-[var(--color-primary)]'
                             }`}>
                             <Icon size={32} />
                         </div>
@@ -72,17 +72,19 @@ export const ModalProvider = ({ children }) => {
 
         const handleConfirm = async () => {
             if (onConfirm) {
-                setModalConfig(prev => ({ ...prev, loading: true }));
+                // Optimistic Close: Close the modal immediately for better offline responsiveness
+                setModalConfig(null);
                 try {
                     await onConfirm();
-                    setModalConfig(null);
                 } catch (error) {
-                    setModalConfig(prev => ({ ...prev, loading: false }));
+                    console.error("Confirm action failed:", error);
+                    // Error is logged, but modal stays closed to keep UI responsive
                 }
             } else {
                 setModalConfig(null);
             }
         };
+
 
         setModalConfig({
             isOpen: true,
@@ -96,7 +98,7 @@ export const ModalProvider = ({ children }) => {
                         <Avatar name={avatarName} size="xl" className="mx-auto mb-4" />
                     ) : (
                         <div className={`w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center ${type === 'danger' ? 'bg-[var(--color-danger-light)] text-[var(--color-danger)]' :
-                                'bg-[var(--color-warning-light)] text-[var(--color-warning)]'
+                            'bg-[var(--color-warning-light)] text-[var(--color-warning)]'
                             }`}>
                             <Icon size={32} />
                         </div>

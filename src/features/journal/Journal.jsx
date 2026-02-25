@@ -155,52 +155,72 @@ const Journal = () => {
         setDrafts((prev) => prev.filter((_, i) => i !== index));
     };
 
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+        setEditingId(null);
+        setAmount('');
+        setDescription('');
+        setDateValue('');
+        setDrafts([]);
+    };
+
     const handleSave = async () => {
-        if (editingId) {
-            const numAmount = parseFloat(amount);
-            if (!numAmount || numAmount <= 0) return showAlert({ title: "Invalid Amount", message: "Please enter a valid amount greater than 0", type: "warning" });
+        const numAmount = parseFloat(amount);
+        const activeDrafts = [...drafts];
 
-            const dateObj = dateValue ? new Date(dateValue) : new Date();
-            dateObj.setHours(12, 0, 0, 0);
-
-            await updateDoc(doc(db, 'journal', editingId), {
+        // Final draft check if not editing
+        if (!editingId && numAmount > 0) {
+            activeDrafts.push({
                 amount: numAmount,
                 description: description || modalType,
+                date: dateValue,
                 type: modalType,
-                date: Timestamp.fromDate(dateObj),
             });
-        } else {
-            let finalDrafts = [...drafts];
-            if (amount && parseFloat(amount) > 0) {
-                finalDrafts.push({
-                    amount: parseFloat(amount),
-                    description: description || modalType,
-                    date: dateValue,
-                    type: modalType,
-                });
-            }
-
-            if (finalDrafts.length === 0) return showAlert({ title: "Empty List", message: "Please add at least one entry before saving", type: "warning" });
-
-            const batch = writeBatch(db);
-            finalDrafts.forEach((draft) => {
-                const dateObj = draft.date ? new Date(draft.date) : new Date();
-                dateObj.setHours(12, 0, 0, 0);
-                const newRef = doc(collection(db, 'journal'));
-                batch.set(newRef, {
-                    uid: user.uid,
-                    amount: draft.amount,
-                    description: draft.description,
-                    type: draft.type,
-                    date: Timestamp.fromDate(dateObj),
-                    createdAt: serverTimestamp(),
-                });
-            });
-            await batch.commit();
         }
 
-        setIsModalOpen(false);
+        if (editingId) {
+            if (!numAmount || numAmount <= 0) return showAlert({ title: "Invalid Amount", message: "Please enter a valid amount greater than 0", type: "warning" });
+        } else if (activeDrafts.length === 0) {
+            return showAlert({ title: "Empty List", message: "Please enter an amount or add entries to the list", type: "warning" });
+        }
+
+        handleCloseModal(); // Close immediately for feedback
+
+        try {
+            if (editingId) {
+                const dateObj = dateValue ? new Date(dateValue) : new Date();
+                dateObj.setHours(12, 0, 0, 0);
+
+                await updateDoc(doc(db, 'journal', editingId), {
+                    amount: numAmount,
+                    description: description || modalType,
+                    type: modalType,
+                    date: Timestamp.fromDate(dateObj),
+                });
+            } else {
+                const batch = writeBatch(db);
+                activeDrafts.forEach((draft) => {
+                    const dateObj = draft.date ? new Date(draft.date) : new Date();
+                    dateObj.setHours(12, 0, 0, 0);
+                    const newRef = doc(collection(db, 'journal'));
+                    batch.set(newRef, {
+                        uid: user.uid,
+                        amount: draft.amount,
+                        description: draft.description,
+                        type: draft.type,
+                        date: Timestamp.fromDate(dateObj),
+                        createdAt: serverTimestamp(),
+                    });
+                });
+                await batch.commit();
+            }
+        } catch (error) {
+            console.error("Error saving journal entry:", error);
+            showAlert({ title: "Save Error", message: "Failed to save entry. Please try again.", type: "error" });
+            setIsModalOpen(true); // Re-open on error
+        }
     };
+
 
     const handleDeleteEntry = (id) => {
         showConfirm({
@@ -361,7 +381,7 @@ const Journal = () => {
 
             <Modal
                 isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
+                onClose={handleCloseModal}
                 title={editingId ? 'Edit Entry' : `Add ${modalType === 'income' ? 'Income' : 'Expense'}`}
                 icon={modalType === 'income' ? FiTrendingUp : FiTrendingDown}
                 footer={
