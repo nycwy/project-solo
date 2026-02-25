@@ -60,24 +60,30 @@ const Remember = () => {
         return () => unsub();
     }, [user]);
 
-    const handleAddItem = async (e) => {
+    const handleAddItem = (e) => {
         e.preventDefault();
         if (!itemName.trim()) return showAlert({ title: "Incomplete", message: "What do you need to buy?", type: "warning" });
 
         setLoading(true);
         try {
-            await addDoc(collection(db, 'shopping_list'), {
+            // Initiate the add but don't await (Optimistic)
+            addDoc(collection(db, 'shopping_list'), {
                 uid: user.uid,
                 item: itemName,
                 estimatedAmount: parseFloat(estAmount) || 0,
                 createdAt: serverTimestamp(),
+            }).catch(err => {
+                console.error("Background sync error", err);
             });
+
+            // Reset UI immediately
+            setLoading(false);
             setItemName('');
             setEstAmount('');
         } catch (error) {
             console.error(error);
+            setLoading(false);
         }
-        setLoading(false);
     };
 
     const handleDelete = (id) => {
@@ -95,22 +101,27 @@ const Remember = () => {
         setEditEstAmount(item.estimatedAmount?.toString() || '');
     };
 
-    const handleEditSave = async (e) => {
+    const handleEditSave = (e) => {
         e.preventDefault();
         if (!editItemName.trim()) return showAlert({ title: "Item Required", message: "Item name cannot be empty", type: "warning" });
 
-        setEditingItem(null); // Immediate Close
         setLoading(true);
         try {
-            await updateDoc(doc(db, 'shopping_list', editingItem.id), {
+            updateDoc(doc(db, 'shopping_list', editingItem.id), {
                 item: editItemName,
                 estimatedAmount: parseFloat(editEstAmount) || 0,
+            }).catch(err => {
+                console.error("Background sync error", err);
             });
+
+            // Reset UI immediately
+            setEditingItem(null);
+            setLoading(false);
         } catch (error) {
             console.error(error);
+            setLoading(false);
             showAlert({ title: "Update Failed", message: "Failed to update item", type: "danger" });
         }
-        setLoading(false);
     };
 
     const openPurchaseModal = (item) => {
@@ -118,13 +129,12 @@ const Remember = () => {
         setActualPrice(item.estimatedAmount.toString());
     };
 
-    const handleConfirmPurchase = async () => {
+    const handleConfirmPurchase = () => {
         if (!purchasingItem) return;
 
         const currentItem = purchasingItem;
         const price = parseFloat(actualPrice) || 0;
 
-        setPurchasingItem(null); // Immediate Close
         setLoading(true);
 
         try {
@@ -144,12 +154,19 @@ const Remember = () => {
             });
 
             batch.delete(doc(db, 'shopping_list', currentItem.id));
-            await batch.commit();
+
+            batch.commit().catch(err => {
+                console.error("Background sync error", err);
+            });
+
+            // Reset UI immediately
+            setPurchasingItem(null);
+            setLoading(false);
         } catch (error) {
             console.error('Error moving item:', error);
+            setLoading(false);
             showAlert({ title: "Failed", message: "Failed to update expense status", type: "danger" });
         }
-        setLoading(false);
     };
 
 

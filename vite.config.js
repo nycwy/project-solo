@@ -16,16 +16,22 @@ export default defineConfig({
                 short_name: 'Kati?',
                 description: 'Track expenses, split bills, and manage your journal.',
                 theme_color: '#ffffff',
+                background_color: '#ffffff',
+                display: 'standalone',
+                scope: '/',
+                start_url: '/',
                 icons: [
                     {
-                        src: 'king.jpg',
+                        src: '/king.jpg',
                         sizes: '192x192',
-                        type: 'image/jpeg'
+                        type: 'image/jpeg',
+                        purpose: 'any maskable'
                     },
                     {
-                        src: 'king.jpg',
+                        src: '/king.jpg',
                         sizes: '512x512',
-                        type: 'image/jpeg'
+                        type: 'image/jpeg',
+                        purpose: 'any maskable'
                     }
                 ]
             },
