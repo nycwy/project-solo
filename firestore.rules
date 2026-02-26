@@ -69,12 +69,13 @@ service cloud.firestore {
     // --- FRIEND REQUESTS ---
     // • Sender and Receiver can read/delete
     // • Sender can create
-    // • Receiver can update (accept/decline)
+    // • Receiver can update (accept/decline) - Restricted to status field only
     match /friend_requests/{requestId} {
       allow read, delete: if isSignedIn() && 
         (resource.data.fromId == request.auth.uid || resource.data.toId == request.auth.uid);
       allow create: if isSignedIn() && request.resource.data.fromId == request.auth.uid;
-      allow update: if isSignedIn() && resource.data.toId == request.auth.uid;
+      allow update: if isSignedIn() && resource.data.toId == request.auth.uid &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
     }
 
     // --- SHOPPING LIST ---
