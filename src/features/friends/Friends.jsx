@@ -15,6 +15,8 @@ import {
     serverTimestamp,
     getDocs,
     getDoc,
+    limit,
+    writeBatch,
 } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -122,7 +124,11 @@ const Friends = () => {
 
     const handleAccept = async (req) => {
         try {
-            const myName = user.displayName || user.email;
+            // 1. Delete request first for instant UI cleanup
+            await deleteDoc(doc(db, 'friend_requests', req.id));
+            const myName = user.username || user.displayName || user.email;
+
+            // 2. Update MY friends list
             await updateDoc(doc(db, 'users', user.uid), {
                 friendsList: arrayUnion({
                     uid: req.fromId,
@@ -130,6 +136,7 @@ const Friends = () => {
                     email: (req.fromEmail || "").toLowerCase(),
                 }),
             });
+            // 3. Update THEIR friends list
             await updateDoc(doc(db, 'users', req.fromId), {
                 friendsList: arrayUnion({
                     uid: user.uid,
@@ -137,7 +144,6 @@ const Friends = () => {
                     email: (user.email || "").toLowerCase(),
                 }),
             });
-            await deleteDoc(doc(db, 'friend_requests', req.id));
         } catch (error) {
             console.error('Error accepting request:', error);
         }
@@ -150,28 +156,31 @@ const Friends = () => {
     const handleUnfriendAction = async (friend) => {
         setIsUnfriending(true);
         try {
-            // My side: Get current list and filter
+            const batch = writeBatch(db);
+            // 1. Prepare My Side Update
             const myRef = doc(db, 'users', user.uid);
             const mySnap = await getDoc(myRef);
             if (mySnap.exists()) {
                 const myList = mySnap.data().friendsList || [];
                 const updatedMyList = myList.filter(f => f.uid !== friend.uid);
-                await updateDoc(myRef, { friendsList: updatedMyList });
+                batch.update(myRef, { friendsList: updatedMyList });
             }
-
-            // Friend's side: Get current list and filter
+            // 2. Prepare Friend's Side Update
             const friendRef = doc(db, 'users', friend.uid);
             const friendSnap = await getDoc(friendRef);
             if (friendSnap.exists()) {
                 const friendList = friendSnap.data().friendsList || [];
                 const updatedFriendList = friendList.filter(f => f.uid !== user.uid);
-                await updateDoc(friendRef, { friendsList: updatedFriendList });
+                batch.update(friendRef, { friendsList: updatedFriendList });
             }
+            // 3. Execute both simultaneously
+            await batch.commit();
+
         } catch (error) {
             console.error('Error unfriending:', error);
             showAlert({
                 title: "Error",
-                message: "Failed to remove friend. Please try again.",
+                message: "Permission denied or network error. Please try again.",
                 type: "danger"
             });
         } finally {
@@ -228,7 +237,8 @@ const Friends = () => {
         try {
             const usersQuery = query(
                 collection(db, 'users'),
-                where('email', '==', friendEmail.trim().toLowerCase())
+                where('email', '==', friendEmail.trim().toLowerCase()),
+                limit(1)
             );
             const usersSnap = await getDocs(usersQuery);
             if (usersSnap.empty) {

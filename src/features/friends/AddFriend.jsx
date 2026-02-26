@@ -7,6 +7,7 @@ import {
     getDocs,
     addDoc,
     serverTimestamp,
+    limit,
 } from "firebase/firestore";
 import { AuthContext } from "../../context/AuthContext";
 import Button from "../../components/Button";
@@ -61,7 +62,7 @@ const AddFriend = () => {
             }
 
             const usersRef = collection(db, "users");
-            const q = query(usersRef, where("email", "==", targetEmail));
+            const q = query(usersRef, where("email", "==", targetEmail), limit(1));
             const querySnapshot = await getDocs(q);
 
             if (querySnapshot.empty) {
@@ -75,6 +76,19 @@ const AddFriend = () => {
 
             const friendDoc = querySnapshot.docs[0];
             const friendData = friendDoc.data();
+
+            // Duplicate check
+            const reqQuery = query(
+                collection(db, 'friend_requests'),
+                where('fromId', '==', user.uid),
+                where('toId', '==', friendDoc.id),
+                where('status', '==', 'pending')
+            );
+            const reqSnap = await getDocs(reqQuery);
+            if (!reqSnap.empty) {
+                setLoading(false);
+                return showAlert({ title: "Request Pending", message: "A friend request is already pending for this user.", type: "info" });
+            }
 
             await addDoc(collection(db, "friend_requests"), {
                 fromId: user.uid,

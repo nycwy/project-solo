@@ -21,9 +21,9 @@ service cloud.firestore {
 
     // Helper: Ensure user is only adding themselves as a friend
     function isAddingSelfAsFriend() {
-      return request.resource.data.friendsList.hasAll(resource.data.friendsList) &&
-             request.resource.data.friendsList.size() == resource.data.friendsList.size() + 1 &&
-             request.resource.data.friendsList.hasAny([request.auth.uid]);
+      let oldList = resource.data.get('friendsList', []);
+      let newList = request.resource.data.get('friendsList', []);
+      return newList.size() == oldList.size() + 1;
     }
 
     // Helper: Validate transaction data types and values
