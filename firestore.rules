@@ -24,7 +24,8 @@ service cloud.firestore {
     // • Create: Only the user themselves
     // • Update: User themselves OR someone updating your friendsList (friend request accept flow)
     match /users/{userId} {
-      allow read: if isSignedIn(); 
+      allow get: if isSignedIn(); 
+      allow list: if isSignedIn() && request.query.limit <= 10;
       allow create: if isMember(userId);
       allow update: if isMember(userId) || (isSignedIn() && isOnlyFriendsUpdate());
       allow delete: if false;
