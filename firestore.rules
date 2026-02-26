@@ -32,11 +32,22 @@ service cloud.firestore {
 
     // --- TRANSACTIONS ---
     // • Access strictly limited to participants (payer or debtor)
+    // • Strict role-based enforcement for creation, modification, and deletion
     match /transactions/{transactionId} {
-      allow read, update, delete: if isSignedIn() && 
+      allow read: if isSignedIn() && 
         (resource.data.payerId == request.auth.uid || resource.data.debtorId == request.auth.uid);
+      
       allow create: if isSignedIn() && 
-        (request.resource.data.payerId == request.auth.uid || request.resource.data.debtorId == request.auth.uid);
+        request.resource.data.payerId == request.auth.uid;
+
+      allow update: if isSignedIn() && (
+        resource.data.payerId == request.auth.uid || 
+        (resource.data.debtorId == request.auth.uid && 
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['settleStatus']))
+      );
+
+      allow delete: if isSignedIn() && 
+        resource.data.payerId == request.auth.uid;
     }
 
     // --- JOURNAL ---
