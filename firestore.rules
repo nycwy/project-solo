@@ -26,6 +26,14 @@ service cloud.firestore {
              request.resource.data.friendsList.hasAny([request.auth.uid]);
     }
 
+    // Helper: Validate transaction data types and values
+    function isValidTransaction() {
+      return request.resource.data.amount is number && 
+             request.resource.data.amount >= 0 &&
+             request.resource.data.description is string && 
+             request.resource.data.description.size() > 0;
+    }
+
     // --- USERS ---
     // • Get: Needed for profile display
     // • List: Limited to 10 results to prevent scraping
@@ -47,13 +55,13 @@ service cloud.firestore {
         (resource.data.payerId == request.auth.uid || resource.data.debtorId == request.auth.uid);
       
       allow create: if isSignedIn() && 
-        request.resource.data.payerId == request.auth.uid;
+        request.resource.data.payerId == request.auth.uid && isValidTransaction();
 
       allow update: if isSignedIn() && (
         resource.data.payerId == request.auth.uid || 
         (resource.data.debtorId == request.auth.uid && 
          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['settleStatus']))
-      );
+      ) && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['amount', 'description']) || isValidTransaction());
 
       allow delete: if isSignedIn() && 
         resource.data.payerId == request.auth.uid;
@@ -63,7 +71,9 @@ service cloud.firestore {
     // • Access strictly limited to the owner
     match /journal/{journalId} {
       allow read, update, delete: if isSignedIn() && resource.data.uid == request.auth.uid;
-      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid &&
+        request.resource.data.amount is number && request.resource.data.amount >= 0 && 
+        request.resource.data.description is string;
     }
 
     // --- FRIEND REQUESTS ---
