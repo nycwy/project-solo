@@ -19,11 +19,12 @@ service cloud.firestore {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['friendsList']);
     }
 
-    // Helper: Ensure user is only adding themselves as a friend
-    function isAddingSelfAsFriend() {
+    // Helper: Ensure user is only adding or removing exactly one friend
+    function isModifyingFriend() {
       let oldList = resource.data.get('friendsList', []);
       let newList = request.resource.data.get('friendsList', []);
-      return newList.size() == oldList.size() + 1;
+      // Allows the array to increase by 1 (Add Friend) OR decrease by 1 (Unfriend)
+      return newList.size() == oldList.size() + 1 || newList.size() == oldList.size() - 1;
     }
 
     // Helper: Validate transaction data types and values
@@ -43,7 +44,7 @@ service cloud.firestore {
       allow get: if isSignedIn(); 
       allow list: if isSignedIn() && request.query.limit <= 10;
       allow create: if isMember(userId);
-      allow update: if isMember(userId) || (isSignedIn() && isOnlyFriendsUpdate() && isAddingSelfAsFriend());
+      allow update: if isMember(userId) || (isSignedIn() && isOnlyFriendsUpdate() && isModifyingFriend());
       allow delete: if false;
     }
 
@@ -60,7 +61,8 @@ service cloud.firestore {
       allow update: if isSignedIn() && (
         resource.data.payerId == request.auth.uid || 
         (resource.data.debtorId == request.auth.uid && 
-         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['settleStatus']))
+         // FIX: Debtor can now update status, settleStatus, and settleRequestedAt
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'settleStatus', 'settleRequestedAt']))
       ) && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['amount', 'description']) || isValidTransaction());
 
       allow delete: if isSignedIn() && 
@@ -71,7 +73,9 @@ service cloud.firestore {
     // • Access strictly limited to the owner
     match /journal/{journalId} {
       allow read, update, delete: if isSignedIn() && resource.data.uid == request.auth.uid;
-      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid &&
+      // FIX: Allows Payer to create an 'autoSplit' receipt for the Debtor
+      allow create: if isSignedIn() && 
+        (request.resource.data.uid == request.auth.uid || 'autoSplit' in request.resource.data) &&
         request.resource.data.amount is number && request.resource.data.amount >= 0 && 
         request.resource.data.description is string;
     }
@@ -102,4 +106,3 @@ service cloud.firestore {
     }
   }
 }
-
