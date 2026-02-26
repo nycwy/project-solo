@@ -234,6 +234,16 @@ const Friends = () => {
         if (friendEmail.trim() === user.email) return showAlert({ title: "Invalid Email", message: "You can't add yourself as a friend!", type: "warning" });
 
         setAddLoading(true);
+
+        // 🛑 OFFLINE INTERCEPTOR
+        if (!navigator.onLine) {
+            setAddLoading(false);
+            return showAlert({
+                title: "No Internet Connection",
+                message: "Please connect to the internet to find and add friends.",
+                type: "warning"
+            });
+        }
         try {
             const usersQuery = query(
                 collection(db, 'users'),
