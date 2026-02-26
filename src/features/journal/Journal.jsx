@@ -78,8 +78,8 @@ const Journal = () => {
     const getGroupedEntries = () => {
         const groups = {};
         entries.forEach((entry) => {
-            if (!entry.date?.seconds) return;
-            const dateObj = new Date(entry.date.seconds * 1000);
+            const time = entry.date?.toMillis ? entry.date.toMillis() : (entry.date?.seconds ? entry.date.seconds * 1000 : Date.now());
+            const dateObj = new Date(time);
             const key = `${dateObj.getFullYear()}-${dateObj.getMonth()}`;
             if (!groups[key]) {
                 groups[key] = {
@@ -104,16 +104,16 @@ const Journal = () => {
 
     const totalIncome = entries
         .filter((e) => {
-            if (!e.date?.seconds) return false;
-            const dateObj = new Date(e.date.seconds * 1000);
+            const time = e.date?.toMillis ? e.date.toMillis() : (e.date?.seconds ? e.date.seconds * 1000 : Date.now());
+            const dateObj = new Date(time);
             return `${dateObj.getFullYear()}-${dateObj.getMonth()}` === currentMonthKey && e.type === 'income';
         })
         .reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
 
     const totalExpense = entries
         .filter((e) => {
-            if (!e.date?.seconds) return false;
-            const dateObj = new Date(e.date.seconds * 1000);
+            const time = e.date?.toMillis ? e.date.toMillis() : (e.date?.seconds ? e.date.seconds * 1000 : Date.now());
+            const dateObj = new Date(time);
             return `${dateObj.getFullYear()}-${dateObj.getMonth()}` === currentMonthKey && e.type === 'expense';
         })
         .reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
@@ -236,8 +236,8 @@ const Journal = () => {
     };
 
     const formatDate = (timestamp) => {
-        if (!timestamp?.seconds) return '';
-        return new Date(timestamp.seconds * 1000).toLocaleDateString('en-US', {
+        const time = timestamp?.toMillis ? timestamp.toMillis() : (timestamp?.seconds ? timestamp.seconds * 1000 : Date.now());
+        return new Date(time).toLocaleDateString('en-US', {
             month: 'short',
             day: 'numeric',
         });

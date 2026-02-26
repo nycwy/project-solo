@@ -94,8 +94,9 @@ const Statement = () => {
                 if (item.type === 'income') totalIncome += amountVal;
                 else totalExpense += amountVal;
 
+                const time = item.date?.toMillis ? item.date.toMillis() : (item.date?.seconds ? item.date.seconds * 1000 : Date.now());
                 return [
-                    new Date(item.date.seconds * 1000).toLocaleDateString('en-GB'),
+                    new Date(time).toLocaleDateString('en-GB'),
                     item.description || '-',
                     item.category || item.type.toUpperCase(),
                     item.type === 'income' ? `+ ${amountVal.toFixed(2)}` : `- ${amountVal.toFixed(2)}`
@@ -299,8 +300,9 @@ const Statement = () => {
                     }
                 }
 
+                const time = t.date?.toMillis ? t.date.toMillis() : (t.date?.seconds ? t.date.seconds * 1000 : Date.now());
                 return [
-                    new Date(t.date.seconds * 1000).toLocaleDateString('en-GB'),
+                    new Date(time).toLocaleDateString('en-GB'),
                     t.description || '-',
                     partyName,
                     type,

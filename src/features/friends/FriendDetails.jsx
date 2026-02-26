@@ -194,8 +194,8 @@ const FriendDetails = () => {
     };
 
     const formatDate = (ts) => {
-        if (!ts?.seconds) return '';
-        return new Date(ts.seconds * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        const time = ts?.toMillis ? ts.toMillis() : (ts?.seconds ? ts.seconds * 1000 : Date.now());
+        return new Date(time).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     };
 
     const getStatusBadge = (t) => {
