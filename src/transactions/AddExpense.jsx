@@ -68,14 +68,14 @@ const AddExpense = () => {
                 const mainDoc = await getDoc(doc(db, 'transactions', id));
                 if (!mainDoc.exists()) {
                     showAlert({ title: "Not Found", message: "Expense not found", type: "warning" });
-                    navigate('/');
+                    navigate('/split');
                     return;
                 }
 
                 const data = mainDoc.data();
                 if (data.payerId !== user.uid) {
                     showAlert({ title: "Access Denied", message: "You can only edit expenses you created.", type: "danger" });
-                    navigate('/');
+                    navigate('/split');
                     return;
                 }
 
@@ -110,7 +110,7 @@ const AddExpense = () => {
         };
 
         if (user) fetchTransaction();
-    }, [id, user, navigate]);
+    }, [id, user, navigate, showAlert]);
 
     const toggleParticipant = (friendId) => {
         setParticipants((prev) =>
@@ -136,7 +136,7 @@ const AddExpense = () => {
             }
 
             // 2. Validate Description
-            const sanitizedDescription = description.trim().replace(/[<>]/g, ""); // Basic XSS prevention
+            const sanitizedDescription = description.trim().replace(/[<>]/g, "");
             if (!sanitizedDescription) {
                 setLoading(false);
                 return showAlert({
@@ -160,6 +160,7 @@ const AddExpense = () => {
             const newBatchId = existingBatchId || Date.now().toString();
             const batch = writeBatch(db);
 
+            // 4. Handle Editing Old Documents
             if (isEditing) {
                 if (existingBatchId) {
                     const q = query(collection(db, 'transactions'), where('batchId', '==', existingBatchId));
@@ -178,6 +179,7 @@ const AddExpense = () => {
                 oldJournal.forEach((d) => batch.delete(d.ref));
             }
 
+            // 5. Build New Documents
             const payerShare = participants.includes(user.uid)
                 ? parseFloat(splitAmount.toFixed(2))
                 : 0;
@@ -239,8 +241,17 @@ const AddExpense = () => {
                 }
             }
 
-            await batch.commit();
+            setLoading(false);
+            setAmount('');
+            setDescription('');
+            setParticipants([user.uid]);
+
             navigate('/split');
+
+            batch.commit().catch(err => {
+                console.error("Critical: Background commit failed:", err);
+            });
+
         } catch (error) {
             console.error('Error saving expense:', error);
             let errorMessage = "Failed to save expense. Please check your connection and try again.";
@@ -254,8 +265,8 @@ const AddExpense = () => {
                 message: errorMessage,
                 type: "danger"
             });
+            setLoading(false);
         }
-        setLoading(false);
     };
 
     return (

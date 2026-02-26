@@ -63,8 +63,12 @@ const Journal = () => {
             where('uid', '==', user.uid)
         );
         const unsub = onSnapshot(q, (snap) => {
-            const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-            data.sort((a, b) => (b.date?.seconds || 0) - (a.date?.seconds || 0));
+            const data = snap.docs.map((d) => ({ id: d.id, ...d.data({ serverTimestamps: 'estimate' }) }));
+            data.sort((a, b) => {
+                const timeA = a.date?.toMillis ? a.date.toMillis() : (a.date?.seconds ? a.date.seconds * 1000 : Date.now());
+                const timeB = b.date?.toMillis ? b.date.toMillis() : (b.date?.seconds ? b.date.seconds * 1000 : Date.now());
+                return timeB - timeA;
+            });
             setEntries(data);
             setLoading(false);
         });

@@ -77,7 +77,7 @@ const Dashboard = () => {
         const unsub = onSnapshot(q, (snap) => {
             setPayerTransactions(
                 snap.docs
-                    .map((d) => ({ id: d.id, ...d.data() }))
+                    .map((d) => ({ id: d.id, ...d.data({ serverTimestamps: 'estimate' }) }))
                     .filter((t) => !t.hiddenBy?.includes(user.uid))
             );
             setLoading(false);
@@ -94,7 +94,7 @@ const Dashboard = () => {
         const unsub = onSnapshot(q, (snap) => {
             setDebtorTransactions(
                 snap.docs
-                    .map((d) => ({ id: d.id, ...d.data() }))
+                    .map((d) => ({ id: d.id, ...d.data({ serverTimestamps: 'estimate' }) }))
                     .filter((t) => !t.hiddenBy?.includes(user.uid))
             );
         });
@@ -145,9 +145,11 @@ const Dashboard = () => {
     const { totalOwed, totalDebt, netBalance } = balances;
 
     const allTransactions = useMemo(() => {
-        return [...payerTransactions, ...debtorTransactions].sort(
-            (a, b) => (b.date?.seconds || 0) - (a.date?.seconds || 0)
-        );
+        return [...payerTransactions, ...debtorTransactions].sort((a, b) => {
+            const timeA = a.date?.toMillis ? a.date.toMillis() : (a.date?.seconds ? a.date.seconds * 1000 : Date.now());
+            const timeB = b.date?.toMillis ? b.date.toMillis() : (b.date?.seconds ? b.date.seconds * 1000 : Date.now());
+            return timeB - timeA;
+        });
     }, [payerTransactions, debtorTransactions]);
 
 

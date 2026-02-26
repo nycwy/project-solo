@@ -66,19 +66,27 @@ const FriendDetails = () => {
         );
 
         const unsub1 = onSnapshot(q1, (snap) => {
-            const data1 = snap.docs.map((d) => ({ id: d.id, ...d.data(), role: 'payer' }));
+            const data1 = snap.docs.map((d) => ({ id: d.id, ...d.data({ serverTimestamps: 'estimate' }), role: 'payer' }));
             setTransactions((prev) => {
                 const others = prev.filter((t) => t.role !== 'payer');
-                return [...others, ...data1].sort((a, b) => (b.date?.seconds || 0) - (a.date?.seconds || 0));
+                return [...others, ...data1].sort((a, b) => {
+                    const timeA = a.date?.toMillis ? a.date.toMillis() : (a.date?.seconds ? a.date.seconds * 1000 : Date.now());
+                    const timeB = b.date?.toMillis ? b.date.toMillis() : (b.date?.seconds ? b.date.seconds * 1000 : Date.now());
+                    return timeB - timeA;
+                });
             });
             setLoading(false);
         });
 
         const unsub2 = onSnapshot(q2, (snap) => {
-            const data2 = snap.docs.map((d) => ({ id: d.id, ...d.data(), role: 'debtor' }));
+            const data2 = snap.docs.map((d) => ({ id: d.id, ...d.data({ serverTimestamps: 'estimate' }), role: 'debtor' }));
             setTransactions((prev) => {
                 const others = prev.filter((t) => t.role !== 'debtor');
-                return [...others, ...data2].sort((a, b) => (b.date?.seconds || 0) - (a.date?.seconds || 0));
+                return [...others, ...data2].sort((a, b) => {
+                    const timeA = a.date?.toMillis ? a.date.toMillis() : (a.date?.seconds ? a.date.seconds * 1000 : Date.now());
+                    const timeB = b.date?.toMillis ? b.date.toMillis() : (b.date?.seconds ? b.date.seconds * 1000 : Date.now());
+                    return timeB - timeA;
+                });
             });
         });
 

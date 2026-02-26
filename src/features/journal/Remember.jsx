@@ -53,8 +53,12 @@ const Remember = () => {
             where('uid', '==', user.uid)
         );
         const unsub = onSnapshot(q, (snap) => {
-            const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-            data.sort((a, b) => b.createdAt?.seconds - a.createdAt?.seconds);
+            const data = snap.docs.map((d) => ({ id: d.id, ...d.data({ serverTimestamps: 'estimate' }) }));
+            data.sort((a, b) => {
+                const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : (a.createdAt?.seconds ? a.createdAt.seconds * 1000 : Date.now());
+                const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : (b.createdAt?.seconds ? b.createdAt.seconds * 1000 : Date.now());
+                return timeB - timeA;
+            });
             setItems(data);
         });
         return () => unsub();

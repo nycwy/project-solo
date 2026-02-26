@@ -74,8 +74,12 @@ const Statement = () => {
             );
 
             const snapshot = await getDocs(q);
-            const data = snapshot.docs.map((doc) => doc.data());
-            data.sort((a, b) => a.date.seconds - b.date.seconds);
+            const data = snapshot.docs.map((doc) => doc.data({ serverTimestamps: 'estimate' }));
+            data.sort((a, b) => {
+                const timeA = a.date?.toMillis ? a.date.toMillis() : (a.date?.seconds ? a.date.seconds * 1000 : Date.now());
+                const timeB = b.date?.toMillis ? b.date.toMillis() : (b.date?.seconds ? b.date.seconds * 1000 : Date.now());
+                return timeA - timeB; // Statement is usually chronological ascending
+            });
 
             if (data.length === 0) {
                 setLoading(false);
@@ -252,10 +256,14 @@ const Statement = () => {
 
             const [snap1, snap2] = await Promise.all([getDocs(q1), getDocs(q2)]);
             const allTxns = [
-                ...snap1.docs.map((d) => ({ ...d.data(), role: 'payer' })),
-                ...snap2.docs.map((d) => ({ ...d.data(), role: 'debtor' })),
+                ...snap1.docs.map((d) => ({ ...d.data({ serverTimestamps: 'estimate' }), role: 'payer' })),
+                ...snap2.docs.map((d) => ({ ...d.data({ serverTimestamps: 'estimate' }), role: 'debtor' })),
             ];
-            allTxns.sort((a, b) => a.date.seconds - b.date.seconds);
+            allTxns.sort((a, b) => {
+                const timeA = a.date?.toMillis ? a.date.toMillis() : (a.date?.seconds ? a.date.seconds * 1000 : Date.now());
+                const timeB = b.date?.toMillis ? b.date.toMillis() : (b.date?.seconds ? b.date.seconds * 1000 : Date.now());
+                return timeA - timeB;
+            });
 
             if (allTxns.length === 0) {
                 setLoading(false);
