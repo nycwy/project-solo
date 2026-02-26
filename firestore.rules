@@ -19,15 +19,23 @@ service cloud.firestore {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['friendsList']);
     }
 
+    // Helper: Ensure user is only adding themselves as a friend
+    function isAddingSelfAsFriend() {
+      return request.resource.data.friendsList.hasAll(resource.data.friendsList) &&
+             request.resource.data.friendsList.size() == resource.data.friendsList.size() + 1 &&
+             request.resource.data.friendsList.hasAny([request.auth.uid]);
+    }
+
     // --- USERS ---
-    // • Read: Needed for friend search and profile display
+    // • Get: Needed for profile display
+    // • List: Limited to 10 results to prevent scraping
     // • Create: Only the user themselves
-    // • Update: User themselves OR someone updating your friendsList (friend request accept flow)
+    // • Update: User themselves OR someone updating your friendsList
     match /users/{userId} {
       allow get: if isSignedIn(); 
       allow list: if isSignedIn() && request.query.limit <= 10;
       allow create: if isMember(userId);
-      allow update: if isMember(userId) || (isSignedIn() && isOnlyFriendsUpdate());
+      allow update: if isMember(userId) || (isSignedIn() && isOnlyFriendsUpdate() && isAddingSelfAsFriend());
       allow delete: if false;
     }
 
