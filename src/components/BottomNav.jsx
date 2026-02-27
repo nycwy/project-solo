@@ -1,12 +1,11 @@
 import { useContext } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { FiLayout, FiPieChart, FiUsers, FiFileText, FiShoppingBag } from 'react-icons/fi';
+import { FiLayout, FiPieChart, FiUsers, FiFileText } from 'react-icons/fi';
 import { NotificationContext } from '../context/NotificationContext';
 
 const tabs = [
     { id: 'journal', label: 'Journal', icon: FiLayout, path: '/journal' },
     { id: 'dashboard', label: 'Splitter', icon: FiPieChart, path: '/split' },
-    { id: 'shopping', label: 'Shopping', icon: FiShoppingBag, path: '/purchase-list' },
     { id: 'friends', label: 'Friends', icon: FiUsers, path: '/friends' },
     { id: 'statement', label: 'Statement', icon: FiFileText, path: '/statement' },
 ];

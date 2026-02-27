@@ -403,14 +403,6 @@ const Dashboard = () => {
                     </div>
                 )}
             </div>
-
-            <button
-                onClick={() => navigate('/add-expense')}
-                className="lg:hidden fixed bottom-24 right-5 z-40 w-14 h-14 rounded-full bg-[var(--color-primary)] text-white shadow-lg shadow-[var(--color-primary)]/30 flex items-center justify-center hover:opacity-90 active:scale-90 transition-all"
-                title="Split Expense"
-            >
-                <FiPlus size={24} />
-            </button>
         </div>
     );
 };

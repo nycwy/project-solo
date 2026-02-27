@@ -26,6 +26,7 @@ import {
     FiLayout,
     FiShoppingBag,
     FiChevronDown,
+    FiDollarSign,
 } from 'react-icons/fi';
 
 import Card from '../../components/Card';
@@ -55,6 +56,7 @@ const Journal = () => {
     const [drafts, setDrafts] = useState([]);
 
     const [expandedMonth, setExpandedMonth] = useState(null);
+    const [isFabMenuOpen, setIsFabMenuOpen] = useState(false);
 
     useEffect(() => {
         if (!user?.uid) return;
@@ -471,6 +473,42 @@ const Journal = () => {
                     )}
                 </div>
             </Modal>
+
+            <div className="lg:hidden fixed bottom-24 right-5 z-50 flex items-center justify-center">
+                {isFabMenuOpen && (
+                    <div
+                        className="fixed inset-0 z-40"
+                        onClick={() => setIsFabMenuOpen(false)}
+                    />
+                )}
+
+                <button
+                    onClick={() => { navigate('/add-expense'); setIsFabMenuOpen(false); }}
+                    className={`absolute z-50 w-11 h-11 rounded-full bg-[var(--color-warning)] text-white shadow-lg shadow-[var(--color-warning)]/30 flex items-center justify-center transition-all duration-300 ease-in-out ${isFabMenuOpen ? 'opacity-100 scale-100 -translate-y-[4.5rem]' : 'opacity-0 scale-0 translate-y-0'
+                        }`}
+                >
+                    <FiDollarSign size={20} />
+                </button>
+                <span className={`absolute z-50 text-[10px] font-bold text-[var(--color-text-muted)] transition-all duration-300 ease-in-out ${isFabMenuOpen ? 'opacity-100 -translate-y-9' : 'opacity-0 translate-y-0'
+                    }`}>Split</span>
+
+                <button
+                    onClick={() => { navigate('/purchase-list'); setIsFabMenuOpen(false); }}
+                    className={`absolute z-50 w-11 h-11 rounded-full bg-[var(--color-success)] text-white shadow-lg shadow-[var(--color-success)]/30 flex items-center justify-center transition-all duration-300 ease-in-out ${isFabMenuOpen ? 'opacity-100 scale-100 -translate-x-[4.5rem]' : 'opacity-0 scale-0 translate-x-0'
+                        }`}
+                >
+                    <FiShoppingBag size={20} />
+                </button>
+                <span className={`absolute z-50 text-[10px] font-bold text-[var(--color-text-muted)] transition-all duration-300 ease-in-out ${isFabMenuOpen ? 'opacity-100 -translate-x-[4.5rem] translate-y-8' : 'opacity-0 translate-x-0 translate-y-0'
+                    }`}>Shop</span>
+
+                <button
+                    onClick={() => setIsFabMenuOpen(!isFabMenuOpen)}
+                    className="relative z-50 w-14 h-14 rounded-full bg-[var(--color-primary)] text-white shadow-lg shadow-[var(--color-primary)]/30 flex items-center justify-center hover:opacity-90 active:scale-90 transition-all duration-300"
+                >
+                    <FiPlus size={24} className={`transition-transform duration-300 ${isFabMenuOpen ? 'rotate-45' : ''}`} />
+                </button>
+            </div>
         </div>
     );
 };
