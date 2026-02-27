@@ -67,14 +67,14 @@ const AddExpense = () => {
             try {
                 const mainDoc = await getDoc(doc(db, 'transactions', id));
                 if (!mainDoc.exists()) {
-                    showAlert({ title: "Not Found", message: "Expense not found", type: "warning" });
+                    showAlert({ title: "Gone", message: "That expense doesn't exist anymore.", type: "warning" });
                     navigate('/split');
                     return;
                 }
 
                 const data = mainDoc.data();
                 if (data.payerId !== user.uid) {
-                    showAlert({ title: "Access Denied", message: "You can only edit expenses you created.", type: "danger" });
+                    showAlert({ title: "Can't edit this", message: "You can only edit expenses you created.", type: "danger" });
                     navigate('/split');
                     return;
                 }
@@ -124,34 +124,31 @@ const AddExpense = () => {
         setLoading(true);
 
         try {
-            // 1. Validate Amount
             const numericAmount = parseFloat(amount);
             if (isNaN(numericAmount) || numericAmount <= 0) {
                 setLoading(false);
                 return showAlert({
-                    title: "Invalid Amount",
-                    message: "The bill amount must be a positive number greater than zero.",
+                    title: "Enter an amount",
+                    message: "The bill should be more than zero.",
                     type: "warning"
                 });
             }
 
-            // 2. Validate Description
             const sanitizedDescription = description.trim().replace(/[<>]/g, "");
             if (!sanitizedDescription) {
                 setLoading(false);
                 return showAlert({
-                    title: "Description Required",
-                    message: "Please enter what this expense is for.",
+                    title: "What's it for?",
+                    message: "Add a short description so you remember later.",
                     type: "warning"
                 });
             }
 
-            // 3. Validate Participants
             if (participants.length === 0) {
                 setLoading(false);
                 return showAlert({
-                    title: "No Selection",
-                    message: "Please select at least one person to split with.",
+                    title: "Pick someone",
+                    message: "Select at least one person to split with.",
                     type: "warning"
                 });
             }
@@ -160,7 +157,6 @@ const AddExpense = () => {
             const newBatchId = existingBatchId || Date.now().toString();
             const batch = writeBatch(db);
 
-            // 4. Handle Editing Old Documents
             if (isEditing) {
                 if (existingBatchId) {
                     const q = query(collection(db, 'transactions'), where('batchId', '==', existingBatchId));
@@ -179,7 +175,6 @@ const AddExpense = () => {
                 oldJournal.forEach((d) => batch.delete(d.ref));
             }
 
-            // 5. Build New Documents
             const payerShare = participants.includes(user.uid)
                 ? parseFloat(splitAmount.toFixed(2))
                 : 0;
@@ -261,7 +256,7 @@ const AddExpense = () => {
             }
 
             showAlert({
-                title: "Error",
+                title: "Couldn't save",
                 message: errorMessage,
                 type: "danger"
             });
@@ -274,7 +269,7 @@ const AddExpense = () => {
             <Card padding="xl" className="w-full max-w-lg">
                 <PageHeader
                     title={isEditing ? 'Edit Expense' : 'New Expense'}
-                    subtitle="Enter details below"
+                    subtitle="Who's splitting what?"
                     icon={FiDollarSign}
                     onBack={true}
                 />

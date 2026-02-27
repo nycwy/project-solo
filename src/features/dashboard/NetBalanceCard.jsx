@@ -1,4 +1,4 @@
-import React from "react";
+
 
 const NetBalanceCard = ({ totalOwed, totalDebt }) => {
     const netBalance = totalOwed - totalDebt;

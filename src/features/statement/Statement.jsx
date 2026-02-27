@@ -58,7 +58,7 @@ const Statement = () => {
     };
 
     const generateJournalPDF = async () => {
-        if (!startDate || !endDate) return showAlert({ title: "Dates Required", message: "Please select both start and end dates.", type: "warning" });
+        if (!startDate || !endDate) return showAlert({ title: "Pick your dates", message: "Select a start and end date first.", type: "warning" });
         setLoading(true);
 
         try {
@@ -83,7 +83,7 @@ const Statement = () => {
 
             if (data.length === 0) {
                 setLoading(false);
-                return showAlert({ title: "No Entries", message: "No journal entries found for the selected period.", type: "info" });
+                return showAlert({ title: "Nothing found", message: "No journal entries in that date range.", type: "info" });
             }
 
             let totalIncome = 0;
@@ -228,13 +228,13 @@ const Statement = () => {
             pdfDoc.save(`Journal_Statement_${startStr.split(' ').join('_')}_to_${endStr.split(' ').join('_')}.pdf`);
         } catch (error) {
             console.error('PDF Error:', error);
-            alert('Error generating PDF.');
+            showAlert({ title: "Something went wrong", message: "Couldn't generate the PDF. Try again.", type: "danger" });
         }
         setLoading(false);
     };
 
     const generateSplitterPDF = async () => {
-        if (!startDate || !endDate) return showAlert({ title: "Dates Required", message: "Please select both start and end dates.", type: "warning" });
+        if (!startDate || !endDate) return showAlert({ title: "Pick your dates", message: "Select a start and end date first.", type: "warning" });
         setLoading(true);
 
         try {
@@ -268,7 +268,7 @@ const Statement = () => {
 
             if (allTxns.length === 0) {
                 setLoading(false);
-                return showAlert({ title: "No Transactions", message: "No transactions found for the selected period.", type: "info" });
+                return showAlert({ title: "Nothing found", message: "No transactions in that date range.", type: "info" });
             }
 
             let totalLent = 0;
@@ -470,7 +470,7 @@ const Statement = () => {
             pdfDoc.save(`Split_Statement_${startStr.split(' ').join('_')}_to_${endStr.split(' ').join('_')}.pdf`);
         } catch (error) {
             console.error('PDF Error:', error);
-            alert('Error generating PDF.');
+            showAlert({ title: "Something went wrong", message: "Couldn't generate the PDF. Try again.", type: "danger" });
         }
         setLoading(false);
     };
@@ -484,7 +484,7 @@ const Statement = () => {
         <div className="p-4 md:p-6 pb-24 lg:pb-6">
             <PageHeader
                 title="Statements"
-                subtitle="Download authentic reports"
+                subtitle="Export your records"
                 icon={FiFileText}
                 iconClassName="bg-[var(--color-primary-light)] text-[var(--color-primary)]"
             />

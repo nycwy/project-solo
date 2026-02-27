@@ -124,11 +124,9 @@ const Friends = () => {
 
     const handleAccept = async (req) => {
         try {
-            // 1. Delete request first for instant UI cleanup
             await deleteDoc(doc(db, 'friend_requests', req.id));
             const myName = user.username || user.displayName || user.email;
 
-            // 2. Update MY friends list
             await updateDoc(doc(db, 'users', user.uid), {
                 friendsList: arrayUnion({
                     uid: req.fromId,
@@ -136,7 +134,6 @@ const Friends = () => {
                     email: (req.fromEmail || "").toLowerCase(),
                 }),
             });
-            // 3. Update THEIR friends list
             await updateDoc(doc(db, 'users', req.fromId), {
                 friendsList: arrayUnion({
                     uid: user.uid,
@@ -157,7 +154,6 @@ const Friends = () => {
         setIsUnfriending(true);
         try {
             const batch = writeBatch(db);
-            // 1. Prepare My Side Update
             const myRef = doc(db, 'users', user.uid);
             const mySnap = await getDoc(myRef);
             if (mySnap.exists()) {
@@ -165,7 +161,6 @@ const Friends = () => {
                 const updatedMyList = myList.filter(f => f.uid !== friend.uid);
                 batch.update(myRef, { friendsList: updatedMyList });
             }
-            // 2. Prepare Friend's Side Update
             const friendRef = doc(db, 'users', friend.uid);
             const friendSnap = await getDoc(friendRef);
             if (friendSnap.exists()) {
@@ -173,14 +168,13 @@ const Friends = () => {
                 const updatedFriendList = friendList.filter(f => f.uid !== user.uid);
                 batch.update(friendRef, { friendsList: updatedFriendList });
             }
-            // 3. Execute both simultaneously
             await batch.commit();
 
         } catch (error) {
             console.error('Error unfriending:', error);
             showAlert({
-                title: "Error",
-                message: "Permission denied or network error. Please try again.",
+                title: "Something went wrong",
+                message: "Check your connection and try again.",
                 type: "danger"
             });
         } finally {
@@ -207,8 +201,8 @@ const Friends = () => {
 
             if (hasUnsettled) {
                 return showAlert({
-                    title: "Cannot Unfriend",
-                    message: "Cannot unfriend because you have some transaction to be settled.",
+                    title: "Settle up first",
+                    message: "You still have unsettled transactions with this person.",
                     confirmText: "Okay",
                     type: "warning"
                 });
@@ -230,17 +224,16 @@ const Friends = () => {
     };
 
     const handleSendRequest = async () => {
-        if (!friendEmail.trim()) return showAlert({ title: "Email Required", message: "Please enter an email address", type: "warning" });
-        if (friendEmail.trim() === user.email) return showAlert({ title: "Invalid Email", message: "You can't add yourself as a friend!", type: "warning" });
+        if (!friendEmail.trim()) return showAlert({ title: "Enter an email", message: "Please enter an email address", type: "warning" });
+        if (friendEmail.trim() === user.email) return showAlert({ title: "That's you!", message: "You can't add yourself as a friend!", type: "warning" });
 
         setAddLoading(true);
 
-        // 🛑 OFFLINE INTERCEPTOR
         if (!navigator.onLine) {
             setAddLoading(false);
             return showAlert({
-                title: "No Internet Connection",
-                message: "Please connect to the internet to find and add friends.",
+                title: "You're offline",
+                message: "You need internet to add friends.",
                 type: "warning"
             });
         }
@@ -252,7 +245,7 @@ const Friends = () => {
             );
             const usersSnap = await getDocs(usersQuery);
             if (usersSnap.empty) {
-                showAlert({ title: "User Not Found", message: "No user found with this email", type: "warning" });
+                showAlert({ title: "No luck", message: "We couldn't find anyone with that email.", type: "warning" });
                 setAddLoading(false);
                 return;
             }
@@ -261,7 +254,7 @@ const Friends = () => {
             const friendId = friendDoc.id;
 
             if (friends.some((f) => f.uid === friendId)) {
-                showAlert({ title: "Already Friends", message: "You are already friends with this user", type: "info" });
+                showAlert({ title: "Already friends", message: "You're already connected.", type: "info" });
                 setAddLoading(false);
                 return;
             }
@@ -274,7 +267,7 @@ const Friends = () => {
             );
             const reqSnap = await getDocs(reqQuery);
             if (!reqSnap.empty) {
-                showAlert({ title: "Request Pending", message: "A friend request is already pending for this user", type: "info" });
+                showAlert({ title: "Already sent", message: "You've already sent them a request.", type: "info" });
                 setAddLoading(false);
                 return;
             }
@@ -294,13 +287,13 @@ const Friends = () => {
             setFriendEmail('');
             setShowAddFriend(false);
             showAlert({
-                title: "Success",
+                title: "Request sent!",
                 message: `Request sent to ${friendDoc.data().username || friendEmail}!`,
                 type: "success"
             });
         } catch (error) {
             console.error('Error sending request:', error);
-            showAlert({ title: "Error", message: "Failed to send request. Please try again.", type: "danger" });
+            showAlert({ title: "Couldn't send", message: "Something went wrong. Please try again.", type: "danger" });
         }
         setAddLoading(false);
     };
@@ -430,7 +423,7 @@ const Friends = () => {
                 <EmptyState
                     icon={FiUsers}
                     title="No friends yet"
-                    subtitle="Add friends to start splitting expenses"
+                    subtitle="Add someone to start splitting bills"
                     actionText="Add Friend"
                     onAction={() => setShowAddFriend(true)}
                 />

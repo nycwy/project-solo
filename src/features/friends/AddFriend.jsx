@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import { useState, useContext } from "react";
 import { db } from "../../services/firebase";
 import {
     collection,
@@ -35,7 +35,7 @@ const AddFriend = () => {
             if (!targetEmail) {
                 setLoading(false);
                 return showAlert({
-                    title: "Email Required",
+                    title: "Enter an email",
                     message: "Please enter an email address.",
                     type: "warning"
                 });
@@ -46,8 +46,8 @@ const AddFriend = () => {
             if (!emailRegex.test(targetEmail)) {
                 setLoading(false);
                 return showAlert({
-                    title: "Invalid Email",
-                    message: "Please enter a valid email address.",
+                    title: "Check your email",
+                    message: "That doesn't look like a valid email.",
                     type: "warning"
                 });
             }
@@ -55,8 +55,8 @@ const AddFriend = () => {
             if (user && targetEmail === (user.email || "").toLowerCase()) {
                 setLoading(false);
                 return showAlert({
-                    title: "Invalid Action",
-                    message: "You cannot add yourself as a friend.",
+                    title: "That's you!",
+                    message: "Can't add yourself as a friend.",
                     type: "warning"
                 });
             }
@@ -68,8 +68,8 @@ const AddFriend = () => {
             if (querySnapshot.empty) {
                 setLoading(false);
                 return showAlert({
-                    title: "User Not Found",
-                    message: "No user found with this email. Ask them to register first!",
+                    title: "No luck",
+                    message: "No one with that email. They'll need to sign up first!",
                     type: "info"
                 });
             }
@@ -87,7 +87,7 @@ const AddFriend = () => {
             const reqSnap = await getDocs(reqQuery);
             if (!reqSnap.empty) {
                 setLoading(false);
-                return showAlert({ title: "Request Pending", message: "A friend request is already pending for this user.", type: "info" });
+                return showAlert({ title: "Already sent", message: "A friend request is already pending for this user.", type: "info" });
             }
 
             await addDoc(collection(db, "friend_requests"), {
@@ -100,7 +100,7 @@ const AddFriend = () => {
             });
 
             showAlert({
-                title: "Request Sent",
+                title: "Sent!",
                 message: `Friend request sent to ${friendData.username || targetEmail}!`,
                 type: "success"
             });
@@ -110,8 +110,8 @@ const AddFriend = () => {
         } catch (err) {
             console.error("Add Friend Error:", err);
             showAlert({
-                title: "Error",
-                message: "Failed to send friend request. Please try again later.",
+                title: "Something went wrong",
+                message: "Couldn't send the request. Try again later.",
                 type: "danger"
             });
         } finally {
@@ -124,7 +124,7 @@ const AddFriend = () => {
         <div className="p-4 md:p-6 pb-24 lg:pb-6">
             <PageHeader
                 title="Add New Friend"
-                subtitle="Connect with friends"
+                subtitle="Find people you know"
                 icon={FiUserPlus}
                 onBack={true}
             />

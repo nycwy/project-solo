@@ -66,7 +66,7 @@ const Remember = () => {
 
     const handleAddItem = (e) => {
         e.preventDefault();
-        if (!itemName.trim()) return showAlert({ title: "Incomplete", message: "What do you need to buy?", type: "warning" });
+        if (!itemName.trim()) return showAlert({ title: "What's the item?", message: "What do you need to buy?", type: "warning" });
 
         setLoading(true);
         try {
@@ -107,7 +107,7 @@ const Remember = () => {
 
     const handleEditSave = (e) => {
         e.preventDefault();
-        if (!editItemName.trim()) return showAlert({ title: "Item Required", message: "Item name cannot be empty", type: "warning" });
+        if (!editItemName.trim()) return showAlert({ title: "Name it", message: "Give the item a name.", type: "warning" });
 
         setLoading(true);
         try {
@@ -124,7 +124,7 @@ const Remember = () => {
         } catch (error) {
             console.error(error);
             setLoading(false);
-            showAlert({ title: "Update Failed", message: "Failed to update item", type: "danger" });
+            showAlert({ title: "Couldn't update", message: "Failed to update item", type: "danger" });
         }
     };
 
@@ -169,7 +169,7 @@ const Remember = () => {
         } catch (error) {
             console.error('Error moving item:', error);
             setLoading(false);
-            showAlert({ title: "Failed", message: "Failed to update expense status", type: "danger" });
+            showAlert({ title: "Something went wrong", message: "Couldn't mark this as bought. Try again.", type: "danger" });
         }
     };
 
@@ -178,7 +178,7 @@ const Remember = () => {
         <div className="p-4 md:p-6 pb-24 lg:pb-6">
             <PageHeader
                 title="Shopping List"
-                subtitle="Track items to purchase"
+                subtitle="Things you need to buy"
                 icon={FiShoppingBag}
                 iconClassName="bg-[var(--color-warning-light)] text-[var(--color-warning)]"
             />

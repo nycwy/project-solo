@@ -50,7 +50,7 @@ const Profile = () => {
     }, [user]);
 
     const handleUpdateProfile = async () => {
-        if (!newName.trim()) return showAlert({ title: "Incomplete", message: "Name cannot be empty", type: "warning" });
+        if (!newName.trim()) return showAlert({ title: "Name can't be blank", message: "Name cannot be empty", type: "warning" });
         setSaving(true);
 
         try {
@@ -61,7 +61,6 @@ const Profile = () => {
             const userRef = doc(db, 'users', user.uid);
             await updateDoc(userRef, { username: newName });
 
-            // Update name in friends' lists
             const userDoc = await getDoc(userRef);
             if (userDoc.exists()) {
                 const friendsList = userDoc.data().friendsList || [];
@@ -81,7 +80,7 @@ const Profile = () => {
             setEditing(false);
         } catch (error) {
             console.error('Error updating profile:', error);
-            showAlert({ title: "Update Failed", message: "Failed to update profile", type: "danger" });
+            showAlert({ title: "Couldn't save", message: "Something went wrong updating your profile.", type: "danger" });
         }
         setSaving(false);
     };

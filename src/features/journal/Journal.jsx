@@ -141,7 +141,7 @@ const Journal = () => {
     };
 
     const addToDraft = () => {
-        if (!amount || parseFloat(amount) <= 0) return showAlert({ title: "Invalid Amount", message: "Please enter a valid amount greater than 0", type: "warning" });
+        if (!amount || parseFloat(amount) <= 0) return showAlert({ title: "Enter an amount", message: "Amount should be greater than zero.", type: "warning" });
         setDrafts((prev) => [
             ...prev,
             {
@@ -172,7 +172,6 @@ const Journal = () => {
         const numAmount = parseFloat(amount);
         const activeDrafts = [...drafts];
 
-        // Final draft check if not editing
         if (!editingId && numAmount > 0) {
             activeDrafts.push({
                 amount: numAmount,
@@ -183,9 +182,9 @@ const Journal = () => {
         }
 
         if (editingId) {
-            if (!numAmount || numAmount <= 0) return showAlert({ title: "Invalid Amount", message: "Please enter a valid amount greater than 0", type: "warning" });
+            if (!numAmount || numAmount <= 0) return showAlert({ title: "Enter an amount", message: "Amount should be greater than zero.", type: "warning" });
         } else if (activeDrafts.length === 0) {
-            return showAlert({ title: "Empty List", message: "Please enter an amount or add entries to the list", type: "warning" });
+            return showAlert({ title: "Nothing to save", message: "Add an amount or put something in the list first.", type: "warning" });
         }
 
         handleCloseModal(); // Close immediately for feedback
@@ -220,7 +219,7 @@ const Journal = () => {
             }
         } catch (error) {
             console.error("Error saving journal entry:", error);
-            showAlert({ title: "Save Error", message: "Failed to save entry. Please try again.", type: "error" });
+            showAlert({ title: "Couldn't save", message: "Something went wrong. Please try again.", type: "error" });
             setIsModalOpen(true); // Re-open on error
         }
     };
@@ -228,8 +227,8 @@ const Journal = () => {
 
     const handleDeleteEntry = (id) => {
         showConfirm({
-            title: "Delete Entry",
-            message: "Are you sure you want to delete this journal entry? This action cannot be undone.",
+            title: "Delete this?",
+            message: "This entry will be permanently removed.",
             confirmText: "Delete",
             onConfirm: () => deleteDoc(doc(db, 'journal', id))
         });
@@ -299,7 +298,7 @@ const Journal = () => {
                 <EmptyState
                     icon={FiLayout}
                     title="No journal entries yet"
-                    subtitle="Tap 'Add Income' or 'Add Expense' above to get started."
+                    subtitle="Tap the income or expense card above to start tracking."
                 />
             ) : (
                 <div className="space-y-4">

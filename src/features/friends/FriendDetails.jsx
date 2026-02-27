@@ -117,7 +117,7 @@ const FriendDetails = () => {
             const amount = Number(txData.amount) || 0;
 
             showConfirm({
-                title: "Accept Transaction",
+                title: "Accept this?",
                 message: `Accept this transaction for Rs. ${amount}?`,
                 confirmText: "Accept",
                 type: "success",
@@ -142,8 +142,8 @@ const FriendDetails = () => {
             const amount = Number(txData.amount) || 0;
 
             showConfirm({
-                title: "Confirm Settlement",
-                message: `Confirm that Rs. ${amount} has been settled? This will record an expense in your journal.`,
+                title: "All settled?",
+                message: `Mark Rs. ${amount} as paid? We'll log it in your journal.`,
                 confirmText: "Confirm",
                 type: "success",
                 onConfirm: async () => {
@@ -171,8 +171,8 @@ const FriendDetails = () => {
 
     const handleDelete = (id) => {
         showConfirm({
-            title: "Delete Transaction",
-            message: "Are you sure you want to delete this transaction permanently?",
+            title: "Delete this?",
+            message: "This will be gone forever.",
             confirmText: "Delete",
             onConfirm: async () => {
                 const txSnap = await getDoc(doc(db, 'transactions', id));
@@ -245,7 +245,7 @@ const FriendDetails = () => {
             {transactions.length === 0 ? (
                 <EmptyState
                     icon={FiArrowUpRight}
-                    title="No transactions"
+                    title="Nothing here yet"
                     subtitle={`No shared expenses with ${friendName} yet`}
                 />
             ) : (
@@ -263,7 +263,6 @@ const FriendDetails = () => {
                                 <Card className="p-2.5 w-full max-w-full overflow-hidden animate-fade-in-up transition-transform active:scale-[0.98]">
                                     {!isPayer && t.status === 'pending' ? (
                                         <div className="flex items-center justify-between gap-2 w-full">
-                                            {/* State 1: Pending (Needs Accept/Reject) */}
                                             <div className="flex items-center gap-2 flex-1 min-w-0 pr-1">
                                                 <Avatar name={friendInfo?.username || 'Friend'} size="xs" className="shrink-0 w-8 h-8" />
                                                 <div className="flex-1 min-w-0 flex flex-col items-start gap-0.5">
@@ -290,7 +289,6 @@ const FriendDetails = () => {
                                         </div>
                                     ) : (
                                         <div className="flex items-center justify-between gap-2 w-full">
-                                            {/* State 2: Default (Accepted/Settled) */}
                                             <div className="flex items-center gap-2 flex-1 min-w-0 pr-1">
                                                 <Avatar name={friendInfo?.username || 'Friend'} size="xs" className="shrink-0 w-8 h-8" />
                                                 <div className="flex-1 min-w-0 flex flex-col items-start">

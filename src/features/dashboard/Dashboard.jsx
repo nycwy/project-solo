@@ -20,8 +20,6 @@ import {
     FiArrowDownLeft,
     FiCheck,
     FiX,
-    FiEdit2,
-    FiTrash2,
     FiClock,
     FiCheckCircle,
     FiDollarSign,
@@ -163,7 +161,7 @@ const Dashboard = () => {
             const amount = Number(txData.amount) || 0;
 
             showConfirm({
-                title: "Accept Transaction",
+                title: "Accept this?",
                 message: `Accept this transaction for Rs. ${amount}?`,
                 confirmText: "Accept",
                 type: "success",
@@ -180,8 +178,8 @@ const Dashboard = () => {
 
     const handleSettle = (id) => {
         showConfirm({
-            title: "Settle Transaction",
-            message: "Request to settle this transaction?",
+            title: "Settle up?",
+            message: "Send a settle request for this one?",
             confirmText: "Request Settle",
             type: "info",
             onConfirm: () => updateDoc(doc(db, 'transactions', id), {
@@ -201,8 +199,8 @@ const Dashboard = () => {
             const amount = Number(txData.amount) || 0;
 
             showConfirm({
-                title: "Confirm Settlement",
-                message: `Confirm that Rs. ${amount} has been settled? This will record an expense in your journal.`,
+                title: "All settled?",
+                message: `Mark Rs. ${amount} as paid? We'll log it in your journal.`,
                 confirmText: "Confirm",
                 type: "success",
                 onConfirm: async () => {
@@ -230,7 +228,7 @@ const Dashboard = () => {
 
     const handleDelete = (id) => {
         showConfirm({
-            title: "Remove View",
+            title: "Hide this?",
             message: "Hide this transaction from your dashboard? You can still see it in friend details.",
             confirmText: "Hide",
             onConfirm: () => updateDoc(doc(db, 'transactions', id), {
@@ -311,7 +309,7 @@ const Dashboard = () => {
                     <EmptyState
                         icon={FiDollarSign}
                         title="No expenses yet"
-                        subtitle="Tap + to split the bills"
+                        subtitle="Tap + to split a bill"
                     />
                 ) : (
                     <div className="w-full max-w-[100vw] overflow-x-hidden space-y-2">
@@ -330,7 +328,6 @@ const Dashboard = () => {
                                     <Card className="p-2.5 w-full max-w-full overflow-hidden animate-fade-in-up transition-transform active:scale-[0.98]">
                                         {!isPayer && t.status === 'pending' ? (
                                             <div className="flex items-center justify-between gap-2 w-full">
-                                                {/* State 1: Pending (Needs Accept/Reject) */}
                                                 <div className="flex items-center gap-2 flex-1 min-w-0 pr-1">
                                                     <Avatar name={otherName} size="xs" className="shrink-0 w-8 h-8" />
                                                     <div className="flex-1 min-w-0 flex flex-col items-start gap-0.5">
@@ -357,7 +354,6 @@ const Dashboard = () => {
                                             </div>
                                         ) : (
                                             <div className="flex items-center justify-between gap-2 w-full">
-                                                {/* State 2: Default (Accepted/Settled) */}
                                                 <div className="flex items-center gap-2 flex-1 min-w-0 pr-1">
                                                     <Avatar name={otherName} size="xs" className="shrink-0 w-8 h-8" />
                                                     <div className="flex-1 min-w-0 flex flex-col items-start">

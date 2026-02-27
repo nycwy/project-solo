@@ -58,12 +58,12 @@ const Login = () => {
     };
 
     const handleReset = async () => {
-        if (!email) return showAlert({ title: "Email Required", message: "Please enter your email address first so we can send a reset link.", type: "warning" });
+        if (!email) return showAlert({ title: "Hold on", message: "Enter your email first and we'll send a reset link.", type: "warning" });
         try {
             await sendPasswordResetEmail(auth, email.toLowerCase());
-            showAlert({ title: "Email Sent", message: "Password reset email sent! Please check your inbox.", type: "success" });
+            showAlert({ title: "Check your inbox!", message: "We just sent you a password reset link.", type: "success" });
         } catch (err) {
-            showAlert({ title: "Error", message: "Failed to send reset email. Please ensure the email is correct.", type: "danger" });
+            showAlert({ title: "Couldn't send link", message: "Double-check the email and try again.", type: "danger" });
         }
     };
 

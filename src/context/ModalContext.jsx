@@ -1,4 +1,4 @@
-import React, { createContext, useState, useCallback } from 'react';
+import { createContext, useState, useCallback } from 'react';
 import Modal from '../components/Modal';
 import Button from '../components/Button';
 import Avatar from '../components/Avatar';
@@ -72,13 +72,11 @@ export const ModalProvider = ({ children }) => {
 
         const handleConfirm = async () => {
             if (onConfirm) {
-                // Optimistic Close: Close the modal immediately for better offline responsiveness
                 setModalConfig(null);
                 try {
                     await onConfirm();
                 } catch (error) {
                     console.error("Confirm action failed:", error);
-                    // Error is logged, but modal stays closed to keep UI responsive
                 }
             } else {
                 setModalConfig(null);
