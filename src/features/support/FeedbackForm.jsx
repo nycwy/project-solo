@@ -145,6 +145,7 @@ const FeedbackForm = ({ inModal = false, onClose }) => {
                 <textarea
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
+                    maxLength={500}
                     rows={inModal ? 4 : 6}
                     placeholder="Describe your feedback, suggestion, or issue in detail..."
                     className="w-full px-3.5 py-3 bg-[var(--color-surface)] ring-1 ring-inset ring-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text)] outline-none focus:ring-2 focus:ring-inset focus:ring-[var(--color-primary)] transition-all duration-200 placeholder:text-[var(--color-text-muted)] resize-none"
