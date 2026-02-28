@@ -326,7 +326,7 @@ const Statement = () => {
             pdfDoc.setFont('helvetica', 'bold');
             pdfDoc.setFontSize(24);
             pdfDoc.setTextColor(primaryColor);
-            pdfDoc.text('Split statement', 15, 30);
+            pdfDoc.text('Fair Share statement', 15, 30);
 
             pdfDoc.setFont('helvetica', 'normal');
             pdfDoc.setFontSize(10);
@@ -346,7 +346,7 @@ const Statement = () => {
             pdfDoc.setFont('helvetica', 'bold');
             pdfDoc.setFontSize(14);
             pdfDoc.setTextColor(primaryColor);
-            pdfDoc.text('Split Entries', 15, 57);
+            pdfDoc.text('Fair Share Entries', 15, 57);
 
             autoTable(pdfDoc, {
                 startY: 62,
@@ -467,7 +467,7 @@ const Statement = () => {
             pdfDoc.setTextColor(netBalance >= 0 ? greenColor : redColor);
             pdfDoc.text(Math.abs(netBalance).toFixed(2), 165, finalY + 6, { align: 'center' });
 
-            pdfDoc.save(`Split_Statement_${startStr.split(' ').join('_')}_to_${endStr.split(' ').join('_')}.pdf`);
+            pdfDoc.save(`Fair_Share_Statement_${startStr.split(' ').join('_')}_to_${endStr.split(' ').join('_')}.pdf`);
         } catch (error) {
             console.error('PDF Error:', error);
             showAlert({ title: "Something went wrong", message: "Couldn't generate the PDF. Try again.", type: "danger" });
@@ -507,7 +507,7 @@ const Statement = () => {
                             : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]'
                             }`}
                     >
-                        Splitter Report
+                        Fair Share Report
                     </button>
                 </div>
 
@@ -536,7 +536,7 @@ const Statement = () => {
                         <FiCheckCircle className="mt-0.5 shrink-0" size={18} />
                         <div>
                             <h3 className="font-bold text-sm mb-1">
-                                {activeTab === 'journal' ? 'Personal Journal Statement' : 'Splitter Transaction Statement'}
+                                {activeTab === 'journal' ? 'Personal Journal Statement' : 'Fair Share Transaction Statement'}
                             </h3>
                             <p className="text-xs opacity-80 leading-relaxed">
                                 {activeTab === 'journal'

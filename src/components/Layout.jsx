@@ -27,7 +27,7 @@ import { useNavigate } from 'react-router-dom';
 
 const navItems = [
     { label: 'Journal', icon: FiLayout, path: '/journal' },
-    { label: 'Splitter', icon: FiPieChart, path: '/split' },
+    { label: 'Fair Share', icon: FiPieChart, path: '/split' },
     { label: 'Friends', icon: FiUsers, path: '/friends' },
     { label: 'Statement', icon: FiFileText, path: '/statement' },
     { label: 'Profile', icon: FiUser, path: '/profile' },

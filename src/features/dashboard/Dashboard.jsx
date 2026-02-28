@@ -208,8 +208,8 @@ const Dashboard = () => {
                         uid: txData.debtorId,
                         type: 'expense',
                         amount: amount,
-                        category: 'Split Bill',
-                        description: txData.description || 'Split Expense',
+                        category: 'Fair Share Bill',
+                        description: txData.description || 'Fair Share Expense',
                         date: serverTimestamp(),
                         createdAt: serverTimestamp(),
                         autoSplit: true
@@ -266,7 +266,7 @@ const Dashboard = () => {
     return (
         <div className="p-4 md:p-6 pb-24 lg:pb-6">
             <PageHeader
-                title="Splitter"
+                title="Fair Share"
                 subtitle={<>Manage shared expenses</>}
                 icon={FiDollarSign}
                 rightContent={
@@ -308,8 +308,8 @@ const Dashboard = () => {
                 {allTransactions.length === 0 ? (
                     <EmptyState
                         icon={FiDollarSign}
-                        title="No expenses yet"
-                        subtitle="Tap + to split a bill"
+                        title="No transactions yet"
+                        subtitle="Tap + for Fair Share"
                     />
                 ) : (
                     <div className="w-full max-w-[100vw] overflow-x-hidden space-y-2">

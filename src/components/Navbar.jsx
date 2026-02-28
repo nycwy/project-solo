@@ -55,7 +55,7 @@ const Navbar = () => {
                                     </div>
                                 )}
                             </div>
-                            <span>Splitter</span>
+                            <span>Fair Share</span>
                         </NavLink>
                         <NavLink to="/friends" className={desktopLinkClasses}>
                             <div className="relative">

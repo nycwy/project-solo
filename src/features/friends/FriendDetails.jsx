@@ -151,8 +151,8 @@ const FriendDetails = () => {
                         uid: txData.debtorId,
                         type: 'expense',
                         amount: amount,
-                        category: 'Split Bill',
-                        description: txData.description || 'Split Expense',
+                        category: 'Fair Share Bill',
+                        description: txData.description || 'Fair Share Expense',
                         date: serverTimestamp(),
                         createdAt: serverTimestamp(),
                         autoSplit: true

@@ -148,7 +148,7 @@ const AddExpense = () => {
                 setLoading(false);
                 return showAlert({
                     title: "Pick someone",
-                    message: "Select at least one person to split with.",
+                    message: "Select at least one person for Fair Share.",
                     type: "warning"
                 });
             }
@@ -201,7 +201,7 @@ const AddExpense = () => {
                     description: sanitizedDescription,
                     type: 'expense',
                     date: serverTimestamp(),
-                    source: 'splitter',
+                    source: 'Fair Share',
                     batchId: newBatchId,
                 });
             } else {
@@ -230,7 +230,7 @@ const AddExpense = () => {
                         description: sanitizedDescription,
                         type: 'expense',
                         date: serverTimestamp(),
-                        source: 'splitter',
+                        source: 'Fair Share',
                         batchId: newBatchId,
                     });
                 }
@@ -269,7 +269,7 @@ const AddExpense = () => {
             <Card padding="xl" className="w-full max-w-lg">
                 <PageHeader
                     title={isEditing ? 'Edit Expense' : 'New Expense'}
-                    subtitle="Who's splitting what?"
+                    subtitle="Fair Share details"
                     icon={FiDollarSign}
                     onBack={true}
                 />
@@ -295,7 +295,7 @@ const AddExpense = () => {
 
                     <div>
                         <label className="block text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider mb-1.5 ml-1">
-                            Split with
+                            Fair Share with
                         </label>
                         <button
                             type="button"
@@ -314,7 +314,7 @@ const AddExpense = () => {
                                         {participants.length === 1 ? 'Just Me' : `${participants.length} People`}
                                     </p>
                                     <p className="text-xs opacity-70">
-                                        {participants.length === 1 ? 'Personal Expense' : 'Split Equally'}
+                                        {participants.length === 1 ? 'Personal Expense' : 'Fair Share Equally'}
                                     </p>
                                 </div>
                             </div>

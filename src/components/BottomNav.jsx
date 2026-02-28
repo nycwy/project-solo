@@ -5,7 +5,7 @@ import { NotificationContext } from '../context/NotificationContext';
 
 const tabs = [
     { id: 'journal', label: 'Journal', icon: FiLayout, path: '/journal' },
-    { id: 'dashboard', label: 'Splitter', icon: FiPieChart, path: '/split' },
+    { id: 'dashboard', label: 'Fair Share', icon: FiPieChart, path: '/split' },
     { id: 'friends', label: 'Friends', icon: FiUsers, path: '/friends' },
     { id: 'statement', label: 'Statement', icon: FiFileText, path: '/statement' },
 ];

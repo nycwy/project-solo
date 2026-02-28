@@ -423,7 +423,7 @@ const Friends = () => {
                 <EmptyState
                     icon={FiUsers}
                     title="No friends yet"
-                    subtitle="Add someone to start splitting bills"
+                    subtitle="Add someone to start Fair Share"
                     actionText="Add Friend"
                     onAction={() => setShowAddFriend(true)}
                 />

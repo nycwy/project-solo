@@ -4,7 +4,7 @@ const Footer = () => {
     return (
         <footer className="w-full py-4 text-center mt-auto">
             <p className="text-[10px] md:text-xs text-[var(--color-text-muted)] font-medium">
-                &copy; {currentYear} Splitter. All rights reserved.
+                &copy; {currentYear} Fair Share. All rights reserved.
             </p>
         </footer>
     );
