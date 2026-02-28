@@ -40,7 +40,7 @@ const BottomNav = () => {
     }, [location.pathname]);
 
     const handleAction = (path) => {
-        navigate(path);
+        navigate(path, { replace: true });
         setIsFabOpen(false);
     };
 
@@ -56,6 +56,7 @@ const BottomNav = () => {
             <NavLink
                 key={tab.id}
                 to={tab.path}
+                replace
                 className="flex flex-col items-center justify-center gap-0.5 py-1 w-14 relative"
             >
                 <div className="relative">
