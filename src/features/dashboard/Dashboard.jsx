@@ -249,7 +249,7 @@ const Dashboard = () => {
         if (t.debtorId === 'SELF') return <Badge variant="gray">Personal</Badge>;
         if (t.settleStatus === 'settled') return <Badge variant="success" icon={FiCheckCircle}>Settled</Badge>;
         if (t.settleStatus === 'settle_pending') return <Badge variant="purple" icon={FiClock}>Settling</Badge>;
-        if (t.status === 'confirmed') return <Badge variant="success" icon={FiCheckCircle}>Confirmed</Badge>;
+        if (t.status === 'confirmed') return <Badge variant="info" icon={FiCheckCircle}>Accepted</Badge>;
         if (t.status === 'pending') return <Badge variant="pending" icon={FiClock}>Pending</Badge>;
         if (t.status === 'rejected') return <Badge variant="danger" icon={FiX}>Rejected</Badge>;
         return null;
@@ -337,7 +337,7 @@ const Dashboard = () => {
                                                         <span className="w-full text-[11px] font-medium text-[var(--color-text-muted)] truncate mt-0.5">
                                                             {formatDate(t.date)} <span className="text-[9px] text-[var(--color-border)] mx-0.5">•</span> {isPayer ? `To ${otherName}` : `From ${otherName}`}
                                                         </span>
-                                                        <span className="text-sm font-number font-bold text-white mt-0.5">
+                                                        <span className="text-sm font-number font-bold text-[var(--color-text-secondary)] mt-0.5">
                                                             {isPayer ? '+' : '-'} Rs.{t.amount}
                                                         </span>
                                                     </div>
@@ -368,18 +368,16 @@ const Dashboard = () => {
 
                                                 <div className="shrink-0 flex flex-col items-end gap-1">
                                                     <div className="flex flex-col items-end justify-center gap-0.5">
-                                                        {t.status !== 'pending' && (!isPayer || t.settleStatus !== 'settle_pending') && (
-                                                            <div className="transform origin-right scale-[0.80]">
-                                                                {getStatusBadge(t)}
-                                                            </div>
-                                                        )}
+                                                        <div className="transform origin-right scale-[0.80]">
+                                                            {getStatusBadge(t)}
+                                                        </div>
                                                         <span className={`text-[13px] font-number font-bold leading-none ${isPayer ? 'text-[var(--color-text)]' : 'text-[var(--color-text-secondary)]'}`}>
                                                             {isPayer ? '+' : '-'} Rs.{t.amount}
                                                         </span>
                                                     </div>
 
                                                     {((!isPayer && t.status === 'confirmed' && t.settleStatus !== 'settled' && t.settleStatus !== 'settle_pending') || (isPayer && t.settleStatus === 'settle_pending')) && (
-                                                        <div className="flex items-center gap-1.5 shrink-0">
+                                                        <div className="flex items-center gap-1.5 shrink-0 mt-0.5">
                                                             {!isPayer && t.status === 'confirmed' && t.settleStatus !== 'settled' && t.settleStatus !== 'settle_pending' && (
                                                                 <button onClick={() => handleSettle(t.id)} className="h-6 px-2.5 flex items-center justify-center rounded-md text-[10px] font-semibold tracking-wide uppercase text-slate-200 bg-slate-700/50 border border-slate-600 hover:bg-slate-700 transition-colors select-none">
                                                                     Settle
@@ -403,7 +401,7 @@ const Dashboard = () => {
                     </div>
                 )}
             </div>
-        </div>
+        </div >
     );
 };
 

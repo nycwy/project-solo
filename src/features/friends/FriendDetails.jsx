@@ -201,7 +201,7 @@ const FriendDetails = () => {
     const getStatusBadge = (t) => {
         if (t.settleStatus === 'settled') return <Badge variant="success" icon={FiCheckCircle}>Settled</Badge>;
         if (t.settleStatus === 'settle_pending') return <Badge variant="purple" icon={FiClock}>Settling</Badge>;
-        if (t.status === 'confirmed') return <Badge variant="success" icon={FiCheckCircle}>Confirmed</Badge>;
+        if (t.status === 'confirmed') return <Badge variant="info" icon={FiCheckCircle}>Accepted</Badge>;
         if (t.status === 'pending') return <Badge variant="pending" icon={FiClock}>Pending</Badge>;
         return null;
     };
@@ -303,11 +303,9 @@ const FriendDetails = () => {
 
                                             <div className="shrink-0 flex flex-col items-end gap-1">
                                                 <div className="flex flex-col items-end justify-center gap-0.5">
-                                                    {t.status !== 'pending' && (!isPayer || t.settleStatus !== 'settle_pending') && (
-                                                        <div className="transform origin-right scale-[0.80]">
-                                                            {getStatusBadge(t)}
-                                                        </div>
-                                                    )}
+                                                    <div className="transform origin-right scale-[0.80]">
+                                                        {getStatusBadge(t)}
+                                                    </div>
                                                     <span className={`text-[13px] font-number font-bold leading-none ${isPayer ? 'text-[var(--color-text)]' : 'text-[var(--color-text-secondary)]'}`}>
                                                         {isPayer ? '+' : '-'} Rs.{t.amount}
                                                     </span>

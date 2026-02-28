@@ -28,17 +28,19 @@ export async function checkUnsettledTransactions() {
         getDocs(debtorQuery),
     ]);
 
-    // Filter client-side: unsettled = not SELF, not rejected, and not settled
-    const unsettled = [
-        ...payerSnap.docs.filter(d => {
-            const data = d.data();
-            return data.debtorId !== "SELF" && data.status !== "rejected" && data.settleStatus !== "settled";
-        }),
-        ...debtorSnap.docs.filter(d => {
-            const data = d.data();
-            return data.status !== "rejected" && data.settleStatus !== "settled";
-        }),
-    ];
+    const combined = [...payerSnap.docs, ...debtorSnap.docs];
+    const uniqueDocs = Array.from(new Map(combined.map(d => [d.id, d])).values());
+
+    const unsettled = uniqueDocs.filter(d => {
+        const data = d.data();
+        const isPayer = data.payerId === user.uid;
+
+        // If I'm the payer, skip SELF records. If I'm the debtor, it can't be SELF.
+        if (isPayer && data.debtorId === "SELF") return false;
+
+        // Count if not rejected and not settled
+        return data.status !== "rejected" && data.settleStatus !== "settled";
+    });
 
     return unsettled.length > 0
         ? { canDelete: false, count: unsettled.length }
