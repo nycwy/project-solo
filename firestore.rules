@@ -45,7 +45,7 @@ service cloud.firestore {
       allow list: if isSignedIn() && request.query.limit <= 10;
       allow create: if isMember(userId);
       allow update: if isMember(userId) || (isSignedIn() && isOnlyFriendsUpdate() && isModifyingFriend());
-      allow delete: if false;
+      allow delete: if isMember(userId);
     }
 
     // --- TRANSACTIONS ---

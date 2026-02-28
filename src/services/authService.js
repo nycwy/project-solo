@@ -1,6 +1,49 @@
 import { EmailAuthProvider, reauthenticateWithCredential, deleteUser } from "firebase/auth";
-import { doc, deleteDoc } from "firebase/firestore";
+import { doc, deleteDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { auth, db } from "./firebase";
+
+/**
+ * Checks if the current user has any unsettled split transactions.
+ * Returns { canDelete: true } if no unsettled transactions exist,
+ * or { canDelete: false, count } with the number of unsettled transactions.
+ */
+export async function checkUnsettledTransactions() {
+    const user = auth.currentUser;
+    if (!user) return { canDelete: false, count: 0 };
+
+    // Query all transactions where the user is the payer
+    const payerQuery = query(
+        collection(db, "transactions"),
+        where("payerId", "==", user.uid)
+    );
+
+    // Query all transactions where the user is the debtor
+    const debtorQuery = query(
+        collection(db, "transactions"),
+        where("debtorId", "==", user.uid)
+    );
+
+    const [payerSnap, debtorSnap] = await Promise.all([
+        getDocs(payerQuery),
+        getDocs(debtorQuery),
+    ]);
+
+    // Filter client-side: unsettled = not SELF, not rejected, and not settled
+    const unsettled = [
+        ...payerSnap.docs.filter(d => {
+            const data = d.data();
+            return data.debtorId !== "SELF" && data.status !== "rejected" && data.settleStatus !== "settled";
+        }),
+        ...debtorSnap.docs.filter(d => {
+            const data = d.data();
+            return data.status !== "rejected" && data.settleStatus !== "settled";
+        }),
+    ];
+
+    return unsettled.length > 0
+        ? { canDelete: false, count: unsettled.length }
+        : { canDelete: true, count: 0 };
+}
 
 /**
  * Deletes the currently logged-in user's account.
