@@ -58,7 +58,6 @@ const Journal = () => {
     const [drafts, setDrafts] = useState([]);
 
     const [expandedMonth, setExpandedMonth] = useState(null);
-    const [isFabMenuOpen, setIsFabMenuOpen] = useState(false);
 
     useEffect(() => {
         if (!user?.uid) return;
@@ -490,50 +489,6 @@ const Journal = () => {
                     )}
                 </div>
             </Modal>
-
-            <div className="lg:hidden fixed bottom-24 right-5 z-50 flex items-center justify-center">
-                {isFabMenuOpen && (
-                    <div
-                        className="fixed inset-0 z-40"
-                        onClick={() => setIsFabMenuOpen(false)}
-                    />
-                )}
-
-                <button
-                    onClick={() => { navigate('/add-expense'); setIsFabMenuOpen(false); }}
-                    style={{
-                        transition: 'transform 350ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 250ms ease',
-                        transitionDelay: isFabMenuOpen ? '50ms' : '0ms',
-                        transform: isFabMenuOpen ? 'translateY(-4.5rem) scale(1)' : 'translateY(0) scale(0.5)',
-                        opacity: isFabMenuOpen ? 1 : 0,
-                        pointerEvents: isFabMenuOpen ? 'auto' : 'none',
-                    }}
-                    className="absolute z-50 w-11 h-11 rounded-full bg-[var(--color-primary)] text-white shadow-lg shadow-[var(--color-primary)]/30 flex items-center justify-center hover:brightness-110 active:scale-90"
-                >
-                    <FiPieChart size={20} />
-                </button>
-
-                <button
-                    onClick={() => { navigate('/purchase-list'); setIsFabMenuOpen(false); }}
-                    style={{
-                        transition: 'transform 350ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 250ms ease',
-                        transitionDelay: isFabMenuOpen ? '100ms' : '0ms',
-                        transform: isFabMenuOpen ? 'translateX(-4.5rem) scale(1)' : 'translateX(0) scale(0.5)',
-                        opacity: isFabMenuOpen ? 1 : 0,
-                        pointerEvents: isFabMenuOpen ? 'auto' : 'none',
-                    }}
-                    className="absolute z-50 w-11 h-11 rounded-full bg-[var(--color-warning)] text-white shadow-lg shadow-[var(--color-warning)]/30 flex items-center justify-center hover:brightness-110 active:scale-90"
-                >
-                    <FiShoppingCart size={20} />
-                </button>
-
-                <button
-                    onClick={() => setIsFabMenuOpen(!isFabMenuOpen)}
-                    className="relative z-50 w-11 h-11 rounded-full bg-[var(--color-primary)] text-white shadow-lg shadow-[var(--color-primary)]/30 flex items-center justify-center hover:opacity-90 active:scale-90 transition-all duration-300"
-                >
-                    <FiPlus size={20} className={`transition-transform duration-300 ${isFabMenuOpen ? 'rotate-45' : ''}`} />
-                </button>
-            </div>
         </div>
     );
 };

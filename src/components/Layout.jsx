@@ -5,6 +5,7 @@ import useNetwork from '../hooks/useNetwork';
 
 import { ThemeContext } from '../context/ThemeProvider';
 import BottomNav from './BottomNav';
+import FloatingActionButton from './FloatingActionButton';
 import Avatar from './Avatar';
 import Footer from './Footer';
 import {
@@ -234,6 +235,7 @@ const Layout = () => {
             </div>
 
             {/* Mobile Bottom Nav */}
+            <FloatingActionButton />
             <BottomNav />
         </div>
     );
