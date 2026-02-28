@@ -1,4 +1,4 @@
-import { useState, useContext, useEffect } from 'react';
+import { useState, useContext, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { db } from '../services/firebase';
@@ -19,6 +19,7 @@ import {
     FiChevronDown,
     FiDollarSign,
     FiSearch,
+    FiAlertCircle,
 } from 'react-icons/fi';
 
 import Card from '../components/Card';
@@ -43,6 +44,10 @@ const AddExpense = () => {
     const [showFriendSelector, setShowFriendSelector] = useState(false);
     const [existingBatchId, setExistingBatchId] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
+
+    // Unequal split state
+    const [splitMode, setSplitMode] = useState('equal'); // 'equal' | 'exact'
+    const [exactAmounts, setExactAmounts] = useState({}); // { [uid]: string }
 
     useEffect(() => {
         const fetchFriends = async () => {
@@ -91,11 +96,37 @@ const AddExpense = () => {
                     );
                     const batchSnap = await getDocs(q);
                     const foundParticipants = new Set([user.uid]);
-                    batchSnap.forEach((doc) => {
-                        const t = doc.data();
-                        if (t.debtorId !== 'SELF') foundParticipants.add(t.debtorId);
+                    const foundExactAmounts = {};
+
+                    batchSnap.forEach((d) => {
+                        const t = d.data();
+                        if (t.debtorId !== 'SELF') {
+                            foundParticipants.add(t.debtorId);
+                            foundExactAmounts[t.debtorId] = t.amount.toString();
+                        }
                     });
-                    setParticipants(Array.from(foundParticipants));
+
+                    const participantArr = Array.from(foundParticipants);
+                    setParticipants(participantArr);
+
+                    // Determine if it was an EXACT split
+                    const firstDoc = batchSnap.docs[0]?.data();
+                    if (firstDoc?.splitType === 'EXACT') {
+                        setSplitMode('exact');
+                        // Calculate payer's share from journal or derive it
+                        const jq = query(
+                            collection(db, 'journal'),
+                            where('uid', '==', user.uid),
+                            where('batchId', '==', data.batchId)
+                        );
+                        const journalSnap = await getDocs(jq);
+                        if (!journalSnap.empty) {
+                            foundExactAmounts[user.uid] = journalSnap.docs[0].data().amount.toString();
+                        } else {
+                            foundExactAmounts[user.uid] = '0';
+                        }
+                        setExactAmounts(foundExactAmounts);
+                    }
                 } else {
                     if (data.debtorId !== 'SELF') {
                         setParticipants([user.uid, data.debtorId]);
@@ -112,6 +143,19 @@ const AddExpense = () => {
         if (user) fetchTransaction();
     }, [id, user, navigate, showAlert]);
 
+    // Sync exactAmounts keys when participants change
+    useEffect(() => {
+        if (splitMode === 'exact' && participants.length > 1) {
+            setExactAmounts(prev => {
+                const updated = {};
+                participants.forEach(pId => {
+                    updated[pId] = prev[pId] ?? '';
+                });
+                return updated;
+            });
+        }
+    }, [participants, splitMode]);
+
     const toggleParticipant = (friendId) => {
         setParticipants((prev) =>
             prev.includes(friendId) ? prev.filter((p) => p !== friendId) : [...prev, friendId]
@@ -119,12 +163,41 @@ const AddExpense = () => {
         setSearchTerm('');
     };
 
+    const handleSplitModeChange = (mode) => {
+        setSplitMode(mode);
+        if (mode === 'exact') {
+            const init = {};
+            participants.forEach(pId => { init[pId] = ''; });
+            setExactAmounts(init);
+        }
+    };
+
+    const updateExactAmount = (uid, value) => {
+        setExactAmounts(prev => ({ ...prev, [uid]: value }));
+    };
+
+    // Compute totals for exact mode
+    const exactTotal = useMemo(() => {
+        if (splitMode !== 'exact') return 0;
+        return Object.values(exactAmounts).reduce((sum, v) => sum + (parseFloat(v) || 0), 0);
+    }, [exactAmounts, splitMode]);
+
+    const numericAmount = parseFloat(amount) || 0;
+    const exactDiff = numericAmount - exactTotal;
+    const isExactValid = splitMode === 'exact' && Math.abs(exactDiff) < 0.01;
+
+    // Helper to get friend name
+    const getFriendName = (uid) => {
+        if (uid === user?.uid) return 'You (Payer)';
+        const f = friends.find(f => f.uid === uid);
+        return f?.username || 'Unknown';
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
 
         try {
-            const numericAmount = parseFloat(amount);
             if (isNaN(numericAmount) || numericAmount <= 0) {
                 setLoading(false);
                 return showAlert({
@@ -153,7 +226,21 @@ const AddExpense = () => {
                 });
             }
 
-            const splitAmount = numericAmount / participants.length;
+            // Exact mode validation
+            if (splitMode === 'exact' && participants.length > 1) {
+                if (!isExactValid) {
+                    setLoading(false);
+                    const diff = exactDiff;
+                    return showAlert({
+                        title: "Amounts don't add up",
+                        message: diff > 0
+                            ? `You're Rs. ${diff.toFixed(2)} short. Adjust the amounts to match the total bill.`
+                            : `You're Rs. ${Math.abs(diff).toFixed(2)} over. Adjust the amounts to match the total bill.`,
+                        type: "warning"
+                    });
+                }
+            }
+
             const newBatchId = existingBatchId || Date.now().toString();
             const batch = writeBatch(db);
 
@@ -175,10 +262,7 @@ const AddExpense = () => {
                 oldJournal.forEach((d) => batch.delete(d.ref));
             }
 
-            const payerShare = participants.includes(user.uid)
-                ? parseFloat(splitAmount.toFixed(2))
-                : 0;
-
+            // SELF expense (personal, only user)
             if (participants.length === 1 && participants.includes(user.uid)) {
                 const newRef = doc(collection(db, 'transactions'));
                 batch.set(newRef, {
@@ -204,7 +288,10 @@ const AddExpense = () => {
                     source: 'Fair Share',
                     batchId: newBatchId,
                 });
-            } else {
+            } else if (splitMode === 'equal') {
+                // EQUAL split
+                const splitAmount = numericAmount / participants.length;
+
                 participants.forEach((pId) => {
                     if (pId === user.uid) return;
                     const newRef = doc(collection(db, 'transactions'));
@@ -222,11 +309,50 @@ const AddExpense = () => {
                     });
                 });
 
+                const payerShare = participants.includes(user.uid)
+                    ? parseFloat(splitAmount.toFixed(2))
+                    : 0;
+
                 if (payerShare > 0) {
                     const journalRef = doc(collection(db, 'journal'));
                     batch.set(journalRef, {
                         uid: user.uid,
                         amount: payerShare,
+                        description: sanitizedDescription,
+                        type: 'expense',
+                        date: serverTimestamp(),
+                        source: 'Fair Share',
+                        batchId: newBatchId,
+                    });
+                }
+            } else {
+                // EXACT split
+                participants.forEach((pId) => {
+                    if (pId === user.uid) return;
+                    const friendAmount = parseFloat(exactAmounts[pId]) || 0;
+                    if (friendAmount <= 0) return;
+
+                    const newRef = doc(collection(db, 'transactions'));
+                    batch.set(newRef, {
+                        description: sanitizedDescription,
+                        originalAmount: numericAmount,
+                        amount: parseFloat(friendAmount.toFixed(2)),
+                        payerId: user.uid,
+                        debtorId: pId,
+                        date: serverTimestamp(),
+                        status: 'pending',
+                        splitType: 'EXACT',
+                        batchId: newBatchId,
+                        settleStatus: null,
+                    });
+                });
+
+                const payerShare = parseFloat(exactAmounts[user.uid]) || 0;
+                if (payerShare > 0) {
+                    const journalRef = doc(collection(db, 'journal'));
+                    batch.set(journalRef, {
+                        uid: user.uid,
+                        amount: parseFloat(payerShare.toFixed(2)),
                         description: sanitizedDescription,
                         type: 'expense',
                         date: serverTimestamp(),
@@ -240,6 +366,8 @@ const AddExpense = () => {
             setAmount('');
             setDescription('');
             setParticipants([user.uid]);
+            setSplitMode('equal');
+            setExactAmounts({});
 
             navigate('/split');
 
@@ -263,6 +391,8 @@ const AddExpense = () => {
             setLoading(false);
         }
     };
+
+    const showSplitToggle = participants.length > 1;
 
     return (
         <div className="p-4 md:p-6 pb-24 lg:pb-6 flex flex-col items-center justify-center min-h-[80vh]">
@@ -314,7 +444,11 @@ const AddExpense = () => {
                                         {participants.length === 1 ? 'Just Me' : `${participants.length} People`}
                                     </p>
                                     <p className="text-xs opacity-70">
-                                        {participants.length === 1 ? 'Personal Expense' : 'Fair Share Equally'}
+                                        {participants.length === 1
+                                            ? 'Personal Expense'
+                                            : splitMode === 'equal'
+                                                ? 'Fair Share Equally'
+                                                : 'Exact Amounts'}
                                     </p>
                                 </div>
                             </div>
@@ -385,7 +519,119 @@ const AddExpense = () => {
                         )}
                     </div>
 
-                    {amount && participants.length > 0 && (
+                    {/* Split Mode Toggle */}
+                    {showSplitToggle && (
+                        <div>
+                            <label className="block text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider mb-1.5 ml-1">
+                                Split Method
+                            </label>
+                            <div className="flex bg-[var(--color-surface-alt)] rounded-xl p-1 border border-[var(--color-border)]">
+                                <button
+                                    type="button"
+                                    onClick={() => handleSplitModeChange('equal')}
+                                    className={`flex-1 py-2.5 text-xs font-bold rounded-lg transition-all duration-300 ${splitMode === 'equal'
+                                        ? 'bg-[var(--color-primary)] text-white shadow-md shadow-[var(--color-primary)]/30'
+                                        : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
+                                        }`}
+                                >
+                                    Split Equally
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleSplitModeChange('exact')}
+                                    className={`flex-1 py-2.5 text-xs font-bold rounded-lg transition-all duration-300 ${splitMode === 'exact'
+                                        ? 'bg-[var(--color-warning)] text-white shadow-md shadow-[var(--color-warning)]/30'
+                                        : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
+                                        }`}
+                                >
+                                    Exact Amounts
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Exact Amount Inputs */}
+                    {splitMode === 'exact' && showSplitToggle && (
+                        <div className="space-y-3">
+                            <label className="block text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider ml-1">
+                                Enter each person's share
+                            </label>
+
+                            <div className="space-y-2">
+                                {/* Payer's share */}
+                                <div className="flex items-center gap-3 p-3 bg-[var(--color-surface-alt)] rounded-xl border border-[var(--color-border)]">
+                                    <Avatar name="You" size="sm" />
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-bold text-[var(--color-text)] truncate">You (Payer)</p>
+                                    </div>
+                                    <div className="relative w-28 shrink-0">
+                                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-[var(--color-text-muted)] font-bold">Rs.</span>
+                                        <input
+                                            type="number"
+                                            inputMode="decimal"
+                                            step="0.01"
+                                            min="0"
+                                            value={exactAmounts[user?.uid] || ''}
+                                            onChange={(e) => updateExactAmount(user.uid, e.target.value)}
+                                            placeholder="0.00"
+                                            className="w-full pl-9 pr-2 py-2 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg text-sm font-bold text-right text-[var(--color-text)] focus:ring-2 focus:ring-[var(--color-primary-subtle)] focus:border-[var(--color-primary)] outline-none transition-all placeholder:text-[var(--color-text-muted)]"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Friends' shares */}
+                                {participants.filter(pId => pId !== user?.uid).map(pId => {
+                                    const friendName = getFriendName(pId);
+                                    return (
+                                        <div key={pId} className="flex items-center gap-3 p-3 bg-[var(--color-surface-alt)] rounded-xl border border-[var(--color-border)]">
+                                            <Avatar name={friendName} size="sm" />
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-bold text-[var(--color-text)] truncate">{friendName}</p>
+                                            </div>
+                                            <div className="relative w-28 shrink-0">
+                                                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-[var(--color-text-muted)] font-bold">Rs.</span>
+                                                <input
+                                                    type="number"
+                                                    inputMode="decimal"
+                                                    step="0.01"
+                                                    min="0"
+                                                    value={exactAmounts[pId] || ''}
+                                                    onChange={(e) => updateExactAmount(pId, e.target.value)}
+                                                    placeholder="0.00"
+                                                    className="w-full pl-9 pr-2 py-2 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg text-sm font-bold text-right text-[var(--color-text)] focus:ring-2 focus:ring-[var(--color-primary-subtle)] focus:border-[var(--color-primary)] outline-none transition-all placeholder:text-[var(--color-text-muted)]"
+                                                />
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Running total bar */}
+                            {numericAmount > 0 && (
+                                <div className={`flex items-center justify-between p-3 rounded-xl border transition-all ${isExactValid
+                                    ? 'bg-[var(--color-success-light)] border-[var(--color-success)]/30'
+                                    : 'bg-[var(--color-danger-light)] border-[var(--color-danger)]/30'
+                                    }`}>
+                                    <div className="flex items-center gap-2">
+                                        {isExactValid ? (
+                                            <FiCheck className="text-[var(--color-success)]" size={16} />
+                                        ) : (
+                                            <FiAlertCircle className="text-[var(--color-danger)]" size={16} />
+                                        )}
+                                        <span className={`text-xs font-bold ${isExactValid ? 'text-[var(--color-success)]' : 'text-[var(--color-danger)]'}`}>
+                                            {isExactValid ? 'Amounts match!' : exactDiff > 0 ? `Rs. ${exactDiff.toFixed(2)} remaining` : `Rs. ${Math.abs(exactDiff).toFixed(2)} over`}
+                                        </span>
+                                    </div>
+                                    <span className={`text-sm font-bold ${isExactValid ? 'text-[var(--color-success)]' : 'text-[var(--color-danger)]'}`}>
+                                        Rs. {exactTotal.toFixed(2)} / {numericAmount.toFixed(2)}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Summary Card (Equal Mode) */}
+                    {splitMode === 'equal' && amount && participants.length > 0 && (
                         <Card className="bg-[var(--color-surface-alt)] border-[var(--color-border)]" padding="sm">
                             <p className="text-xs text-[var(--color-text-muted)] uppercase font-bold tracking-widest mb-2 text-center">Summary</p>
                             <div className="flex justify-between items-center text-sm">
@@ -399,6 +645,27 @@ const AddExpense = () => {
                                     <p className="text-xs text-[var(--color-text-muted)] mb-1">You receive</p>
                                     <p className="font-bold text-[var(--color-success)] text-lg">
                                         + Rs. {(amount - amount / participants.length).toFixed(2)}
+                                    </p>
+                                </div>
+                            </div>
+                        </Card>
+                    )}
+
+                    {/* Summary Card (Exact Mode) */}
+                    {splitMode === 'exact' && showSplitToggle && numericAmount > 0 && isExactValid && (
+                        <Card className="bg-[var(--color-surface-alt)] border-[var(--color-border)]" padding="sm">
+                            <p className="text-xs text-[var(--color-text-muted)] uppercase font-bold tracking-widest mb-2 text-center">Summary</p>
+                            <div className="flex justify-between items-center text-sm">
+                                <div className="text-center flex-1 border-r border-[var(--color-border)] pr-3">
+                                    <p className="text-xs text-[var(--color-text-muted)] mb-1">Your share</p>
+                                    <p className="font-bold text-[var(--color-text)] text-lg">
+                                        Rs. {(parseFloat(exactAmounts[user?.uid]) || 0).toFixed(2)}
+                                    </p>
+                                </div>
+                                <div className="text-center flex-1 pl-3">
+                                    <p className="text-xs text-[var(--color-text-muted)] mb-1">You receive</p>
+                                    <p className="font-bold text-[var(--color-success)] text-lg">
+                                        + Rs. {(numericAmount - (parseFloat(exactAmounts[user?.uid]) || 0)).toFixed(2)}
                                     </p>
                                 </div>
                             </div>

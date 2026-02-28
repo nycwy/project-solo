@@ -22,7 +22,7 @@ import {
     FiX,
     FiClock,
     FiCheckCircle,
-    FiDollarSign,
+    FiPieChart,
     FiPlus,
 } from 'react-icons/fi';
 
@@ -268,7 +268,7 @@ const Dashboard = () => {
             <PageHeader
                 title="Fair Share"
                 subtitle={<>Manage shared expenses</>}
-                icon={FiDollarSign}
+                icon={FiPieChart}
                 rightContent={
                     <span className="hidden lg:inline-flex">
                         <Button
@@ -283,19 +283,19 @@ const Dashboard = () => {
 
             <div className="mb-6 grid grid-cols-2 gap-3">
                 <div className="premium-card p-4">
-                    <span className="text-[10px] text-[var(--color-text-muted)] font-bold uppercase tracking-wider mb-1 block">You Get Back</span>
+                    <span className="text-[10px] text-[var(--color-text-muted)] font-bold uppercase tracking-wider mb-1 block">Receivable</span>
                     <p className="text-lg font-number font-semibold text-emerald-600 dark:text-emerald-400">Rs. {totalOwed.toFixed(0)}</p>
                 </div>
 
                 <div className="premium-card p-4">
-                    <span className="text-[10px] text-[var(--color-text-muted)] font-bold uppercase tracking-wider mb-1 block">You Pay</span>
+                    <span className="text-[10px] text-[var(--color-text-muted)] font-bold uppercase tracking-wider mb-1 block">Payable</span>
                     <p className="text-lg font-number font-semibold text-rose-600 dark:text-rose-400">Rs. {totalDebt.toFixed(0)}</p>
                 </div>
 
                 <div className="premium-card p-4 col-span-2 flex items-center justify-between">
                     <span className="text-xs text-[var(--color-text-muted)] font-bold uppercase tracking-wider">Net Balance</span>
                     <span className={`text-xl font-number font-bold ${netBalance >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                        {netBalance >= 0 ? '+' : '-'} Rs. {Math.abs(netBalance).toFixed(0)}
+                        {netBalance >= 0 ? '' : '-'} Rs. {Math.abs(netBalance).toFixed(0)}
                     </span>
                 </div>
             </div>
@@ -307,7 +307,7 @@ const Dashboard = () => {
 
                 {allTransactions.length === 0 ? (
                     <EmptyState
-                        icon={FiDollarSign}
+                        icon={FiPieChart}
                         title="No transactions yet"
                         subtitle="Tap + for Fair Share"
                     />

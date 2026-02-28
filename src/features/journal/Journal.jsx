@@ -27,8 +27,9 @@ import {
     FiShoppingBag,
     FiChevronDown,
     FiShoppingCart,
+    FiPieChart,
 } from 'react-icons/fi';
-import { LuSplit } from 'react-icons/lu';
+
 
 import Card from '../../components/Card';
 import Button from '../../components/Button';
@@ -492,9 +493,9 @@ const Journal = () => {
                         opacity: isFabMenuOpen ? 1 : 0,
                         pointerEvents: isFabMenuOpen ? 'auto' : 'none',
                     }}
-                    className="absolute z-50 w-11 h-11 rounded-full bg-[var(--color-warning)] text-white shadow-lg shadow-[var(--color-warning)]/30 flex items-center justify-center hover:brightness-110 active:scale-90"
+                    className="absolute z-50 w-11 h-11 rounded-full bg-[var(--color-primary)] text-white shadow-lg shadow-[var(--color-primary)]/30 flex items-center justify-center hover:brightness-110 active:scale-90"
                 >
-                    <LuSplit size={20} />
+                    <FiPieChart size={20} />
                 </button>
 
                 <button
@@ -506,7 +507,7 @@ const Journal = () => {
                         opacity: isFabMenuOpen ? 1 : 0,
                         pointerEvents: isFabMenuOpen ? 'auto' : 'none',
                     }}
-                    className="absolute z-50 w-11 h-11 rounded-full bg-[var(--color-success)] text-white shadow-lg shadow-[var(--color-success)]/30 flex items-center justify-center hover:brightness-110 active:scale-90"
+                    className="absolute z-50 w-11 h-11 rounded-full bg-[var(--color-warning)] text-white shadow-lg shadow-[var(--color-warning)]/30 flex items-center justify-center hover:brightness-110 active:scale-90"
                 >
                     <FiShoppingCart size={20} />
                 </button>
