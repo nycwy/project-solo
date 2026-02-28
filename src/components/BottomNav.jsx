@@ -53,12 +53,7 @@ const BottomNav = () => {
             (tab.id === 'dashboard' && splitRequestsCount > 0);
 
         return (
-            <NavLink
-                key={tab.id}
-                to={tab.path}
-                replace
-                className="flex flex-col items-center justify-center gap-0.5 py-1 w-14 relative"
-            >
+            <NavLink key={tab.id} to={tab.path} replace className='flex flex-col items-center justify-center gap-0.5 py-1 px-3 relative'>
                 <div className="relative">
                     <tab.icon
                         size={20}
