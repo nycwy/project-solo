@@ -18,6 +18,7 @@ import {
     FiTrash2,
     FiLock,
     FiAlertTriangle,
+    FiMessageSquare,
 } from 'react-icons/fi';
 import { signOut } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
@@ -219,6 +220,21 @@ const Profile = () => {
                                 onClick={handleLogout}
                             />
                         </div>
+                    </div>
+                </Card>
+                {/* Send Feedback */}
+                <Card padding="sm" className="md:!p-4 cursor-pointer hover:bg-[var(--color-surface-hover)] transition-colors" onClick={() => navigate('/feedback')}>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                            <div className="p-1.5 bg-[var(--color-primary-light)] text-[var(--color-primary)] rounded-lg">
+                                <FiMessageSquare size={14} />
+                            </div>
+                            <div>
+                                <h3 className="text-xs font-bold text-[var(--color-text)]">Send Feedback</h3>
+                                <p className="text-[10px] text-[var(--color-text-muted)]">Report bugs, request features</p>
+                            </div>
+                        </div>
+                        <span className="text-[var(--color-text-muted)] text-lg">›</span>
                     </div>
                 </Card>
 

@@ -23,6 +23,7 @@ import Friends from "./features/friends/Friends";
 import Journal from "./features/journal/Journal";
 import Statement from "./features/statement/Statement";
 import Remember from "./features/journal/Remember";
+import FeedbackForm from "./features/support/FeedbackForm";
 
 const router = createBrowserRouter([
     {
@@ -100,6 +101,10 @@ const router = createBrowserRouter([
             {
                 path: "/logout",
                 element: <Logout />,
+            },
+            {
+                path: "/feedback",
+                element: <FeedbackForm />,
             },
         ],
     },

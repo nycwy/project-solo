@@ -99,6 +99,17 @@ service cloud.firestore {
       allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
     }
 
+    // --- FEEDBACK ---
+    // • Write-only: authenticated users can create, nobody can read/update/delete
+    match /feedback/{feedbackId} {
+      allow create: if isSignedIn() &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.feedbackType in ['Bug', 'Feature', 'General'] &&
+        request.resource.data.message is string &&
+        request.resource.data.message.size() > 0 &&
+        request.resource.data.email is string;
+    }
+
     // --- GLOBAL DENY ---
     // Deny all by default for any other paths
     match /{document=**} {

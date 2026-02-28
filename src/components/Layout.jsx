@@ -19,6 +19,7 @@ import {
     FiChevronsLeft,
     FiChevronsRight,
     FiWifiOff,
+    FiMessageSquare,
 } from 'react-icons/fi';
 import { signOut } from 'firebase/auth';
 import { auth } from '../services/firebase';
@@ -118,8 +119,18 @@ const Layout = () => {
                         ))}
                     </nav>
 
-                    {/* Theme Toggle + User Section */}
+                    {/* Theme Toggle + Feedback + User Section */}
                     <div className="px-3 pb-4 space-y-2 mt-auto">
+                        {/* Feedback */}
+                        <button
+                            onClick={() => navigate('/feedback')}
+                            className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-hover)] transition-all ${sidebarOpen ? '' : 'justify-center'}`}
+                            title={!sidebarOpen ? 'Send Feedback' : undefined}
+                        >
+                            <FiMessageSquare size={18} />
+                            {sidebarOpen && 'Send Feedback'}
+                        </button>
+
                         {/* Theme Toggle */}
                         <button
                             onClick={toggleTheme}
@@ -194,7 +205,14 @@ const Layout = () => {
                                     </span>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1">
+                                <button
+                                    onClick={() => navigate('/feedback')}
+                                    className="p-2 rounded-xl text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] transition-colors"
+                                    title="Send Feedback"
+                                >
+                                    <FiMessageSquare size={18} />
+                                </button>
                                 <button
                                     onClick={toggleTheme}
                                     className="p-2 rounded-xl text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] transition-colors"
