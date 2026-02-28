@@ -56,6 +56,7 @@ const Journal = () => {
     const [description, setDescription] = useState('');
     const [dateValue, setDateValue] = useState('');
     const [drafts, setDrafts] = useState([]);
+    const [isSaving, setIsSaving] = useState(false);
 
     const [expandedMonth, setExpandedMonth] = useState(null);
 
@@ -116,9 +117,10 @@ const Journal = () => {
         return Object.values(groups).sort((a, b) => b.dateObj - a.dateObj);
     }, [entries]);
 
-    const currentYear = new Date().getFullYear();
-    const currentMonth = new Date().getMonth();
-    const currentMonthKey = `${currentYear}-${currentMonth}`;
+    const currentMonthKey = useMemo(() => {
+        const date = new Date();
+        return `${date.getFullYear()}-${date.getMonth()}`;
+    }, []);
 
     const totalIncome = useMemo(() => entries
         .filter((e) => {
@@ -187,6 +189,7 @@ const Journal = () => {
     };
 
     const handleSave = async () => {
+        setIsSaving(true);
         const numAmount = parseFloat(amount);
         const activeDrafts = [...drafts];
 
@@ -200,12 +203,14 @@ const Journal = () => {
         }
 
         if (editingId) {
-            if (!numAmount || numAmount <= 0) return showAlert({ title: "Enter an amount", message: "Amount should be greater than zero.", type: "warning" });
+            if (!numAmount || numAmount <= 0) {
+                setIsSaving(false);
+                return showAlert({ title: "Enter an amount", message: "Amount should be greater than zero.", type: "warning" });
+            }
         } else if (activeDrafts.length === 0) {
+            setIsSaving(false);
             return showAlert({ title: "Nothing to save", message: "Add an amount or put something in the list first.", type: "warning" });
         }
-
-        handleCloseModal(); // Close immediately for feedback
 
         try {
             if (editingId) {
@@ -235,10 +240,12 @@ const Journal = () => {
                 });
                 await batch.commit();
             }
+            handleCloseModal(); // Close on success
         } catch (error) {
             console.error("Error saving journal entry:", error);
             showAlert({ title: "Couldn't save", message: "Something went wrong. Please try again.", type: "error" });
-            setIsModalOpen(true); // Re-open on error
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -412,6 +419,8 @@ const Journal = () => {
                             variant={modalType === 'income' ? 'success' : 'danger'}
                             fullWidth
                             onClick={handleSave}
+                            disabled={isSaving}
+                            loading={isSaving}
                         />
                     </div>
                 }
