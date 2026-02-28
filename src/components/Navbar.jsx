@@ -36,7 +36,7 @@ const Navbar = () => {
                             K
                         </div>
                         <h1 className="text-xl font-bold text-gray-800 tracking-tight hidden sm:block">
-                            Kati?
+                            Kyalsi
                         </h1>
                     </div>
 
