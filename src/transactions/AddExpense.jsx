@@ -398,10 +398,9 @@ const AddExpense = () => {
         <div className="p-4 md:p-6 pb-24 lg:pb-6 flex flex-col items-center justify-center min-h-[80vh]">
             <Card padding="xl" className="w-full max-w-lg">
                 <PageHeader
-                    title={isEditing ? 'Edit Expense' : 'New Expense'}
-                    subtitle="Fair Share details"
+                    title={isEditing ? 'Edit Expense' : 'Shares and Loans'}
+                    subtitle="Fair share among friends or loans."
                     icon={FiDollarSign}
-                    onBack={true}
                 />
 
                 <form onSubmit={handleSubmit} className="space-y-5">

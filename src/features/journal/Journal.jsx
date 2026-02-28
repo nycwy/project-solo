@@ -1,4 +1,4 @@
-import { useState, useContext, useEffect } from 'react';
+import { useState, useContext, useEffect, useMemo } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import { db } from '../../services/firebase';
 import {
@@ -71,7 +71,11 @@ const Journal = () => {
             data.sort((a, b) => {
                 const timeA = a.date?.toMillis ? a.date.toMillis() : (a.date?.seconds ? a.date.seconds * 1000 : Date.now());
                 const timeB = b.date?.toMillis ? b.date.toMillis() : (b.date?.seconds ? b.date.seconds * 1000 : Date.now());
-                return timeB - timeA;
+                if (timeB !== timeA) return timeB - timeA;
+                // Tiebreaker: use createdAt for entries on the same date
+                const createdA = a.createdAt?.toMillis ? a.createdAt.toMillis() : (a.createdAt?.seconds ? a.createdAt.seconds * 1000 : 0);
+                const createdB = b.createdAt?.toMillis ? b.createdAt.toMillis() : (b.createdAt?.seconds ? b.createdAt.seconds * 1000 : 0);
+                return createdB - createdA;
             });
             setEntries(data);
             setLoading(false);
@@ -79,7 +83,7 @@ const Journal = () => {
         return () => unsub();
     }, [user]);
 
-    const getGroupedEntries = () => {
+    const grouped = useMemo(() => {
         const groups = {};
         entries.forEach((entry) => {
             const time = entry.date?.toMillis ? entry.date.toMillis() : (entry.date?.seconds ? entry.date.seconds * 1000 : Date.now());
@@ -99,28 +103,39 @@ const Journal = () => {
             if (entry.type === 'income') groups[key].monthIncome += Number(entry.amount) || 0;
             else groups[key].monthExpense += Number(entry.amount) || 0;
         });
+        // Sort items within each group: latest first
+        Object.values(groups).forEach(group => {
+            group.items.sort((a, b) => {
+                const timeA = a.date?.toMillis ? a.date.toMillis() : (a.date?.seconds ? a.date.seconds * 1000 : Date.now());
+                const timeB = b.date?.toMillis ? b.date.toMillis() : (b.date?.seconds ? b.date.seconds * 1000 : Date.now());
+                if (timeB !== timeA) return timeB - timeA;
+                const createdA = a.createdAt?.toMillis ? a.createdAt.toMillis() : (a.createdAt?.seconds ? a.createdAt.seconds * 1000 : 0);
+                const createdB = b.createdAt?.toMillis ? b.createdAt.toMillis() : (b.createdAt?.seconds ? b.createdAt.seconds * 1000 : 0);
+                return createdB - createdA;
+            });
+        });
         return Object.values(groups).sort((a, b) => b.dateObj - a.dateObj);
-    };
+    }, [entries]);
 
     const currentYear = new Date().getFullYear();
     const currentMonth = new Date().getMonth();
     const currentMonthKey = `${currentYear}-${currentMonth}`;
 
-    const totalIncome = entries
+    const totalIncome = useMemo(() => entries
         .filter((e) => {
             const time = e.date?.toMillis ? e.date.toMillis() : (e.date?.seconds ? e.date.seconds * 1000 : Date.now());
             const dateObj = new Date(time);
             return `${dateObj.getFullYear()}-${dateObj.getMonth()}` === currentMonthKey && e.type === 'income';
         })
-        .reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+        .reduce((sum, e) => sum + (Number(e.amount) || 0), 0), [entries, currentMonthKey]);
 
-    const totalExpense = entries
+    const totalExpense = useMemo(() => entries
         .filter((e) => {
             const time = e.date?.toMillis ? e.date.toMillis() : (e.date?.seconds ? e.date.seconds * 1000 : Date.now());
             const dateObj = new Date(time);
             return `${dateObj.getFullYear()}-${dateObj.getMonth()}` === currentMonthKey && e.type === 'expense';
         })
-        .reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+        .reduce((sum, e) => sum + (Number(e.amount) || 0), 0), [entries, currentMonthKey]);
 
     const openAddModal = (type) => {
         setModalType(type);
@@ -246,7 +261,7 @@ const Journal = () => {
         });
     };
 
-    const grouped = getGroupedEntries();
+
 
     if (loading) {
         return (
