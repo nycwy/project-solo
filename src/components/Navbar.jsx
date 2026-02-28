@@ -49,7 +49,7 @@ const Navbar = () => {
                                 <FiPieChart size={18} />
                                 {splitRequestsCount > 0 && (
                                     <div className="absolute -top-2 -right-2 flex items-center justify-center w-5 h-5 rounded-full bg-purple-500 border border-white shadow-[0_1px_3px_rgba(0,0,0,0.1)] dark:border-gray-900">
-                                        <span className="text-xs font-bold text-white leading-none transform scale-90 pt-[1px]">
+                                        <span className="text-xs font-bold text-white leading-none transform scale-90 pt-px">
                                             {splitRequestsCount}
                                         </span>
                                     </div>
@@ -62,7 +62,7 @@ const Navbar = () => {
                                 <FaUserFriends size={18} />
                                 {friendRequestsCount > 0 && (
                                     <div className="absolute -top-2 -right-2 flex items-center justify-center w-5 h-5 rounded-full bg-rose-500 border border-white shadow-[0_1px_3px_rgba(0,0,0,0.1)] dark:border-gray-900">
-                                        <span className="text-xs font-bold text-white leading-none transform scale-90 pt-[1px]">
+                                        <span className="text-xs font-bold text-white leading-none transform scale-90 pt-px">
                                             {friendRequestsCount}
                                         </span>
                                     </div>
