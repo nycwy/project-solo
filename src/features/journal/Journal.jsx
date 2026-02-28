@@ -26,8 +26,9 @@ import {
     FiLayout,
     FiShoppingBag,
     FiChevronDown,
-    FiDollarSign,
+    FiShoppingCart,
 } from 'react-icons/fi';
+import { LuSplit } from 'react-icons/lu';
 
 import Card from '../../components/Card';
 import Button from '../../components/Button';
@@ -484,29 +485,37 @@ const Journal = () => {
 
                 <button
                     onClick={() => { navigate('/add-expense'); setIsFabMenuOpen(false); }}
-                    className={`absolute z-50 w-11 h-11 rounded-full bg-[var(--color-warning)] text-white shadow-lg shadow-[var(--color-warning)]/30 flex items-center justify-center transition-all duration-300 ease-in-out ${isFabMenuOpen ? 'opacity-100 scale-100 -translate-y-[4.5rem]' : 'opacity-0 scale-0 translate-y-0'
-                        }`}
+                    style={{
+                        transition: 'transform 350ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 250ms ease',
+                        transitionDelay: isFabMenuOpen ? '50ms' : '0ms',
+                        transform: isFabMenuOpen ? 'translateY(-4.5rem) scale(1)' : 'translateY(0) scale(0.5)',
+                        opacity: isFabMenuOpen ? 1 : 0,
+                        pointerEvents: isFabMenuOpen ? 'auto' : 'none',
+                    }}
+                    className="absolute z-50 w-11 h-11 rounded-full bg-[var(--color-warning)] text-white shadow-lg shadow-[var(--color-warning)]/30 flex items-center justify-center hover:brightness-110 active:scale-90"
                 >
-                    <FiDollarSign size={20} />
+                    <LuSplit size={20} />
                 </button>
-                <span className={`absolute z-50 text-[10px] font-bold text-[var(--color-text-muted)] transition-all duration-300 ease-in-out ${isFabMenuOpen ? 'opacity-100 -translate-y-9' : 'opacity-0 translate-y-0'
-                    }`}>Split</span>
 
                 <button
                     onClick={() => { navigate('/purchase-list'); setIsFabMenuOpen(false); }}
-                    className={`absolute z-50 w-11 h-11 rounded-full bg-[var(--color-success)] text-white shadow-lg shadow-[var(--color-success)]/30 flex items-center justify-center transition-all duration-300 ease-in-out ${isFabMenuOpen ? 'opacity-100 scale-100 -translate-x-[4.5rem]' : 'opacity-0 scale-0 translate-x-0'
-                        }`}
+                    style={{
+                        transition: 'transform 350ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 250ms ease',
+                        transitionDelay: isFabMenuOpen ? '100ms' : '0ms',
+                        transform: isFabMenuOpen ? 'translateX(-4.5rem) scale(1)' : 'translateX(0) scale(0.5)',
+                        opacity: isFabMenuOpen ? 1 : 0,
+                        pointerEvents: isFabMenuOpen ? 'auto' : 'none',
+                    }}
+                    className="absolute z-50 w-11 h-11 rounded-full bg-[var(--color-success)] text-white shadow-lg shadow-[var(--color-success)]/30 flex items-center justify-center hover:brightness-110 active:scale-90"
                 >
-                    <FiShoppingBag size={20} />
+                    <FiShoppingCart size={20} />
                 </button>
-                <span className={`absolute z-50 text-[10px] font-bold text-[var(--color-text-muted)] transition-all duration-300 ease-in-out ${isFabMenuOpen ? 'opacity-100 -translate-x-[4.5rem] translate-y-8' : 'opacity-0 translate-x-0 translate-y-0'
-                    }`}>Shop</span>
 
                 <button
                     onClick={() => setIsFabMenuOpen(!isFabMenuOpen)}
-                    className="relative z-50 w-14 h-14 rounded-full bg-[var(--color-primary)] text-white shadow-lg shadow-[var(--color-primary)]/30 flex items-center justify-center hover:opacity-90 active:scale-90 transition-all duration-300"
+                    className="relative z-50 w-11 h-11 rounded-full bg-[var(--color-primary)] text-white shadow-lg shadow-[var(--color-primary)]/30 flex items-center justify-center hover:opacity-90 active:scale-90 transition-all duration-300"
                 >
-                    <FiPlus size={24} className={`transition-transform duration-300 ${isFabMenuOpen ? 'rotate-45' : ''}`} />
+                    <FiPlus size={20} className={`transition-transform duration-300 ${isFabMenuOpen ? 'rotate-45' : ''}`} />
                 </button>
             </div>
         </div>
