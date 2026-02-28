@@ -172,8 +172,21 @@ const Dashboard = () => {
         }
     };
 
-    const handleReject = async (id) => {
-        await updateDoc(doc(db, 'transactions', id), { status: 'rejected' });
+    const handleReject = (id) => {
+        showConfirm({
+            title: "Reject this?",
+            message: "This will permanently reject the transaction. This cannot be undone.",
+            confirmText: "Reject",
+            type: "danger",
+            onConfirm: async () => {
+                try {
+                    await updateDoc(doc(db, 'transactions', id), { status: 'rejected' });
+                } catch (error) {
+                    console.error('Error rejecting transaction:', error);
+                    showAlert({ title: "Couldn't reject", message: "Something went wrong. Please try again.", type: "error" });
+                }
+            }
+        });
     };
 
     const handleSettle = (id) => {

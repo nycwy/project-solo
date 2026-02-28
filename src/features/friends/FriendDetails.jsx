@@ -100,10 +100,23 @@ const FriendDetails = () => {
         return sum;
     }, 0);
 
-    const handleSettle = async (id) => {
-        await updateDoc(doc(db, 'transactions', id), {
-            settleStatus: 'settle_pending',
-            settleRequestedAt: serverTimestamp(),
+    const handleSettle = (id) => {
+        showConfirm({
+            title: "Settle up?",
+            message: "Send a settle request for this one?",
+            confirmText: "Request Settle",
+            type: "info",
+            onConfirm: async () => {
+                try {
+                    await updateDoc(doc(db, 'transactions', id), {
+                        settleStatus: 'settle_pending',
+                        settleRequestedAt: serverTimestamp(),
+                    });
+                } catch (error) {
+                    console.error('Error settling:', error);
+                    showAlert({ title: "Couldn't settle", message: "Something went wrong. Please try again.", type: "error" });
+                }
+            }
         });
     };
 
@@ -128,8 +141,21 @@ const FriendDetails = () => {
         }
     };
 
-    const handleReject = async (id) => {
-        await updateDoc(doc(db, 'transactions', id), { status: 'rejected' });
+    const handleReject = (id) => {
+        showConfirm({
+            title: "Reject this?",
+            message: "This will permanently reject the transaction. This cannot be undone.",
+            confirmText: "Reject",
+            type: "danger",
+            onConfirm: async () => {
+                try {
+                    await updateDoc(doc(db, 'transactions', id), { status: 'rejected' });
+                } catch (error) {
+                    console.error('Error rejecting transaction:', error);
+                    showAlert({ title: "Couldn't reject", message: "Something went wrong. Please try again.", type: "error" });
+                }
+            }
+        });
     };
 
     const handleConfirmSettle = async (id) => {
@@ -187,7 +213,7 @@ const FriendDetails = () => {
                         where('batchId', '==', txData.batchId)
                     );
                     const jSnap = await getDocs(jq);
-                    jSnap.forEach(async (d) => await deleteDoc(d.ref));
+                    await Promise.all(jSnap.docs.map((d) => deleteDoc(d.ref)));
                 }
             }
         });

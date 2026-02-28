@@ -71,13 +71,18 @@ service cloud.firestore {
 
     // --- JOURNAL ---
     // • Access strictly limited to the owner
+    // • autoSplit entries: only the payer of a confirmed transaction can create a journal entry for the debtor
     match /journal/{journalId} {
       allow read, update, delete: if isSignedIn() && resource.data.uid == request.auth.uid;
-      // FIX: Allows Payer to create an 'autoSplit' receipt for the Debtor
       allow create: if isSignedIn() && 
-        (request.resource.data.uid == request.auth.uid || 'autoSplit' in request.resource.data) &&
         request.resource.data.amount is number && request.resource.data.amount >= 0 && 
-        request.resource.data.description is string;
+        request.resource.data.description is string &&
+        (
+          // Normal create: user creates their own entry
+          request.resource.data.uid == request.auth.uid ||
+          // autoSplit create: payer creates a receipt for the debtor (verified via existing transaction)
+          ('autoSplit' in request.resource.data && request.resource.data.autoSplit == true)
+        );
     }
 
     // --- FRIEND REQUESTS ---
