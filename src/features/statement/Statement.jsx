@@ -486,16 +486,16 @@ const Statement = () => {
                 title="Statements"
                 subtitle="Export your records"
                 icon={FiFileText}
-                iconClassName="bg-[var(--color-primary-light)] text-[var(--color-primary)]"
+                iconClassName="bg-(--color-primary-light) text-(--color-primary)"
             />
 
             <Card padding="lg" className="max-w-2xl mx-auto">
-                <div className="flex p-1 bg-[var(--color-surface-alt)] rounded-xl mb-6">
+                <div className="flex p-1 bg-(--color-surface-alt) rounded-xl mb-6">
                     <button
                         onClick={() => setActiveTab('journal')}
                         className={`flex-1 py-2.5 text-xs md:text-sm font-bold rounded-lg transition-all duration-300 ${activeTab === 'journal'
-                            ? 'bg-[var(--color-surface)] text-[var(--color-primary)] shadow-sm'
-                            : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]'
+                            ? 'bg-(--color-surface) text-(--color-primary) shadow-sm'
+                            : 'text-(--color-text-muted) hover:text-(--color-text-secondary)'
                             }`}
                     >
                         Journal Report
@@ -503,8 +503,8 @@ const Statement = () => {
                     <button
                         onClick={() => setActiveTab('splitter')}
                         className={`flex-1 py-2.5 text-xs md:text-sm font-bold rounded-lg transition-all duration-300 ${activeTab === 'splitter'
-                            ? 'bg-[var(--color-surface)] text-[var(--color-warning)] shadow-sm'
-                            : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]'
+                            ? 'bg-(--color-surface) text-(--color-warning) shadow-sm'
+                            : 'text-(--color-text-muted) hover:text-(--color-text-secondary)'
                             }`}
                     >
                         Fair Share Report
@@ -530,8 +530,8 @@ const Statement = () => {
                     </div>
 
                     <div className={`p-4 rounded-xl border flex items-start gap-3 ${activeTab === 'journal'
-                        ? 'bg-[var(--color-primary-light)] border-[var(--color-primary-subtle)] text-[var(--color-primary)]'
-                        : 'bg-[var(--color-warning-light)] border-[var(--color-warning)]/20 text-[var(--color-warning)]'
+                        ? 'bg-(--color-primary-light) border-(--color-primary-subtle) text-(--color-primary)'
+                        : 'bg-(--color-warning-light) border-(--color-warning)/20 text-(--color-warning)'
                         }`}>
                         <FiCheckCircle className="mt-0.5 shrink-0" size={18} />
                         <div>
