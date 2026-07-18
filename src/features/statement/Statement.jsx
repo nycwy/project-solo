@@ -494,7 +494,7 @@ const Statement = () => {
                     <button
                         onClick={() => setActiveTab('journal')}
                         className={`flex-1 py-2.5 text-xs md:text-sm font-bold rounded-lg transition-all duration-300 ${activeTab === 'journal'
-                            ? 'bg-(--color-surface) text-(--color-primary) shadow-sm'
+                            ? 'bg-(--color-surface) text-(--color-primary)'
                             : 'text-(--color-text-muted) hover:text-(--color-text-secondary)'
                             }`}
                     >
@@ -503,7 +503,7 @@ const Statement = () => {
                     <button
                         onClick={() => setActiveTab('splitter')}
                         className={`flex-1 py-2.5 text-xs md:text-sm font-bold rounded-lg transition-all duration-300 ${activeTab === 'splitter'
-                            ? 'bg-(--color-surface) text-(--color-warning) shadow-sm'
+                            ? 'bg-(--color-surface) text-(--color-warning)'
                             : 'text-(--color-text-muted) hover:text-(--color-text-secondary)'
                             }`}
                     >
