@@ -22,16 +22,22 @@ export default defineConfig({
                 start_url: '/',
                 icons: [
                     {
-                        src: '/king.jpg',
+                        src: '/king.png',
                         sizes: '192x192',
-                        type: 'image/jpeg',
-                        purpose: 'any maskable'
+                        type: 'image/png',
+                        purpose: 'any'
                     },
                     {
-                        src: '/king.jpg',
+                        src: '/king.png',
                         sizes: '512x512',
-                        type: 'image/jpeg',
-                        purpose: 'any maskable'
+                        type: 'image/png',
+                        purpose: 'any'
+                    },
+                    {
+                        src: '/king.png',
+                        sizes: '512x512',
+                        type: 'image/png',
+                        purpose: 'maskable'
                     }
                 ]
             },
